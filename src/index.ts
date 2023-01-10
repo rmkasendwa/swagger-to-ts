@@ -1,6 +1,10 @@
 import '@infinite-debugger/rmk-js-extensions/String';
 
+import { writeFileSync } from 'fs';
+import { dirname } from 'path';
+
 import { OS3Parameter, OS3Paths, OpenSpec3 } from '@tsed/openspec';
+import { ensureDirSync } from 'fs-extra';
 
 type Parameter = {
   name: string;
@@ -18,11 +22,14 @@ interface APIAction {
 }
 
 interface APIEntity {
+  entityName: string;
   apiModuleImports: Record<string, string[]>;
   actions: APIAction[];
 }
 
 const swaggerDocs: OpenSpec3 = require('../swagger.json');
+
+const outputFolderPath = `${__dirname}/__sandbox`;
 
 const PATHS_LIB = `@infinite-debugger/rmk-utils/paths`;
 const API_ADAPTER_PATH = `./Adapter`;
@@ -45,14 +52,15 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 
       if (tags && tags.length > 0 && summary) {
         const entityGroupName = tags[0];
+        const entityNamePascalCase = entityGroupName.toPascalCase();
         if (!accumulator[entityGroupName]) {
           accumulator[entityGroupName] = {
+            entityName: entityNamePascalCase,
             actions: [],
             apiModuleImports: {},
           };
         }
 
-        const entityNamePascalCase = entityGroupName.toPascalCase();
         const endpointPathsFileLocationRelativetoAPI = `../endpoint-paths/${entityNamePascalCase}`;
 
         const name = summary.toCamelCase();
@@ -100,6 +108,13 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             } as Parameter;
           });
 
+        const httpActionString = (() => {
+          if (httpVerb.match(/delete/gi)) {
+            return `_${httpVerb}`;
+          }
+          return httpVerb;
+        })();
+
         const pathParamsString = pathParams
           .map(({ name, type }) => {
             return `${name}: ${type}`;
@@ -133,10 +148,10 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
         if (
           !accumulator[entityGroupName].apiModuleImports[
             API_ADAPTER_PATH
-          ].includes(httpVerb)
+          ].includes(httpActionString)
         ) {
           accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH].push(
-            httpVerb
+            httpActionString
           );
         }
 
@@ -149,7 +164,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           pathParams,
           snippet: `
             export const ${name} = async (${pathParamsString}) => {
-              const { data } = await ${httpVerb}<any[]>(${interpolatedEndpointPathString}, {
+              const { data } = await ${httpActionString}<any>(${interpolatedEndpointPathString}, {
                 label: '${actionDescription}',
               });
               return data;
@@ -164,5 +179,29 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
   },
   {} as Record<string, APIEntity>
 );
+
+// Outputing files
+Object.values(entities).forEach(({ entityName, actions, apiModuleImports }) => {
+  const apiFilePath = `${outputFolderPath}/api/${entityName}.ts`;
+  const importsString = Object.keys(apiModuleImports)
+    .map((key) => {
+      return `import {${apiModuleImports[key].join(', ')}} from '${key}';`;
+    })
+    .join('\n');
+  const actionsString = actions
+    .map(({ snippet }) => {
+      return snippet;
+    })
+    .join('\n\n');
+
+  ensureDirSync(dirname(apiFilePath));
+  writeFileSync(
+    apiFilePath,
+    `
+    ${importsString}
+    ${actionsString}
+  `
+  );
+});
 
 console.log(JSON.stringify(entities, null, 2));
