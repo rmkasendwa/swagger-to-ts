@@ -5,10 +5,12 @@ import { dirname } from 'path';
 
 import { OS3Parameter, OS3Paths, OpenSpec3 } from '@tsed/openspec';
 import { ensureDirSync } from 'fs-extra';
+import { pick } from 'lodash';
 import prettier from 'prettier';
 
 type Parameter = {
   name: string;
+  description?: string;
   type: string;
 };
 
@@ -16,10 +18,7 @@ interface APIAction {
   name: string;
   endpointPathIdentifierString: string;
   enpointPathString: string;
-  httpVerb: string;
-  pathParams: Parameter[];
   snippet: string;
-  actionDescription: string;
 }
 
 interface APIEntity {
@@ -57,12 +56,14 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
       const {
         summary,
         description,
+        responses,
         tags,
         parameters = [],
       } = {
         ...(swaggerDocsPath[httpVerb] as any),
       } as OS3Paths & {
         tags: string[];
+        responses: any;
       };
 
       if (tags && tags.length > 0 && summary) {
@@ -128,7 +129,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           .map((baseParameter) => {
             const parameter = baseParameter as OS3Parameter;
             return {
-              name: parameter.name,
+              ...pick(parameter, 'name', 'description'),
               type: (parameter.schema as any).type, // TODO: Deal with complex types
             } as Parameter;
           });
@@ -180,6 +181,22 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           );
         }
 
+        // API Return type
+        const apiReturnType = (() => {
+          const successfulResponse = Object.keys(responses)
+            .filter((key) => {
+              return key.match(/^2\d\d$/g);
+            })
+            .map((key) => {
+              return responses[key] as {
+                description: string;
+              };
+            })[0];
+          if (successfulResponse) {
+            return successfulResponse;
+          }
+        })();
+
         const jsDocCommentSnippet = (() => {
           const lines: string[] = [];
           if (description) {
@@ -190,10 +207,13 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
               lines.push('');
             }
             lines.push(
-              ...pathParams.map(({ name }) => {
-                return `@param ${name}`;
+              ...pathParams.map(({ name, description }) => {
+                return `@param ${name} ${description}`.trim();
               })
             );
+          }
+          if (apiReturnType) {
+            lines.push(`@returns ${apiReturnType.description}`);
           }
           if (lines.length > 0) {
             const linesString = lines
@@ -214,11 +234,8 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 
         accumulator[entityGroupName].actions.push({
           name,
-          httpVerb,
           enpointPathString,
           endpointPathIdentifierString,
-          actionDescription,
-          pathParams,
           snippet: `
             ${jsDocCommentSnippet}
             export const ${name} = async (${pathParamsString}) => {
