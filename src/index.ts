@@ -15,16 +15,17 @@ interface APIAction {
   pathParams: Parameter[];
   snippet: string;
   actionDescription: string;
-  apiModuleImports: Record<string, string[]>;
 }
 
 interface APIEntity {
+  apiModuleImports: Record<string, string[]>;
   actions: APIAction[];
 }
 
 const swaggerDocs: OpenSpec3 = require('../swagger.json');
 
 const PATHS_LIB = `@infinite-debugger/rmk-utils/paths`;
+const API_ADAPTER_PATH = `./Adapter`;
 
 // Cumulatively finding entites
 const entities = Object.keys(swaggerDocs.paths).reduce(
@@ -47,18 +48,45 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
         if (!accumulator[entityGroupName]) {
           accumulator[entityGroupName] = {
             actions: [],
+            apiModuleImports: {},
           };
         }
 
-        const apiModuleImports: Record<string, string[]> = {};
+        const entityNamePascalCase = entityGroupName.toPascalCase();
+        const endpointPathsFileLocationRelativetoAPI = `../endpoint-paths/${entityNamePascalCase}`;
+
         const name = summary.toCamelCase();
+
         const endpointPathIdentifierString = `${summary
           .replace(/\s+/g, '_')
           .toUpperCase()}_ENDPOINT_PATH`;
+
+        // Resolving endpoint paths imports
+        if (
+          !accumulator[entityGroupName].apiModuleImports[
+            endpointPathsFileLocationRelativetoAPI
+          ]
+        ) {
+          accumulator[entityGroupName].apiModuleImports[
+            endpointPathsFileLocationRelativetoAPI
+          ] = [];
+        }
+        if (
+          !accumulator[entityGroupName].apiModuleImports[
+            endpointPathsFileLocationRelativetoAPI
+          ].includes(endpointPathIdentifierString)
+        ) {
+          accumulator[entityGroupName].apiModuleImports[
+            endpointPathsFileLocationRelativetoAPI
+          ].push(endpointPathIdentifierString);
+        }
+
         const [verb, ...restSummary] = summary.split(' ');
         const actionDescription =
           verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ');
+
         const enpointPathString = pathKey.replace(/\{(\w+)\}/g, ':$1');
+
         const pathParams = parameters
           .filter((baseParameter) => {
             const parameter = baseParameter as OS3Parameter;
@@ -80,16 +108,37 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 
         const interpolatedEndpointPathString = (() => {
           if (pathParams.length > 0) {
-            if (!apiModuleImports[PATHS_LIB]) {
-              apiModuleImports[PATHS_LIB] = [];
+            if (!accumulator[entityGroupName].apiModuleImports[PATHS_LIB]) {
+              accumulator[entityGroupName].apiModuleImports[PATHS_LIB] = [];
             }
-            apiModuleImports[PATHS_LIB].push(`getInterpolatedPath`);
+            if (
+              !accumulator[entityGroupName].apiModuleImports[
+                PATHS_LIB
+              ].includes(`getInterpolatedPath`)
+            ) {
+              accumulator[entityGroupName].apiModuleImports[PATHS_LIB].push(
+                `getInterpolatedPath`
+              );
+            }
             return `getInterpolatedPath(${endpointPathIdentifierString}, {
               ${pathParams.map(({ name }) => name).join(',\n')}
             })`;
           }
           return endpointPathIdentifierString;
         })();
+
+        if (!accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH]) {
+          accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH] = [];
+        }
+        if (
+          !accumulator[entityGroupName].apiModuleImports[
+            API_ADAPTER_PATH
+          ].includes(httpVerb)
+        ) {
+          accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH].push(
+            httpVerb
+          );
+        }
 
         accumulator[entityGroupName].actions.push({
           name,
@@ -108,7 +157,6 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           `
             .trimIndent()
             .trim(),
-          apiModuleImports,
         });
       }
     });
