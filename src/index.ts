@@ -15,6 +15,7 @@ interface APIAction {
   pathParams: Parameter[];
   snippet: string;
   actionDescription: string;
+  imports: Record<string, string[]>;
 }
 
 interface APIEntity {
@@ -46,6 +47,8 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             actions: [],
           };
         }
+
+        const imports: Record<string, string[]> = {};
         const name = summary.toCamelCase();
         const endpointPathIdentifierString = `${summary
           .replace(/\s+/g, '_')
@@ -73,6 +76,15 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           })
           .join(', ');
 
+        const interpolatedEndpointPathString = (() => {
+          if (pathParams.length > 0) {
+            return `getInterpolatedPath(${endpointPathIdentifierString}, {
+              ${pathParams.map(({ name }) => name).join(',\n')}
+            })`;
+          }
+          return endpointPathIdentifierString;
+        })();
+
         accumulator[entityGroupName].actions.push({
           name,
           httpVerb,
@@ -82,7 +94,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           pathParams,
           snippet: `
             export const ${name} = async (${pathParamsString}) => {
-              const { data } = await ${httpVerb}<Country[]>(${endpointPathIdentifierString}, {
+              const { data } = await ${httpVerb}<any[]>(${interpolatedEndpointPathString}, {
                 label: '${actionDescription}',
               });
               return data;
@@ -90,6 +102,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           `
             .trimIndent()
             .trim(),
+          imports,
         });
       }
     });
