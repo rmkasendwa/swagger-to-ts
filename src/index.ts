@@ -189,7 +189,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             ].push(interfaceName);
           }
 
-          return accumulator[entityGroupName].interfaceSnippets.push(`
+          accumulator[entityGroupName].interfaceSnippets.push(`
             export type ${interfaceName} = {
               ${queryParamPropertiesString}
             }
