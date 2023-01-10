@@ -15,7 +15,7 @@ interface APIAction {
   pathParams: Parameter[];
   snippet: string;
   actionDescription: string;
-  imports: Record<string, string[]>;
+  apiModuleImports: Record<string, string[]>;
 }
 
 interface APIEntity {
@@ -23,6 +23,8 @@ interface APIEntity {
 }
 
 const swaggerDocs: OpenSpec3 = require('../swagger.json');
+
+const PATHS_LIB = `@infinite-debugger/rmk-utils/paths`;
 
 // Cumulatively finding entites
 const entities = Object.keys(swaggerDocs.paths).reduce(
@@ -48,7 +50,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           };
         }
 
-        const imports: Record<string, string[]> = {};
+        const apiModuleImports: Record<string, string[]> = {};
         const name = summary.toCamelCase();
         const endpointPathIdentifierString = `${summary
           .replace(/\s+/g, '_')
@@ -78,6 +80,10 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 
         const interpolatedEndpointPathString = (() => {
           if (pathParams.length > 0) {
+            if (!apiModuleImports[PATHS_LIB]) {
+              apiModuleImports[PATHS_LIB] = [];
+            }
+            apiModuleImports[PATHS_LIB].push(`getInterpolatedPath`);
             return `getInterpolatedPath(${endpointPathIdentifierString}, {
               ${pathParams.map(({ name }) => name).join(',\n')}
             })`;
@@ -102,7 +108,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           `
             .trimIndent()
             .trim(),
-          imports,
+          apiModuleImports,
         });
       }
     });
