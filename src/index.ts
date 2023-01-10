@@ -56,6 +56,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
       const httpVerb = key as keyof typeof swaggerDocsPath;
       const {
         summary,
+        description,
         tags,
         parameters = [],
       } = {
@@ -179,6 +180,38 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           );
         }
 
+        const jsDocCommentSnippet = (() => {
+          const lines: string[] = [];
+          if (description) {
+            lines.push(description);
+          }
+          if (pathParams.length > 0) {
+            if (lines.length > 0) {
+              lines.push('');
+            }
+            lines.push(
+              ...pathParams.map(({ name }) => {
+                return `@param ${name}`;
+              })
+            );
+          }
+          if (lines.length > 0) {
+            const linesString = lines
+              .map((line) => {
+                return ` * ${line}`;
+              })
+              .join('\n');
+            return `
+              /**
+               ${linesString}
+               */
+            `
+              .trimIndent()
+              .trim();
+          }
+          return '';
+        })();
+
         accumulator[entityGroupName].actions.push({
           name,
           httpVerb,
@@ -187,6 +220,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           actionDescription,
           pathParams,
           snippet: `
+            ${jsDocCommentSnippet}
             export const ${name} = async (${pathParamsString}) => {
               const { data } = await ${httpActionString}<any>(${interpolatedEndpointPathString}, {
                 label: '${actionDescription}',
@@ -323,4 +357,23 @@ writeFileSync(
     filepath: apiAdapterFilePath,
     ...prettierConfig,
   })
+);
+
+// Outputting index file
+const indexFilePath = `${outputFolderPath}/index.ts`;
+
+ensureDirSync(dirname(indexFilePath));
+writeFileSync(
+  indexFilePath,
+  prettier.format(
+    ouputSubFolders
+      .map((subFolderName) => {
+        return `export * from './${subFolderName}';`;
+      })
+      .join('\n'),
+    {
+      filepath: indexFilePath,
+      ...prettierConfig,
+    }
+  )
 );
