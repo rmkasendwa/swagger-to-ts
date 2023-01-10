@@ -22,7 +22,9 @@ interface APIAction {
 }
 
 interface APIEntity {
-  entityName: string;
+  entityNamePascalCase: string;
+  entityNameUpperCase: string;
+  entityNameCamelCase: string;
   apiModuleImports: Record<string, string[]>;
   actions: APIAction[];
 }
@@ -52,10 +54,14 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 
       if (tags && tags.length > 0 && summary) {
         const entityGroupName = tags[0];
+        const entityNameCamelCase = entityGroupName.toCamelCase();
         const entityNamePascalCase = entityGroupName.toPascalCase();
+        const entityNameUpperCase = summary.replace(/\s+/g, '_').toUpperCase();
         if (!accumulator[entityGroupName]) {
           accumulator[entityGroupName] = {
-            entityName: entityNamePascalCase,
+            entityNameCamelCase,
+            entityNamePascalCase,
+            entityNameUpperCase,
             actions: [],
             apiModuleImports: {},
           };
@@ -65,9 +71,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 
         const name = summary.toCamelCase();
 
-        const endpointPathIdentifierString = `${summary
-          .replace(/\s+/g, '_')
-          .toUpperCase()}_ENDPOINT_PATH`;
+        const endpointPathIdentifierString = `${entityNameUpperCase}_ENDPOINT_PATH`;
 
         // Resolving endpoint paths imports
         if (
@@ -181,27 +185,44 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 );
 
 // Outputing files
-Object.values(entities).forEach(({ entityName, actions, apiModuleImports }) => {
-  const apiFilePath = `${outputFolderPath}/api/${entityName}.ts`;
-  const importsString = Object.keys(apiModuleImports)
-    .map((key) => {
-      return `import {${apiModuleImports[key].join(', ')}} from '${key}';`;
-    })
-    .join('\n');
-  const actionsString = actions
-    .map(({ snippet }) => {
-      return snippet;
-    })
-    .join('\n\n');
+Object.values(entities).forEach(
+  ({
+    entityNameCamelCase,
+    entityNamePascalCase,
+    entityNameUpperCase,
+    actions,
+    apiModuleImports,
+  }) => {
+    // API Files
+    const apiFilePath = `${outputFolderPath}/api/${entityNamePascalCase}.ts`;
+    const importsString = Object.keys(apiModuleImports)
+      .map((key) => {
+        return `import {${apiModuleImports[key].join(', ')}} from '${key}';`;
+      })
+      .join('\n');
+    const actionsString = actions
+      .map(({ snippet }) => {
+        return snippet;
+      })
+      .join('\n\n');
 
-  ensureDirSync(dirname(apiFilePath));
-  writeFileSync(
-    apiFilePath,
-    `
-    ${importsString}
-    ${actionsString}
-  `
-  );
-});
+    ensureDirSync(dirname(apiFilePath));
+    writeFileSync(
+      apiFilePath,
+      `
+        ${importsString}
+        ${actionsString}
+      `
+    );
+
+    // Data Keys Files
+    const dataKeysFilePath = `${outputFolderPath}/data-keys/${entityNamePascalCase}.ts`;
+    ensureDirSync(dirname(dataKeysFilePath));
+    writeFileSync(
+      dataKeysFilePath,
+      `export const ${entityNameUpperCase}_DATA_KEY = '${entityNameCamelCase}';`
+    );
+  }
+);
 
 console.log(JSON.stringify(entities, null, 2));
