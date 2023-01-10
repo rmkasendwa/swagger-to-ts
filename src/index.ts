@@ -203,7 +203,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
   {} as Record<string, APIEntity>
 );
 
-// Outputing files
+// Outputting files
 Object.values(entities).forEach(
   ({
     entityNameCamelCase,
@@ -256,10 +256,10 @@ Object.values(entities).forEach(
     );
 
     // Endpoint paths files
-    const endpointPathsFieldPath = `${outputFolderPath}/endpoint-paths/${entityNamePascalCase}.ts`;
-    ensureDirSync(dirname(endpointPathsFieldPath));
+    const endpointPathsFilePath = `${outputFolderPath}/endpoint-paths/${entityNamePascalCase}.ts`;
+    ensureDirSync(dirname(endpointPathsFilePath));
     writeFileSync(
-      endpointPathsFieldPath,
+      endpointPathsFilePath,
       prettier.format(
         Object.keys(endpointPaths)
           .map((key) => {
@@ -267,10 +267,33 @@ Object.values(entities).forEach(
           })
           .join('\n'),
         {
-          filepath: endpointPathsFieldPath,
+          filepath: endpointPathsFilePath,
           ...prettierConfig,
         }
       )
     );
+
+    // Interfaces files
+    const interfacesFilePath = `${outputFolderPath}/interfaces/${entityNamePascalCase}.ts`;
+    ensureDirSync(dirname(interfacesFilePath));
+    writeFileSync(
+      interfacesFilePath,
+      prettier.format(`// TODO: Implement the interfaces`, {
+        filepath: interfacesFilePath,
+        ...prettierConfig,
+      })
+    );
   }
+);
+
+// Outputting api adapter file
+const apiAdapterFilePath = `${outputFolderPath}/api/Adapter.ts`;
+
+ensureDirSync(dirname(apiAdapterFilePath));
+writeFileSync(
+  apiAdapterFilePath,
+  prettier.format(`export * from '@infinite-debugger/react-mui/api/Adapter';`, {
+    filepath: apiAdapterFilePath,
+    ...prettierConfig,
+  })
 );
