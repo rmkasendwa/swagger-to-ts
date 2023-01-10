@@ -12,6 +12,7 @@ type Parameter = {
   name: string;
   description?: string;
   type: string;
+  required?: boolean;
 };
 
 interface APIAction {
@@ -28,6 +29,7 @@ interface APIEntity {
   apiModuleImports: Record<string, string[]>;
   actions: APIAction[];
   endpointPaths: Record<string, string>;
+  interfaceSnippets: string[];
 }
 
 const swaggerDocs: OpenSpec3 = require('../swagger.json');
@@ -81,12 +83,14 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             actions: [],
             apiModuleImports: {},
             endpointPaths: {},
+            interfaceSnippets: [],
           };
         }
 
         const endpointPathsFileLocationRelativetoAPI = `../endpoint-paths/${entityNamePascalCase}`;
 
         const name = summary.toCamelCase();
+        const pascalCaseActionName = summary.toPascalCase();
 
         const endpointPathIdentifierString = `${summary
           .replace(/\s+/g, '_')
@@ -133,6 +137,42 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
               type: (parameter.schema as any).type, // TODO: Deal with complex types
             } as Parameter;
           });
+
+        const queryParams = parameters
+          .filter((baseParameter) => {
+            const parameter = baseParameter as OS3Parameter;
+            return parameter.in && parameter.in === 'query';
+          })
+          .map((baseParameter) => {
+            const parameter = baseParameter as OS3Parameter;
+            return {
+              ...pick(parameter, 'name', 'description', 'required'),
+              type: (parameter.schema as any).type, // TODO: Deal with complex types
+            } as Parameter;
+          });
+
+        if (queryParams.length > 0) {
+          const queryParamPropertiesString = queryParams
+            .map(({ name, type, description }) => {
+              const interfaceType = (() => {
+                if (['number', 'string'].includes(type)) {
+                  return type;
+                }
+                if (type === 'array') {
+                  return 'any[]';
+                }
+                return 'any';
+              })();
+              // TODO: Add examples and defaults in jsdoc comment
+              return `${name}?: ${interfaceType};`;
+            })
+            .join('\n');
+          return accumulator[entityGroupName].interfaceSnippets.push(`
+            export type ${pascalCaseActionName}QueryParams = {
+              ${queryParamPropertiesString}
+            }
+          `);
+        }
 
         const httpActionString = (() => {
           if (httpVerb.match(/delete/gi)) {
@@ -264,6 +304,7 @@ Object.values(entities).forEach(
     actions,
     apiModuleImports,
     endpointPaths,
+    interfaceSnippets,
   }) => {
     // API files
     const apiFilePath = `${outputFolderPath}/api/${entityNamePascalCase}.ts`;
@@ -326,21 +367,18 @@ Object.values(entities).forEach(
     );
 
     // Interfaces files
-    const interfacesFilePath = `${outputFolderPath}/interfaces/${entityNamePascalCase}.ts`;
-    ensureDirSync(dirname(interfacesFilePath));
-    writeFileSync(
-      interfacesFilePath,
-      prettier.format(
-        `
-        // TODO: Implement the interfaces
-        export {};
-      `,
-        {
+    const interfacesFileContents = interfaceSnippets.join('\n\n').trim();
+    if (interfacesFileContents.length > 0) {
+      const interfacesFilePath = `${outputFolderPath}/interfaces/${entityNamePascalCase}.ts`;
+      ensureDirSync(dirname(interfacesFilePath));
+      writeFileSync(
+        interfacesFilePath,
+        prettier.format(interfacesFileContents, {
           filepath: interfacesFilePath,
           ...prettierConfig,
-        }
-      )
-    );
+        })
+      );
+    }
   }
 );
 
