@@ -27,6 +27,7 @@ interface APIEntity {
   entityNameCamelCase: string;
   apiModuleImports: Record<string, string[]>;
   actions: APIAction[];
+  endpointPaths: Record<string, string>;
 }
 
 const swaggerDocs: OpenSpec3 = require('../swagger.json');
@@ -56,7 +57,9 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
         const entityGroupName = tags[0];
         const entityNameCamelCase = entityGroupName.toCamelCase();
         const entityNamePascalCase = entityGroupName.toPascalCase();
-        const entityNameUpperCase = summary.replace(/\s+/g, '_').toUpperCase();
+        const entityNameUpperCase = entityGroupName
+          .replace(/\s+/g, '_')
+          .toUpperCase();
         if (!accumulator[entityGroupName]) {
           accumulator[entityGroupName] = {
             entityNameCamelCase,
@@ -64,6 +67,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             entityNameUpperCase,
             actions: [],
             apiModuleImports: {},
+            endpointPaths: {},
           };
         }
 
@@ -71,7 +75,14 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
 
         const name = summary.toCamelCase();
 
-        const endpointPathIdentifierString = `${entityNameUpperCase}_ENDPOINT_PATH`;
+        const endpointPathIdentifierString = `${summary
+          .replace(/\s+/g, '_')
+          .toUpperCase()}_ENDPOINT_PATH`;
+        const enpointPathString = pathKey.replace(/\{(\w+)\}/g, ':$1');
+
+        accumulator[entityGroupName].endpointPaths[
+          endpointPathIdentifierString
+        ] = enpointPathString;
 
         // Resolving endpoint paths imports
         if (
@@ -96,8 +107,6 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
         const [verb, ...restSummary] = summary.split(' ');
         const actionDescription =
           verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ');
-
-        const enpointPathString = pathKey.replace(/\{(\w+)\}/g, ':$1');
 
         const pathParams = parameters
           .filter((baseParameter) => {
@@ -192,8 +201,9 @@ Object.values(entities).forEach(
     entityNameUpperCase,
     actions,
     apiModuleImports,
+    endpointPaths,
   }) => {
-    // API Files
+    // API files
     const apiFilePath = `${outputFolderPath}/api/${entityNamePascalCase}.ts`;
     const importsString = Object.keys(apiModuleImports)
       .map((key) => {
@@ -215,12 +225,24 @@ Object.values(entities).forEach(
       `
     );
 
-    // Data Keys Files
+    // Data keys files
     const dataKeysFilePath = `${outputFolderPath}/data-keys/${entityNamePascalCase}.ts`;
     ensureDirSync(dirname(dataKeysFilePath));
     writeFileSync(
       dataKeysFilePath,
       `export const ${entityNameUpperCase}_DATA_KEY = '${entityNameCamelCase}';`
+    );
+
+    // Endpoint paths files
+    const endpointPathsFieldPath = `${outputFolderPath}/endpoint-paths/${entityNamePascalCase}.ts`;
+    ensureDirSync(dirname(endpointPathsFieldPath));
+    writeFileSync(
+      endpointPathsFieldPath,
+      Object.keys(endpointPaths)
+        .map((key) => {
+          return `export const ${key} = '${endpointPaths[key]}';`;
+        })
+        .join('\n')
     );
   }
 );
