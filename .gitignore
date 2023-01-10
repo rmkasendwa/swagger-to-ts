@@ -1,0 +1,15 @@
+diff
+.idea/*
+.nyc_output
+build
+node_modules
+test
+src/**.js
+coverage
+*.log
+.env
+sandbox
+__sandbox
+error.json
+output.json
+dist

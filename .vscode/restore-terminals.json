@@ -1,0 +1,23 @@
+{
+  "artificialDelayMilliseconds": 300,
+  "keepExistingTerminalsOpen": false,
+  "runOnStartup": true,
+  "terminals": [
+    {
+      "splitTerminals": [
+        {
+          "commands": [],
+          "name": "root:chores"
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "commands": [],
+          "name": "root:main"
+        }
+      ]
+    }
+  ]
+}

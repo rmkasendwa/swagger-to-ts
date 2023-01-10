@@ -1,0 +1,32 @@
+module.exports = {
+  root: true,
+  parser: '@typescript-eslint/parser',
+  parserOptions: { project: './tsconfig.json' },
+  env: { es6: true },
+  ignorePatterns: ['node_modules', 'build', 'coverage', '.eslintrc.js'],
+  plugins: ['import', 'eslint-comments', 'functional', 'sort-keys-fix'],
+  extends: [
+    'eslint:recommended',
+    'plugin:eslint-comments/recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/typescript',
+    'plugin:functional/lite',
+    'prettier',
+    'prettier/@typescript-eslint',
+  ],
+  globals: { BigInt: true, console: true, WebAssembly: true },
+  rules: {
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    'eslint-comments/disable-enable-pair': ['error', { allowWholeFile: true }],
+    'eslint-comments/no-unused-disable': 'error',
+    'import/order': [
+      'error',
+      { 'newlines-between': 'always', alphabetize: { order: 'asc' } },
+    ],
+    'functional/immutable-data': 'off',
+    'functional/prefer-readonly-type': 'off',
+    'functional/no-let': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    'import/order': 'off',
+  },
+};
