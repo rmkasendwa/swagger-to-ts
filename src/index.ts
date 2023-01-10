@@ -43,6 +43,7 @@ const prettierConfig: prettier.Options = {
 };
 
 const outputFolderPath = `${__dirname}/__sandbox`;
+const ouputSubFolders = ['api', 'data-keys', 'endpoint-paths', 'interfaces'];
 
 const PATHS_LIB = `@infinite-debugger/rmk-utils/paths`;
 const API_ADAPTER_PATH = `./Adapter`;
@@ -278,13 +279,39 @@ Object.values(entities).forEach(
     ensureDirSync(dirname(interfacesFilePath));
     writeFileSync(
       interfacesFilePath,
-      prettier.format(`// TODO: Implement the interfaces`, {
-        filepath: interfacesFilePath,
-        ...prettierConfig,
-      })
+      prettier.format(
+        `
+        // TODO: Implement the interfaces
+        export {};
+      `,
+        {
+          filepath: interfacesFilePath,
+          ...prettierConfig,
+        }
+      )
     );
   }
 );
+
+// Outputting index export files
+ouputSubFolders.forEach((subFolderName) => {
+  const indexFilePath = `${outputFolderPath}/${subFolderName}/index.ts`;
+  ensureDirSync(dirname(indexFilePath));
+  writeFileSync(
+    indexFilePath,
+    prettier.format(
+      Object.values(entities)
+        .map(({ entityNamePascalCase }) => {
+          return `export * from './${entityNamePascalCase}';`;
+        })
+        .join('\n'),
+      {
+        filepath: indexFilePath,
+        ...prettierConfig,
+      }
+    )
+  );
+});
 
 // Outputting api adapter file
 const apiAdapterFilePath = `${outputFolderPath}/api/Adapter.ts`;
@@ -292,7 +319,7 @@ const apiAdapterFilePath = `${outputFolderPath}/api/Adapter.ts`;
 ensureDirSync(dirname(apiAdapterFilePath));
 writeFileSync(
   apiAdapterFilePath,
-  prettier.format(`export * from '@infinite-debugger/react-mui/api/Adapter';`, {
+  prettier.format(`export * from '@infinite-debugger/axios-api-adapter';`, {
     filepath: apiAdapterFilePath,
     ...prettierConfig,
   })

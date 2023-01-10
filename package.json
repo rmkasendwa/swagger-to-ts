@@ -15,10 +15,11 @@
   },
   "dependencies": {
     "@infinite-debugger/rmk-js-extensions": "^0.1.0-alpha.11",
-    "@infinite-debugger/rmk-utils": "^0.1.0-alpha.7",
     "fs-extra": "^11.1.0"
   },
   "devDependencies": {
+    "@infinite-debugger/axios-api-adapter": "^0.1.0-alpha.0",
+    "@infinite-debugger/rmk-utils": "^0.1.0-alpha.7",
     "@tsed/openspec": "^7.10.0",
     "@types/eslint": "^8.4.10",
     "@types/fs-extra": "^11.0.1",
@@ -26,6 +27,7 @@
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.48.0",
     "@typescript-eslint/parser": "^5.48.0",
+    "axios": "^1.2.2",
     "chai": "^4.3.7",
     "eslint": "^8.31.0",
     "eslint-config-prettier": "^8.6.0",
