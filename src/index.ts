@@ -88,6 +88,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
         }
 
         const endpointPathsFileLocationRelativetoAPI = `../endpoint-paths/${entityNamePascalCase}`;
+        const interfacesFileLocationRelativetoAPI = `../interfaces/${entityNamePascalCase}`;
 
         const name = summary.toCamelCase();
         const pascalCaseActionName = summary.toPascalCase();
@@ -152,6 +153,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           });
 
         if (queryParams.length > 0) {
+          const interfaceName = `${pascalCaseActionName}QueryParams`;
           const queryParamPropertiesString = queryParams
             .map(({ name, type, description }) => {
               const interfaceType = (() => {
@@ -167,8 +169,28 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
               return `${name}?: ${interfaceType};`;
             })
             .join('\n');
+
+          if (
+            !accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ]
+          ) {
+            accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ] = [];
+          }
+          if (
+            !accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ].includes(interfaceName)
+          ) {
+            accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ].push(interfaceName);
+          }
+
           return accumulator[entityGroupName].interfaceSnippets.push(`
-            export type ${pascalCaseActionName}QueryParams = {
+            export type ${interfaceName} = {
               ${queryParamPropertiesString}
             }
           `);
@@ -179,33 +201,6 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             return `_${httpVerb}`;
           }
           return httpVerb;
-        })();
-
-        const pathParamsString = pathParams
-          .map(({ name, type }) => {
-            return `${name}: ${type}`;
-          })
-          .join(', ');
-
-        const interpolatedEndpointPathString = (() => {
-          if (pathParams.length > 0) {
-            if (!accumulator[entityGroupName].apiModuleImports[PATHS_LIB]) {
-              accumulator[entityGroupName].apiModuleImports[PATHS_LIB] = [];
-            }
-            if (
-              !accumulator[entityGroupName].apiModuleImports[
-                PATHS_LIB
-              ].includes(`getInterpolatedPath`)
-            ) {
-              accumulator[entityGroupName].apiModuleImports[PATHS_LIB].push(
-                `getInterpolatedPath`
-              );
-            }
-            return `getInterpolatedPath(${endpointPathIdentifierString}, {
-              ${pathParams.map(({ name }) => name).join(',\n')}
-            })`;
-          }
-          return endpointPathIdentifierString;
         })();
 
         if (!accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH]) {
@@ -272,14 +267,66 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           return '';
         })();
 
+        const paramsString = [
+          ...pathParams.map(({ name, type }) => {
+            return `${name}: ${type}`;
+          }),
+          ...(() => {
+            if (queryParams.length > 0) {
+              return [`queryParams: ${pascalCaseActionName}QueryParams = {}`];
+            }
+            return [];
+          })(),
+        ].join(', ');
+
+        const interpolatedEndpointPathString = (() => {
+          if (pathParams.length > 0) {
+            if (!accumulator[entityGroupName].apiModuleImports[PATHS_LIB]) {
+              accumulator[entityGroupName].apiModuleImports[PATHS_LIB] = [];
+            }
+            if (
+              !accumulator[entityGroupName].apiModuleImports[
+                PATHS_LIB
+              ].includes(`getInterpolatedPath`)
+            ) {
+              accumulator[entityGroupName].apiModuleImports[PATHS_LIB].push(
+                `getInterpolatedPath`
+              );
+            }
+            return `getInterpolatedPath(${endpointPathIdentifierString}, {
+              ${pathParams.map(({ name }) => name).join(',\n')}
+            })`;
+          }
+          return endpointPathIdentifierString;
+        })();
+
+        const interpolatedEndpointPathWithQueryParamsString = (() => {
+          if (queryParams.length > 0) {
+            if (!accumulator[entityGroupName].apiModuleImports[PATHS_LIB]) {
+              accumulator[entityGroupName].apiModuleImports[PATHS_LIB] = [];
+            }
+            if (
+              !accumulator[entityGroupName].apiModuleImports[
+                PATHS_LIB
+              ].includes(`addSearchParams`)
+            ) {
+              accumulator[entityGroupName].apiModuleImports[PATHS_LIB].push(
+                `addSearchParams`
+              );
+            }
+            return `addSearchParams(${interpolatedEndpointPathString}, {...queryParams})`;
+          }
+          return interpolatedEndpointPathString;
+        })();
+
         accumulator[entityGroupName].actions.push({
           name,
           enpointPathString,
           endpointPathIdentifierString,
           snippet: `
             ${jsDocCommentSnippet}
-            export const ${name} = async (${pathParamsString}) => {
-              const { data } = await ${httpActionString}<any>(${interpolatedEndpointPathString}, {
+            export const ${name} = async (${paramsString}) => {
+              const { data } = await ${httpActionString}<any>(${interpolatedEndpointPathWithQueryParamsString}, {
                 label: '${actionDescription}',
               });
               return data;
