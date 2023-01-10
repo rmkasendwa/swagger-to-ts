@@ -5,6 +5,7 @@ import { dirname } from 'path';
 
 import { OS3Parameter, OS3Paths, OpenSpec3 } from '@tsed/openspec';
 import { ensureDirSync } from 'fs-extra';
+import prettier from 'prettier';
 
 type Parameter = {
   name: string;
@@ -31,6 +32,15 @@ interface APIEntity {
 }
 
 const swaggerDocs: OpenSpec3 = require('../swagger.json');
+
+const prettierConfig: prettier.Options = {
+  semi: true,
+  trailingComma: 'es5',
+  singleQuote: true,
+  printWidth: 80,
+  tabWidth: 2,
+  endOfLine: 'auto',
+};
 
 const outputFolderPath = `${__dirname}/__sandbox`;
 
@@ -219,10 +229,16 @@ Object.values(entities).forEach(
     ensureDirSync(dirname(apiFilePath));
     writeFileSync(
       apiFilePath,
-      `
-        ${importsString}
-        ${actionsString}
-      `
+      prettier.format(
+        `
+          ${importsString}
+          ${actionsString}
+        `,
+        {
+          filepath: apiFilePath,
+          ...prettierConfig,
+        }
+      )
     );
 
     // Data keys files
@@ -230,7 +246,13 @@ Object.values(entities).forEach(
     ensureDirSync(dirname(dataKeysFilePath));
     writeFileSync(
       dataKeysFilePath,
-      `export const ${entityNameUpperCase}_DATA_KEY = '${entityNameCamelCase}';`
+      prettier.format(
+        `export const ${entityNameUpperCase}_DATA_KEY = '${entityNameCamelCase}';`,
+        {
+          filepath: dataKeysFilePath,
+          ...prettierConfig,
+        }
+      )
     );
 
     // Endpoint paths files
@@ -238,13 +260,17 @@ Object.values(entities).forEach(
     ensureDirSync(dirname(endpointPathsFieldPath));
     writeFileSync(
       endpointPathsFieldPath,
-      Object.keys(endpointPaths)
-        .map((key) => {
-          return `export const ${key} = '${endpointPaths[key]}';`;
-        })
-        .join('\n')
+      prettier.format(
+        Object.keys(endpointPaths)
+          .map((key) => {
+            return `export const ${key} = '${endpointPaths[key]}';`;
+          })
+          .join('\n'),
+        {
+          filepath: endpointPathsFieldPath,
+          ...prettierConfig,
+        }
+      )
     );
   }
 );
-
-console.log(JSON.stringify(entities, null, 2));
