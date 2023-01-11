@@ -2806,7 +2806,7 @@
           }
         },
         "security": [{ "BearerAuth": [] }],
-        "summary": "Does authenticated user API key exist",
+        "summary": "Check if authenticated user has API key",
         "tags": ["Auth"]
       }
     },

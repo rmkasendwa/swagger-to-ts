@@ -152,6 +152,23 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             } as Parameter;
           });
 
+        const headerParams = parameters
+          .filter((baseParameter) => {
+            const parameter = baseParameter as OS3Parameter;
+            return (
+              parameter.in &&
+              parameter.in === 'header' &&
+              !parameter.name.match(/authorization/gi)
+            );
+          })
+          .map((baseParameter) => {
+            const parameter = baseParameter as OS3Parameter;
+            return {
+              ...pick(parameter, 'name', 'description', 'required'),
+              type: (parameter.schema as any).type, // TODO: Deal with complex types
+            } as Parameter;
+          });
+
         if (queryParams.length > 0) {
           const interfaceName = `${pascalCaseActionName}QueryParams`;
           const queryParamPropertiesString = queryParams
@@ -192,6 +209,47 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           accumulator[entityGroupName].interfaceSnippets.push(`
             export type ${interfaceName} = {
               ${queryParamPropertiesString}
+            }
+          `);
+        }
+
+        if (headerParams.length > 0) {
+          const interfaceName = `${pascalCaseActionName}Headers`;
+          const headerParamPropertiesString = headerParams
+            .map(({ name, type, required }) => {
+              const interfaceType = (() => {
+                if (['number', 'string'].includes(type)) {
+                  return type;
+                }
+                return 'string';
+              })();
+              // TODO: Add examples and defaults in jsdoc comment
+              return `'${name}'${!required ? '?' : ''}: ${interfaceType};`;
+            })
+            .join('\n');
+
+          if (
+            !accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ]
+          ) {
+            accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ] = [];
+          }
+          if (
+            !accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ].includes(interfaceName)
+          ) {
+            accumulator[entityGroupName].apiModuleImports[
+              interfacesFileLocationRelativetoAPI
+            ].push(interfaceName);
+          }
+
+          accumulator[entityGroupName].interfaceSnippets.push(`
+            export type ${interfaceName} = {
+              ${headerParamPropertiesString}
             }
           `);
         }
@@ -272,6 +330,12 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             return `${name}: ${type}`;
           }),
           ...(() => {
+            if (headerParams.length > 0) {
+              return [`headers: ${pascalCaseActionName}Headers`];
+            }
+            return [];
+          })(),
+          ...(() => {
             if (queryParams.length > 0) {
               return [`queryParams: ${pascalCaseActionName}QueryParams = {}`];
             }
@@ -328,6 +392,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             export const ${name} = async (${paramsString}) => {
               const { data } = await ${httpActionString}<any>(${interpolatedEndpointPathWithQueryParamsString}, {
                 label: '${actionDescription}',
+                ${headerParams.length > 0 ? 'headers' : ''}
               });
               return data;
             };
