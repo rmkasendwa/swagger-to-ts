@@ -29,7 +29,7 @@ interface APIEntity {
   apiModuleImports: Record<string, string[]>;
   actions: APIAction[];
   endpointPaths: Record<string, string>;
-  interfaceSnippets: string[];
+  interfaceSnippets: Record<string, string>;
 }
 
 const swaggerDocs: OpenSpec3 = require('../swagger.json');
@@ -83,7 +83,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             actions: [],
             apiModuleImports: {},
             endpointPaths: {},
-            interfaceSnippets: [],
+            interfaceSnippets: {},
           };
         }
 
@@ -139,27 +139,82 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             } as Parameter;
           });
 
+        const httpActionString = (() => {
+          if (httpVerb.match(/delete/gi)) {
+            return `_${httpVerb}`;
+          }
+          return httpVerb;
+        })();
+
+        if (!accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH]) {
+          accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH] = [];
+        }
+        if (
+          !accumulator[entityGroupName].apiModuleImports[
+            API_ADAPTER_PATH
+          ].includes(httpActionString)
+        ) {
+          accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH].push(
+            httpActionString
+          );
+        }
+
+        // API Return type
+        const apiReturnType = (() => {
+          const successfulResponse = Object.keys(responses)
+            .filter((key) => {
+              return key.match(/^2\d\d$/g);
+            })
+            .map((key) => {
+              return responses[key] as {
+                description: string;
+                content?: {
+                  [k: string]: {
+                    schema: {
+                      $ref?: string;
+                      type?: string;
+                    };
+                  };
+                };
+              };
+            })[0];
+          if (successfulResponse) {
+            return successfulResponse;
+          }
+        })();
+
+        (() => {
+          if (apiReturnType && apiReturnType.content) {
+            const [returnContentType] = Object.keys(apiReturnType.content);
+            const baseModelRefPath =
+              apiReturnType.content[returnContentType].schema.$ref;
+            if (baseModelRefPath) {
+              const pathLevels = baseModelRefPath.split('/');
+              const apiReturnTypeInterfaceName =
+                pathLevels[pathLevels.length - 1];
+
+              if (
+                !accumulator[entityGroupName].interfaceSnippets[
+                  apiReturnTypeInterfaceName
+                ]
+              ) {
+                accumulator[entityGroupName].interfaceSnippets[
+                  apiReturnTypeInterfaceName
+                ] = `
+                  export type ${apiReturnTypeInterfaceName} = {
+                  }
+                `;
+              }
+            }
+          } else {
+            console.log({ apiReturnType, swaggerDocsPath });
+          }
+        })();
+
         const queryParams = parameters
           .filter((baseParameter) => {
             const parameter = baseParameter as OS3Parameter;
             return parameter.in && parameter.in === 'query';
-          })
-          .map((baseParameter) => {
-            const parameter = baseParameter as OS3Parameter;
-            return {
-              ...pick(parameter, 'name', 'description', 'required'),
-              type: (parameter.schema as any).type, // TODO: Deal with complex types
-            } as Parameter;
-          });
-
-        const headerParams = parameters
-          .filter((baseParameter) => {
-            const parameter = baseParameter as OS3Parameter;
-            return (
-              parameter.in &&
-              parameter.in === 'header' &&
-              !parameter.name.match(/authorization/gi)
-            );
           })
           .map((baseParameter) => {
             const parameter = baseParameter as OS3Parameter;
@@ -206,12 +261,31 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             ].push(interfaceName);
           }
 
-          accumulator[entityGroupName].interfaceSnippets.push(`
-            export type ${interfaceName} = {
-              ${queryParamPropertiesString}
-            }
-          `);
+          if (!accumulator[entityGroupName].interfaceSnippets[interfaceName]) {
+            accumulator[entityGroupName].interfaceSnippets[interfaceName] = `
+              export type ${interfaceName} = {
+                ${queryParamPropertiesString}
+              }
+            `;
+          }
         }
+
+        const headerParams = parameters
+          .filter((baseParameter) => {
+            const parameter = baseParameter as OS3Parameter;
+            return (
+              parameter.in &&
+              parameter.in === 'header' &&
+              !parameter.name.match(/authorization/gi)
+            );
+          })
+          .map((baseParameter) => {
+            const parameter = baseParameter as OS3Parameter;
+            return {
+              ...pick(parameter, 'name', 'description', 'required'),
+              type: (parameter.schema as any).type, // TODO: Deal with complex types
+            } as Parameter;
+          });
 
         if (headerParams.length > 0) {
           const interfaceName = `${pascalCaseActionName}Headers`;
@@ -247,48 +321,14 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             ].push(interfaceName);
           }
 
-          accumulator[entityGroupName].interfaceSnippets.push(`
-            export type ${interfaceName} = {
-              ${headerParamPropertiesString}
-            }
-          `);
-        }
-
-        const httpActionString = (() => {
-          if (httpVerb.match(/delete/gi)) {
-            return `_${httpVerb}`;
+          if (!accumulator[entityGroupName].interfaceSnippets[interfaceName]) {
+            accumulator[entityGroupName].interfaceSnippets[interfaceName] = `
+              export type ${interfaceName} = {
+                ${headerParamPropertiesString}
+              }
+            `;
           }
-          return httpVerb;
-        })();
-
-        if (!accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH]) {
-          accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH] = [];
         }
-        if (
-          !accumulator[entityGroupName].apiModuleImports[
-            API_ADAPTER_PATH
-          ].includes(httpActionString)
-        ) {
-          accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH].push(
-            httpActionString
-          );
-        }
-
-        // API Return type
-        const apiReturnType = (() => {
-          const successfulResponse = Object.keys(responses)
-            .filter((key) => {
-              return key.match(/^2\d\d$/g);
-            })
-            .map((key) => {
-              return responses[key] as {
-                description: string;
-              };
-            })[0];
-          if (successfulResponse) {
-            return successfulResponse;
-          }
-        })();
 
         const jsDocCommentSnippet = (() => {
           const lines: string[] = [];
@@ -479,7 +519,9 @@ Object.values(entities).forEach(
     );
 
     // Interfaces files
-    const interfacesFileContents = interfaceSnippets.join('\n\n').trim();
+    const interfacesFileContents = Object.values(interfaceSnippets)
+      .join('\n\n')
+      .trim();
     if (interfacesFileContents.length > 0) {
       const interfacesFilePath = `${outputFolderPath}/interfaces/${entityNamePascalCase}.ts`;
       ensureDirSync(dirname(interfacesFilePath));
