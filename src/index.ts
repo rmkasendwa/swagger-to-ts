@@ -183,7 +183,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           }
         })();
 
-        (() => {
+        const apiReturnTypeInterfaceName = (() => {
           if (apiReturnType && apiReturnType.content) {
             const [returnContentType] = Object.keys(apiReturnType.content);
             const baseModelRefPath =
@@ -205,6 +205,27 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
                   }
                 `;
               }
+
+              if (
+                !accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ]
+              ) {
+                accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ] = [];
+              }
+              if (
+                !accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ].includes(apiReturnTypeInterfaceName)
+              ) {
+                accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ].push(apiReturnTypeInterfaceName);
+              }
+
+              return apiReturnTypeInterfaceName;
             }
           } else {
             console.log({ apiReturnType, swaggerDocsPath });
@@ -423,6 +444,13 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           return interpolatedEndpointPathString;
         })();
 
+        const returnTypeString = (() => {
+          if (apiReturnTypeInterfaceName) {
+            return apiReturnTypeInterfaceName;
+          }
+          return 'any';
+        })();
+
         accumulator[entityGroupName].actions.push({
           name,
           enpointPathString,
@@ -430,7 +458,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           snippet: `
             ${jsDocCommentSnippet}
             export const ${name} = async (${paramsString}) => {
-              const { data } = await ${httpActionString}<any>(${interpolatedEndpointPathWithQueryParamsString}, {
+              const { data } = await ${httpActionString}<${returnTypeString}>(${interpolatedEndpointPathWithQueryParamsString}, {
                 label: '${actionDescription}',
                 ${headerParams.length > 0 ? 'headers' : ''}
               });
