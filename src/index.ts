@@ -159,11 +159,22 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           );
         }
 
+        const requestOptionsTypeString = `RequestOptions`;
+        if (
+          !accumulator[entityGroupName].apiModuleImports[
+            API_ADAPTER_PATH
+          ].includes(requestOptionsTypeString)
+        ) {
+          accumulator[entityGroupName].apiModuleImports[API_ADAPTER_PATH].push(
+            requestOptionsTypeString
+          );
+        }
+
         // API Return type
         const apiReturnType = (() => {
           const successfulResponse = Object.keys(responses)
             .filter((key) => {
-              return key.match(/^2\d\d$/g);
+              return key.match(/^[23]\d\d$/g);
             })
             .map((key) => {
               return responses[key] as {
@@ -226,6 +237,8 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
               }
 
               return apiReturnTypeInterfaceName;
+            } else if (apiReturnType.content[returnContentType].schema.type) {
+              return apiReturnType.content[returnContentType].schema.type;
             }
           } else {
             console.log({ apiReturnType, swaggerDocsPath });
@@ -402,6 +415,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             }
             return [];
           })(),
+          `{ ...rest }: RequestOptions`,
         ].join(', ');
 
         const interpolatedEndpointPathString = (() => {
@@ -460,7 +474,8 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             export const ${name} = async (${paramsString}) => {
               const { data } = await ${httpActionString}<${returnTypeString}>(${interpolatedEndpointPathWithQueryParamsString}, {
                 label: '${actionDescription}',
-                ${headerParams.length > 0 ? 'headers' : ''}
+                ${headerParams.length > 0 ? 'headers,' : ''}
+                ...rest,
               });
               return data;
             };
