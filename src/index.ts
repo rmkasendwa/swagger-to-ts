@@ -100,11 +100,13 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
         responses,
         tags,
         parameters = [],
+        requestBody,
       } = {
         ...(swaggerDocsPath[httpVerb] as any),
       } as OS3Paths & {
         tags: string[];
         responses: any;
+        requestBody: any;
       };
 
       if (tags && tags.length > 0 && summary) {
@@ -283,6 +285,61 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           }
         })();
 
+        const apiRequestBodyTypeInterfaceName = (() => {
+          if (requestBody && requestBody.content) {
+            const [requestContentType] = Object.keys(requestBody.content);
+            const baseModelRefPath =
+              requestBody.content[requestContentType].schema.$ref;
+            if (baseModelRefPath) {
+              const pathLevels = baseModelRefPath.split('/');
+              const apiRequestBodyTypeInterfaceName =
+                pathLevels[pathLevels.length - 1];
+
+              if (
+                !accumulator[entityGroupName].interfaceSnippets[
+                  apiRequestBodyTypeInterfaceName
+                ]
+              ) {
+                accumulator[entityGroupName].interfaceSnippets[
+                  apiRequestBodyTypeInterfaceName
+                ] = `export type ${apiRequestBodyTypeInterfaceName} = ${getInterfaceProperties(
+                  baseModelRefPath
+                )}`;
+              }
+
+              if (
+                !accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ]
+              ) {
+                accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ] = [];
+              }
+              if (
+                !accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ].includes(apiRequestBodyTypeInterfaceName)
+              ) {
+                accumulator[entityGroupName].apiModuleImports[
+                  interfacesFileLocationRelativetoAPI
+                ].push(apiRequestBodyTypeInterfaceName);
+              }
+
+              return apiRequestBodyTypeInterfaceName;
+            } else if (requestBody.content[requestContentType].schema.type) {
+              if (
+                requestBody.content[requestContentType].schema.type === 'array'
+              ) {
+                return 'any[]';
+              }
+              return requestBody.content[requestContentType].schema.type;
+            }
+          } else {
+            // console.log({ apiReturnType, swaggerDocsPath });
+          }
+        })();
+
         const queryParams = parameters
           .filter((baseParameter) => {
             const parameter = baseParameter as OS3Parameter;
@@ -442,6 +499,12 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             return `${name}: ${type}`;
           }),
           ...(() => {
+            if (apiRequestBodyTypeInterfaceName) {
+              return [`requestPayload: ${apiRequestBodyTypeInterfaceName}`];
+            }
+            return [];
+          })(),
+          ...(() => {
             if (headerParams.length > 0) {
               return [`headers: ${pascalCaseActionName}Headers`];
             }
@@ -511,8 +574,9 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
             ${jsDocCommentSnippet}
             export const ${name} = async (${paramsString}) => {
               const { data } = await ${httpActionString}<${returnTypeString}>(${interpolatedEndpointPathWithQueryParamsString}, {
-                label: '${actionDescription}',
-                ${headerParams.length > 0 ? 'headers,' : ''}
+                label: '${actionDescription}',${
+            headerParams.length > 0 ? '\nheaders,' : ''
+          }${apiRequestBodyTypeInterfaceName ? '\ndata: requestPayload,' : ''}
                 ...rest,
               });
               return data;
