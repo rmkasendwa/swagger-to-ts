@@ -60,7 +60,18 @@ const getInterfaceProperties = (baseModelRefPath: string): string => {
         if (modelProperties[key].type) {
           const type = (() => {
             if (modelProperties[key].type === 'array') {
-              return `string[]`;
+              const itemType = (() => {
+                if (modelProperties[key].items?.type) {
+                  return modelProperties[key].items.type;
+                }
+                if (modelProperties[key].items?.$ref) {
+                  return `(${getInterfaceProperties(
+                    modelProperties[key].items?.$ref
+                  )})`;
+                }
+                return 'any';
+              })();
+              return `${itemType}[]`;
             }
             return modelProperties[key].type;
           })();

@@ -39,9 +39,9 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
+          "name": { "example": "string", "type": "string" },
           "project": { "$ref": "#/components/schemas/AssignmentProject" },
-          "resourcingStatus": { "example": "String", "type": "string" },
+          "resourcingStatus": { "example": "string", "type": "string" },
           "role": { "$ref": "#/components/schemas/AssignmentRole" },
           "sow": { "$ref": "#/components/schemas/AssignmentSow" },
           "startDate": {
@@ -137,40 +137,96 @@
       },
       "Candidate": {
         "properties": {
-          "canRequestCompanyLaptop": { "example": "String", "type": "object" },
-          "email": { "example": "String", "type": "string" },
+          "canRequestCompanyLaptop": { "example": "string", "type": "object" },
+          "email": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Candidate.",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
           "isSnoozed": { "example": true, "type": "boolean" },
-          "leverLink": { "example": "String", "type": "string" },
+          "leverLink": { "example": "string", "type": "string" },
           "linkToCountry": {
             "$ref": "#/components/schemas/CandidateLinkToCountry"
           },
-          "name": { "example": "String", "type": "string" },
-          "pipelines": { "type": "array" },
-          "position": { "example": "String", "type": "string" },
-          "practicalAssignment": { "type": "array" },
+          "name": { "example": "string", "type": "string" },
+          "pipelines": {
+            "items": { "$ref": "#/components/schemas/CandidatePipelines" },
+            "type": "array"
+          },
+          "position": { "example": "string", "type": "string" },
+          "practicalAssignment": {
+            "items": {
+              "$ref": "#/components/schemas/CandidatePracticalAssignment"
+            },
+            "type": "array"
+          },
           "ratingOverall": { "example": 0, "type": "number" },
-          "reqs": { "type": "array" },
-          "role": { "example": "String", "type": "string" },
+          "reqs": {
+            "items": { "$ref": "#/components/schemas/CandidateReqs" },
+            "type": "array"
+          },
+          "role": { "example": "string", "type": "string" },
           "signup": { "$ref": "#/components/schemas/CandidateSignup" },
-          "stage": { "example": "String", "type": "string" },
-          "timezone": { "example": "String", "type": "string" }
+          "stage": { "example": "string", "type": "string" },
+          "timezone": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
       "CandidateLinkToCountry": {
         "properties": {
-          "abbreviation": { "example": "String", "type": "string" },
+          "abbreviation": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Link to Country",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
+        },
+        "type": "object"
+      },
+      "CandidatePipelines": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for pipelines",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "pipelines": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CandidatePracticalAssignment": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Practical Assignment",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "practicalName": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CandidateReqs": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for REQs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "req": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
@@ -181,7 +237,7 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "preferredName": { "example": "String", "type": "object" }
+          "preferredName": { "example": "string", "type": "object" }
         },
         "type": "object"
       },
@@ -194,20 +250,20 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
-          "website": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" },
+          "website": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
       "Country": {
         "properties": {
-          "countryCode": { "example": "String", "type": "string" },
+          "countryCode": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Country.",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -239,14 +295,17 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
       "Feedback": {
         "properties": {
           "candidate": { "$ref": "#/components/schemas/FeedbackCandidate" },
-          "feedbackForm": { "type": "array" },
+          "feedbackForm": {
+            "items": { "$ref": "#/components/schemas/FeedbackFeedbackForm" },
+            "type": "array"
+          },
           "feedbackSubmitted": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
@@ -257,8 +316,11 @@
             "type": "string"
           },
           "interview": { "$ref": "#/components/schemas/FeedbackInterview" },
-          "leverID": { "example": "String", "type": "string" },
-          "pipeline": { "type": "array" },
+          "leverID": { "example": "string", "type": "string" },
+          "pipeline": {
+            "items": { "$ref": "#/components/schemas/FeedbackPipeline" },
+            "type": "array"
+          },
           "rating": { "example": 0, "type": "number" },
           "submittedBy": { "$ref": "#/components/schemas/FeedbackSubmittedBy" }
         },
@@ -274,10 +336,35 @@
         },
         "type": "object"
       },
+      "FeedbackFeedbackForm": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Feedback Form",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "name": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "FeedbackInterview": {
         "properties": {
           "id": {
             "description": "Unique identifer for Interview",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "FeedbackPipeline": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Pipelines",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           }
@@ -291,7 +378,7 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
+          "name": { "example": "string", "type": "string" },
           "picture": { "example": "https://example.com", "type": "string" }
         },
         "type": "object"
@@ -610,10 +697,16 @@
       "Interview": {
         "properties": {
           "candidate": { "$ref": "#/components/schemas/InterviewCandidate" },
-          "candidateStage": { "example": "String", "type": "string" },
-          "feedback": { "type": "array" },
-          "feedbackForm": { "type": "array" },
-          "formName": { "example": "String", "type": "string" },
+          "candidateStage": { "example": "string", "type": "string" },
+          "feedback": {
+            "items": { "$ref": "#/components/schemas/InterviewFeedback" },
+            "type": "array"
+          },
+          "feedbackForm": {
+            "items": { "$ref": "#/components/schemas/InterviewFeedbackForm" },
+            "type": "array"
+          },
+          "formName": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Interview.",
             "example": "recO0FYb1Tccm9MZ2",
@@ -623,9 +716,15 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "interviewers": { "type": "array" },
-          "leverID": { "example": "String", "type": "string" },
-          "pipelines": { "type": "array" },
+          "interviewers": {
+            "items": { "$ref": "#/components/schemas/InterviewInterviewers" },
+            "type": "array"
+          },
+          "leverID": { "example": "string", "type": "string" },
+          "pipelines": {
+            "items": { "$ref": "#/components/schemas/InterviewPipelines" },
+            "type": "array"
+          },
           "status": { "example": 0, "type": "object" }
         },
         "type": "object"
@@ -637,7 +736,57 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
+        },
+        "type": "object"
+      },
+      "InterviewFeedback": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Feedback",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "rating": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "InterviewFeedbackForm": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Feedback Form",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "InterviewInterviewers": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Interviewers",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "name": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "InterviewPipelines": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Pipelines",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
@@ -676,7 +825,7 @@
       },
       "Position": {
         "properties": {
-          "assignments": { "example": "String", "type": "string" },
+          "assignments": { "example": "string", "type": "string" },
           "created": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
@@ -686,7 +835,7 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
+          "name": { "example": "string", "type": "string" },
           "plannedBillingAllocation": { "example": 0, "type": "number" },
           "plannedEndDate": {
             "example": "2023-01-05T19:00:44.544Z",
@@ -697,12 +846,56 @@
             "type": "string"
           },
           "plannedTimeAllocation": { "example": 0, "type": "number" },
-          "rateCard": { "type": "array" },
-          "resourcing": { "example": "String", "type": "string" },
-          "role": { "type": "array" },
-          "sows": { "type": "array" },
-          "status": { "example": "String", "type": "string" },
+          "rateCard": {
+            "items": { "$ref": "#/components/schemas/PositionRateCard" },
+            "type": "array"
+          },
+          "resourcing": { "example": "string", "type": "string" },
+          "role": {
+            "items": { "$ref": "#/components/schemas/PositionRole" },
+            "type": "array"
+          },
+          "sows": {
+            "items": { "$ref": "#/components/schemas/PositionSows" },
+            "type": "array"
+          },
+          "status": { "example": "string", "type": "string" },
           "team": { "$ref": "#/components/schemas/PositionTeam" }
+        },
+        "type": "object"
+      },
+      "PositionRateCard": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Rate Card",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PositionRole": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Role",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PositionSows": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for SOWs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "projectName": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
@@ -713,24 +906,32 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "program": { "example": "String", "type": "string" },
-          "projectId": { "example": "String", "type": "object" },
-          "recordId": { "example": "String", "type": "object" }
+          "program": { "example": "string", "type": "string" },
+          "projectId": { "example": "string", "type": "object" },
+          "recordId": { "example": "string", "type": "object" }
         },
         "type": "object"
       },
       "Practical": {
         "properties": {
           "accessories": { "type": "object" },
-          "assessors": { "type": "array" },
-          "description": { "example": "String", "type": "string" },
+          "assessors": {
+            "items": { "$ref": "#/components/schemas/PracticalAssessors" },
+            "type": "array"
+          },
+          "description": { "example": "string", "type": "string" },
           "distributionValue": { "example": 0, "type": "number" },
           "expectedHours": { "type": "object" },
-          "feedbackTemplate": { "type": "array" },
-          "field34": { "example": "String", "type": "string" },
-          "githubAssessorTeam": { "example": "String", "type": "string" },
-          "githubOrganization": { "example": "String", "type": "string" },
-          "githubRepositoryTemplate": { "example": "String", "type": "string" },
+          "feedbackTemplate": {
+            "items": {
+              "$ref": "#/components/schemas/PracticalFeedbackTemplate"
+            },
+            "type": "array"
+          },
+          "field34": { "example": "string", "type": "string" },
+          "githubAssessorTeam": { "example": "string", "type": "string" },
+          "githubOrganization": { "example": "string", "type": "string" },
+          "githubRepositoryTemplate": { "example": "string", "type": "string" },
           "githubReviewTeams": { "type": "object" },
           "id": {
             "description": "Unique identifer for Practical.",
@@ -738,32 +939,72 @@
             "type": "string"
           },
           "interviewComponent": { "example": true, "type": "boolean" },
-          "name": { "example": "String", "type": "string" },
-          "observers": { "type": "array" },
-          "pipelines": { "type": "array" },
-          "pipelines2": { "example": "String", "type": "string" },
-          "practicalAssignments": { "type": "array" },
-          "practicalGuideURL": { "example": "String", "type": "string" },
-          "practicalInviteTemplates": { "example": "String", "type": "string" },
+          "name": { "example": "string", "type": "string" },
+          "observers": {
+            "items": { "$ref": "#/components/schemas/PracticalObservers" },
+            "type": "array"
+          },
+          "pipelines": {
+            "items": { "$ref": "#/components/schemas/PracticalPipelines" },
+            "type": "array"
+          },
+          "pipelines2": { "example": "string", "type": "string" },
+          "practicalAssignments": {
+            "items": {
+              "$ref": "#/components/schemas/PracticalPracticalAssignments"
+            },
+            "type": "array"
+          },
+          "practicalGuideURL": { "example": "string", "type": "string" },
+          "practicalInviteTemplates": { "example": "string", "type": "string" },
           "practicalStartedMessageTemplate": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
-          "recordId": { "example": "String", "type": "object" },
-          "roles": { "type": "array" },
-          "shortName": { "example": "String", "type": "string" },
-          "signups": { "type": "array" },
-          "stages": { "type": "array" },
-          "status": { "example": "String", "type": "string" },
-          "type": { "example": "String", "type": "string" },
-          "whatsEvaluated": { "example": "String", "type": "string" }
+          "recordId": { "example": "string", "type": "object" },
+          "roles": {
+            "items": { "$ref": "#/components/schemas/PracticalRoles" },
+            "type": "array"
+          },
+          "shortName": { "example": "string", "type": "string" },
+          "signups": {
+            "items": { "$ref": "#/components/schemas/PracticalSignups" },
+            "type": "array"
+          },
+          "stages": {
+            "items": { "$ref": "#/components/schemas/PracticalStages" },
+            "type": "array"
+          },
+          "status": { "example": "string", "type": "string" },
+          "type": { "example": "string", "type": "string" },
+          "whatsEvaluated": { "example": "string", "type": "string" }
+        },
+        "type": "object"
+      },
+      "PracticalAssessors": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Assessors",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "name": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "slackUID": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
       "PracticalAssignment": {
         "properties": {
           "activePracticalEngagementStatus": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
           "actualEndDate": {
@@ -791,7 +1032,7 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "candidateGithubUsername": { "example": "String", "type": "string" },
+          "candidateGithubUsername": { "example": "string", "type": "string" },
           "candidateInvitedOnDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
@@ -810,14 +1051,14 @@
           },
           "candidateNonResponsive": { "example": true, "type": "boolean" },
           "candidateRecruiterSlackUID": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
           "candidateSlackActivityCount": { "example": 0, "type": "number" },
-          "candidateSlackUID": { "example": "String", "type": "string" },
+          "candidateSlackUID": { "example": "string", "type": "string" },
           "candidateSlackUserExpired": { "example": true, "type": "boolean" },
-          "candidateTimezone": { "example": "String", "type": "string" },
-          "createdByAppID": { "example": "String", "type": "string" },
+          "candidateTimezone": { "example": "string", "type": "string" },
+          "createdByAppID": { "example": "string", "type": "string" },
           "createdDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
@@ -826,9 +1067,9 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "creatorSlackUID": { "example": "String", "type": "string" },
-          "currentSlackChannelName": { "example": "String", "type": "string" },
-          "daysSince": { "example": "String", "type": "object" },
+          "creatorSlackUID": { "example": "string", "type": "string" },
+          "currentSlackChannelName": { "example": "string", "type": "string" },
+          "daysSince": { "example": "string", "type": "object" },
           "distributionRequested": { "example": true, "type": "boolean" },
           "expectedEndDate": {
             "example": "2023-01-05T19:00:44.544Z",
@@ -838,42 +1079,47 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "experimentalAssessment": { "example": "String", "type": "string" },
-          "experimentalMonthPeriod": { "example": "String", "type": "object" },
+          "experimentalAssessment": { "example": "string", "type": "string" },
+          "experimentalMonthPeriod": { "example": "string", "type": "object" },
           "experimentalQualification": {
-            "example": "String",
+            "example": "string",
             "type": "object"
           },
           "experimentalQualifiedCount": {
-            "example": "String",
+            "example": "string",
             "type": "object"
           },
-          "experimentalQueueStatus": { "example": "String", "type": "object" },
+          "experimentalQueueStatus": { "example": "string", "type": "object" },
           "experimentalRawSeniorityRating": { "example": 0, "type": "number" },
-          "experimentalRetention": { "example": "String", "type": "object" },
+          "experimentalRetention": { "example": "string", "type": "object" },
           "experimentalReviewPriority": {
-            "example": "String",
+            "example": "string",
             "type": "object"
           },
           "experimentalSeniorityLevel": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
           "experimentalWeekCompleted": {
-            "example": "String",
+            "example": "string",
             "type": "object"
           },
-          "experimentalWeekPeriod": { "example": "String", "type": "object" },
+          "experimentalWeekPeriod": { "example": "string", "type": "object" },
           "fallbackPipeline": {
             "$ref": "#/components/schemas/PracticalAssignmentFallbackPipeline"
           },
-          "feedback": { "type": "array" },
-          "field97": { "example": "String", "type": "string" },
+          "feedback": {
+            "items": {
+              "$ref": "#/components/schemas/PracticalAssignmentFeedback"
+            },
+            "type": "array"
+          },
+          "field97": { "example": "string", "type": "string" },
           "githubRepository": {
             "example": "https://example.com",
             "type": "string"
           },
-          "githubRepositorySlug": { "example": "String", "type": "string" },
+          "githubRepositorySlug": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Practical Assignment.",
             "example": "recO0FYb1Tccm9MZ2",
@@ -883,8 +1129,8 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "leverNoteId": { "example": "String", "type": "string" },
-          "name": { "example": "String", "type": "object" },
+          "leverNoteId": { "example": "string", "type": "string" },
+          "name": { "example": "string", "type": "object" },
           "numberOfBranchesOnGithubRepository": {
             "example": 0,
             "type": "number"
@@ -901,15 +1147,15 @@
             "$ref": "#/components/schemas/PracticalAssignmentPractical"
           },
           "practicalAssignmentComments": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
           "practicalAssignmentRecordid": {
-            "example": "String",
+            "example": "string",
             "type": "object"
           },
           "practicalDistributionRequestLink": {
-            "example": "String",
+            "example": "string",
             "type": "object"
           },
           "practicalDistributionTracker": {
@@ -917,25 +1163,36 @@
           },
           "practicalFeedbackCount": { "example": 0, "type": "number" },
           "processed": { "example": true, "type": "boolean" },
-          "prototypeFeedback": { "type": "array" },
-          "recordURL": { "example": "String", "type": "object" },
+          "prototypeFeedback": {
+            "items": {
+              "$ref": "#/components/schemas/PracticalAssignmentPrototypeFeedback"
+            },
+            "type": "array"
+          },
+          "recordURL": { "example": "string", "type": "object" },
           "sendRequest": { "$ref": "#/components/schemas/AirtableButton" },
           "sendRequested": { "example": true, "type": "boolean" },
-          "signups": { "type": "array" },
-          "slackChannelId": { "example": "String", "type": "string" },
-          "status": { "example": "String", "type": "string" },
+          "signups": {
+            "items": {
+              "$ref": "#/components/schemas/PracticalAssignmentSignups"
+            },
+            "type": "array"
+          },
+          "slackChannelId": { "example": "string", "type": "string" },
+          "status": { "example": "string", "type": "string" },
           "timeToFinish": { "type": "object" },
-          "triageStatus": { "example": "String", "type": "string" }
+          "triageStatus": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
       "PracticalAssignmentCandidate": {
         "properties": {
-          "country": { "example": "String", "type": "string" },
+          "country": { "example": "string", "type": "string" },
           "department": { "type": "array" },
-          "email": { "example": "String", "type": "string" },
+          "email": { "example": "string", "type": "string" },
           "experimentalCandidateAdvocate": {
-            "example": ["String"],
+            "example": ["string"],
+            "items": { "type": "string" },
             "type": "array"
           },
           "id": {
@@ -943,28 +1200,49 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "interviewFeedbackForms": { "example": ["String"], "type": "array" },
-          "interviewStatuses": { "example": [0], "type": "array" },
-          "interviews": { "example": "String", "type": "string" },
-          "leverLink": { "example": "String", "type": "string" },
-          "linkedinUrl": { "example": "String", "type": "string" },
-          "name": { "example": "String", "type": "string" },
-          "opportunityId": { "example": "String", "type": "string" },
-          "pipelineName": { "example": ["String"], "type": "array" },
-          "pipelineShortName": { "example": ["String"], "type": "array" },
-          "pipelines": { "example": "String", "type": "string" },
-          "position": { "example": "String", "type": "string" },
-          "ratingOverall": { "example": 0, "type": "number" },
-          "recordId": { "example": "String", "type": "object" },
-          "recruitmentBlockSlackChannelId": {
-            "example": ["String"],
+          "interviewFeedbackForms": {
+            "example": ["string"],
+            "items": { "type": "string" },
             "type": "array"
           },
-          "role": { "example": "String", "type": "string" },
+          "interviewStatuses": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "interviews": { "example": "string", "type": "string" },
+          "leverLink": { "example": "string", "type": "string" },
+          "linkedinUrl": { "example": "string", "type": "string" },
+          "name": { "example": "string", "type": "string" },
+          "opportunityId": { "example": "string", "type": "string" },
+          "pipelineName": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "pipelineShortName": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "pipelines": { "example": "string", "type": "string" },
+          "position": { "example": "string", "type": "string" },
+          "ratingOverall": { "example": 0, "type": "number" },
+          "recordId": { "example": "string", "type": "object" },
+          "recruitmentBlockSlackChannelId": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "role": { "example": "string", "type": "string" },
           "seniorityRatingAverage": { "example": 0, "type": "number" },
           "seniorityRatingSd": { "example": 0, "type": "number" },
-          "squadSlackGroupUID": { "example": ["String"], "type": "array" },
-          "stage": { "example": "String", "type": "string" }
+          "squadSlackGroupUID": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "stage": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -978,36 +1256,70 @@
         },
         "type": "object"
       },
+      "PracticalAssignmentFeedback": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Feedback",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PracticalAssignmentPractical": {
         "properties": {
           "accessories": { "type": "array" },
-          "assessorNames": { "example": ["String"], "type": "array" },
-          "assessorSlackUids": { "example": ["String"], "type": "array" },
-          "assessors": { "example": "String", "type": "string" },
+          "assessorNames": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "assessorSlackUids": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "assessors": { "example": "string", "type": "string" },
           "distributionValue": { "example": 0, "type": "number" },
           "expectedHours": { "type": "object" },
-          "feedbackTemplate": { "example": "String", "type": "string" },
-          "githubAssessorTeam": { "example": "String", "type": "string" },
-          "githubOrganization": { "example": "String", "type": "string" },
-          "githubRepositoryTemplate": { "example": "String", "type": "string" },
+          "feedbackTemplate": { "example": "string", "type": "string" },
+          "githubAssessorTeam": { "example": "string", "type": "string" },
+          "githubOrganization": { "example": "string", "type": "string" },
+          "githubRepositoryTemplate": { "example": "string", "type": "string" },
           "githubReviewTeams": { "type": "array" },
           "id": {
             "description": "Unique identifer for Practical",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
-          "observerSlackUids": { "example": ["String"], "type": "array" },
+          "name": { "example": "string", "type": "string" },
+          "observerSlackUids": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
           "practicalStartedMessageTemplate": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
-          "reviewerNames": { "example": ["String"], "type": "array" },
-          "reviewerSlackUids": { "example": ["String"], "type": "array" },
-          "reviewers": { "example": ["String"], "type": "array" },
-          "shortName": { "example": "String", "type": "string" },
-          "status": { "example": "String", "type": "string" },
-          "type": { "example": "String", "type": "string" }
+          "reviewerNames": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "reviewerSlackUids": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "reviewers": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "shortName": { "example": "string", "type": "string" },
+          "status": { "example": "string", "type": "string" },
+          "type": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -1021,34 +1333,154 @@
         },
         "type": "object"
       },
+      "PracticalAssignmentPrototypeFeedback": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Prototype Feedback",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalAssignmentSignups": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Signups",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalFeedbackTemplate": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Feedback Template",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalObservers": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Observers",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalPipelines": {
+        "properties": {
+          "assessmentTeam": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "assessmentTeamNames": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for Pipelines",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "slackUIDFromAssessmentTeam": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalPracticalAssignments": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Practical Assignments",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalRoles": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Roles",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalSignups": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Signups",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PracticalStages": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Stages",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Project": {
         "properties": {
           "additionalInformation": {
             "example": "https://example.com",
             "type": "string"
           },
-          "assignments": { "type": "array" },
-          "client": { "type": "array" },
+          "assignments": {
+            "items": { "$ref": "#/components/schemas/ProjectAssignments" },
+            "type": "array"
+          },
+          "client": {
+            "items": { "$ref": "#/components/schemas/ProjectClient" },
+            "type": "array"
+          },
           "currentTeamCountries": { "type": "object" },
-          "departments": { "type": "array" },
-          "description": { "example": "String", "type": "string" },
+          "departments": {
+            "items": { "$ref": "#/components/schemas/ProjectDepartments" },
+            "type": "array"
+          },
+          "description": { "example": "string", "type": "string" },
+          "entity": { "$ref": "#/components/schemas/ProjectEntity" },
           "group": { "$ref": "#/components/schemas/ProjectGroup" },
-          "hiredForThisProgram": { "type": "array" },
+          "hiredForThisProgram": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectHiredForThisProgram"
+            },
+            "type": "array"
+          },
           "id": {
             "description": "Unique identifer for Project.",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "newTeamMemberRequest": { "example": "String", "type": "string" },
-          "openReqs": { "example": "String", "type": "string" },
+          "newTeamMemberRequest": { "example": "string", "type": "string" },
+          "openReqs": { "example": "string", "type": "string" },
           "opentReqsCount": { "example": 0, "type": "number" },
           "partner": { "$ref": "#/components/schemas/ProjectPartner" },
-          "peopleList": { "example": "String", "type": "string" },
-          "peopleList2": { "example": "String", "type": "string" },
-          "peopleListCopy": { "example": "String", "type": "string" },
-          "positions": { "example": "String", "type": "string" },
+          "peopleList": { "example": "string", "type": "string" },
+          "peopleList2": { "example": "string", "type": "string" },
+          "peopleListCopy": { "example": "string", "type": "string" },
+          "positions": { "example": "string", "type": "string" },
           "program": { "$ref": "#/components/schemas/ProjectProgram" },
-          "project": { "example": "String", "type": "string" },
+          "project": { "example": "string", "type": "string" },
           "projectEndDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
@@ -1057,23 +1489,109 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "recordId": { "example": "String", "type": "object" },
-          "reqs": { "type": "array" },
-          "reqs2": { "type": "array" },
-          "reqsCopy": { "example": "String", "type": "string" },
-          "resourcing": { "type": "array" },
-          "sows": { "type": "array" },
-          "status": { "example": "String", "type": "object" },
+          "recordId": { "example": "string", "type": "object" },
+          "reqs": {
+            "items": { "$ref": "#/components/schemas/ProjectReqs" },
+            "type": "array"
+          },
+          "reqs2": {
+            "items": { "$ref": "#/components/schemas/ProjectReqs2" },
+            "type": "array"
+          },
+          "reqsCopy": { "example": "string", "type": "string" },
+          "resourcing": {
+            "items": { "$ref": "#/components/schemas/ProjectResourcing" },
+            "type": "array"
+          },
+          "sows": {
+            "items": { "$ref": "#/components/schemas/ProjectSows" },
+            "type": "array"
+          },
+          "status": { "example": "string", "type": "object" },
           "teamMemberCountryRollupFromResourcing": { "type": "object" },
-          "teams": { "type": "array" }
+          "teams": {
+            "items": { "$ref": "#/components/schemas/ProjectTeams" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectAssignments": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Assignments",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectClient": {
+        "properties": {
+          "brand": { "type": "array" },
+          "companyId": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for Client",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "name": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "requiredCountry": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "restrictedCountry": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectDepartments": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Departments",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectEntity": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Entity",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
       "ProjectGroup": {
         "properties": {
-          "groupName": { "example": "String", "type": "string" },
+          "groupName": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Group",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectHiredForThisProgram": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Hired for this program",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           }
@@ -1097,28 +1615,96 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
+        },
+        "type": "object"
+      },
+      "ProjectReqs": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for REQs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectReqs2": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for REQs 2",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectResourcing": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Resourcing",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "teamMember": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "teamMemberId": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectSows": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for SOWs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "requiresBackgroundCheck": {
+            "example": [true],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectTeams": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Teams",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
       "REQ": {
         "properties": {
-          "allocations": { "example": "String", "type": "string" },
+          "allocations": { "example": "string", "type": "string" },
           "calculatedClosedDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "object"
           },
-          "calculatedProject": { "example": "String", "type": "object" },
+          "calculatedProject": { "example": "string", "type": "object" },
           "calculatedProjectLink": {
             "$ref": "#/components/schemas/REQCalculatedProjectLink"
           },
-          "candidateRequestForm": { "example": "String", "type": "object" },
+          "candidateRequestForm": { "example": "string", "type": "object" },
           "closedDateOverride": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
           "daysOpen": { "example": 0, "type": "object" },
-          "filledBy": { "type": "array" },
+          "filledBy": {
+            "items": { "$ref": "#/components/schemas/REQFilledBy" },
+            "type": "array"
+          },
           "hiringManager": { "$ref": "#/components/schemas/REQHiringManager" },
           "id": {
             "description": "Unique identifer for REQ.",
@@ -1141,21 +1727,27 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "object"
           },
-          "pipelines": { "type": "array" },
-          "positions": { "example": "String", "type": "string" },
+          "pipelines": {
+            "items": { "$ref": "#/components/schemas/REQPipelines" },
+            "type": "array"
+          },
+          "positions": { "example": "string", "type": "string" },
           "project": { "$ref": "#/components/schemas/REQProject" },
-          "recordId": { "example": "String", "type": "object" },
-          "req": { "example": "String", "type": "object" },
-          "reqDetails": { "example": "String", "type": "string" },
-          "reqNumber": { "example": "String", "type": "object" },
+          "recordId": { "example": "string", "type": "object" },
+          "req": { "example": "string", "type": "object" },
+          "reqDetails": { "example": "string", "type": "string" },
+          "reqNumber": { "example": "string", "type": "object" },
           "reqNumberGenerate": { "example": 0, "type": "number" },
           "requestedBy": { "$ref": "#/components/schemas/REQRequestedBy" },
-          "resourcing": { "type": "array" },
+          "resourcing": {
+            "items": { "$ref": "#/components/schemas/REQResourcing" },
+            "type": "array"
+          },
           "role": { "$ref": "#/components/schemas/REQRole" },
-          "signupEdit": { "example": "String", "type": "object" },
+          "signupEdit": { "example": "string", "type": "object" },
           "signupInfo": { "$ref": "#/components/schemas/REQSignupInfo" },
           "sow": { "$ref": "#/components/schemas/REQSow" },
-          "status": { "example": "String", "type": "string" },
+          "status": { "example": "string", "type": "string" },
           "timeToClose": { "example": 0, "type": "object" },
           "timeToFill": { "example": 0, "type": "object" },
           "type": { "$ref": "#/components/schemas/REQType" }
@@ -1169,7 +1761,31 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "requiresBackgroundCheck": { "example": [true], "type": "array" }
+          "requiresBackgroundCheck": {
+            "example": [true],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "REQFilledBy": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Filled by",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "joinDate": {
+            "example": ["2023-01-05T19:00:44.544Z"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "offerDate": {
+            "example": ["2023-01-05T19:00:44.544Z"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
@@ -1179,25 +1795,77 @@
             "description": "Unique identifer for Hiring Manager",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
-          }
+          },
+          "name": { "example": "string", "type": "string" },
+          "picture": { "example": "https://example.com", "type": "string" }
         },
         "type": "object"
       },
       "REQLateStageCandidate": {
         "properties": {
-          "compensationCurrency": { "example": "String", "type": "string" },
+          "compensationCurrency": { "example": "string", "type": "string" },
           "compensationRangeMin": { "example": 0, "type": "number" },
-          "country": { "example": "String", "type": "string" },
-          "email": { "example": "String", "type": "string" },
+          "country": { "example": "string", "type": "string" },
+          "email": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Late Stage Candidate",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "leverLink": { "example": "String", "type": "string" },
-          "name": { "example": "String", "type": "string" },
-          "noticePeriod": { "example": "String", "type": "string" },
-          "opportunityId": { "example": "String", "type": "string" }
+          "leverLink": { "example": "string", "type": "string" },
+          "name": { "example": "string", "type": "string" },
+          "noticePeriod": { "example": "string", "type": "string" },
+          "opportunityId": { "example": "string", "type": "string" }
+        },
+        "type": "object"
+      },
+      "REQPipelines": {
+        "properties": {
+          "earlyStageCandidateCount": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for Pipelines",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "lateStageCandidateCount": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "lateStageConsumerRatio": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "offlineAssessmentCandidateCount": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "projects": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "recruitmentLead": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "recruitmentLeadName": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "recruitmentLeadPhotoUrl": {
+            "example": ["https://example.com"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
@@ -1208,13 +1876,15 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "project": { "example": "String", "type": "string" },
+          "project": { "example": "string", "type": "string" },
           "requiredCountryFromClient": {
-            "example": ["String"],
+            "example": ["string"],
+            "items": { "type": "string" },
             "type": "array"
           },
           "restrictedCountryFromClient": {
-            "example": ["String"],
+            "example": ["string"],
+            "items": { "type": "string" },
             "type": "array"
           }
         },
@@ -1230,26 +1900,56 @@
         },
         "type": "object"
       },
+      "REQResourcing": {
+        "properties": {
+          "allocation": {
+            "example": [0],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "calculatedStart": {
+            "example": ["2023-01-05T19:00:44.544Z"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for Resourcing",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "resourceStart": {
+            "example": ["2023-01-05T19:00:44.544Z"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "roleLevel": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "REQRole": {
         "properties": {
           "billable": { "example": true, "type": "boolean" },
-          "departmentName": { "example": "String", "type": "string" },
-          "division": { "example": "String", "type": "string" },
-          "hrTitleDeprecated": { "example": "String", "type": "string" },
+          "departmentName": { "example": "string", "type": "string" },
+          "division": { "example": "string", "type": "string" },
+          "hrTitleDeprecated": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Role",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "jobDescription": { "example": "String", "type": "string" },
-          "pipeline": { "example": "String", "type": "string" },
-          "pipelineName": { "example": "String", "type": "string" },
-          "pipelineRecordID": { "example": "String", "type": "object" },
-          "practiceArea": { "example": "String", "type": "string" },
-          "recordID": { "example": "String", "type": "object" },
-          "recruiterFromPipeline": { "example": "String", "type": "string" },
-          "roleName": { "example": "String", "type": "string" },
-          "statusFromPipeline": { "example": "String", "type": "object" }
+          "jobDescription": { "example": "string", "type": "string" },
+          "pipeline": { "example": "string", "type": "string" },
+          "pipelineName": { "example": "string", "type": "string" },
+          "pipelineRecordID": { "example": "string", "type": "object" },
+          "practiceArea": { "example": "string", "type": "string" },
+          "recordID": { "example": "string", "type": "object" },
+          "recruiterFromPipeline": { "example": "string", "type": "string" },
+          "roleName": { "example": "string", "type": "string" },
+          "statusFromPipeline": { "example": "string", "type": "object" }
         },
         "type": "object"
       },
@@ -1262,19 +1962,20 @@
           },
           "joinDate": {
             "example": ["2023-01-05T19:00:44.544Z"],
+            "items": { "type": "string" },
             "type": "array"
           },
-          "recordID": { "example": "String", "type": "object" }
+          "recordID": { "example": "string", "type": "object" }
         },
         "type": "object"
       },
       "REQSow": {
         "properties": {
-          "client": { "example": "String", "type": "string" },
-          "department": { "example": "String", "type": "string" },
-          "entity": { "example": "String", "type": "string" },
+          "client": { "example": "string", "type": "string" },
+          "department": { "example": "string", "type": "string" },
+          "entity": { "example": "string", "type": "string" },
           "entityNameFromDivisionsFromDepartment": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
           "id": {
@@ -1282,8 +1983,8 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "project": { "example": "String", "type": "string" },
-          "recordId": { "example": "String", "type": "object" }
+          "project": { "example": "string", "type": "string" },
+          "recordId": { "example": "string", "type": "object" }
         },
         "type": "object"
       },
@@ -1305,10 +2006,18 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "roleLevel": { "example": "String", "type": "string" },
-          "roleName": { "example": "String", "type": "string" },
-          "topologyPermissionExcludes": { "type": "array" },
-          "topologyPermissions": { "type": "array" }
+          "roleLevel": { "example": "string", "type": "string" },
+          "roleName": { "example": "string", "type": "string" },
+          "topologyPermissionExcludes": {
+            "items": {
+              "$ref": "#/components/schemas/RoleTopologyPermissionExcludes"
+            },
+            "type": "array"
+          },
+          "topologyPermissions": {
+            "items": { "$ref": "#/components/schemas/RoleTopologyPermissions" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
@@ -1322,31 +2031,68 @@
         },
         "type": "object"
       },
+      "RoleTopologyPermissionExcludes": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Topology Permission Excludes",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "name": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "RoleTopologyPermissions": {
+        "properties": {
+          "code": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for Topology Permissions",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "SOW": {
         "properties": {
-          "allocations": { "example": "String", "type": "string" },
-          "assignments": { "type": "array" },
-          "client": { "type": "array" },
+          "allocations": { "example": "string", "type": "string" },
+          "assignments": {
+            "items": { "$ref": "#/components/schemas/SOWAssignments" },
+            "type": "array"
+          },
+          "client": {
+            "items": { "$ref": "#/components/schemas/SOWClient" },
+            "type": "array"
+          },
           "closeDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "company": { "example": "String", "type": "string" },
-          "companyBusinessUnit": { "example": "String", "type": "string" },
+          "company": { "example": "string", "type": "string" },
+          "companyBusinessUnit": { "example": "string", "type": "string" },
           "companyId": { "example": 0, "type": "number" },
           "countResourcing": { "example": 0, "type": "number" },
           "currentTeamMemberCount": { "example": 0, "type": "object" },
           "currentTeamMemberNames": { "type": "object" },
-          "dealName": { "example": "String", "type": "string" },
+          "dealName": { "example": "string", "type": "string" },
           "dealProbability": { "example": 0, "type": "number" },
           "dealid": { "example": 0, "type": "number" },
           "department": { "$ref": "#/components/schemas/SOWDepartment" },
-          "description": { "example": "String", "type": "string" },
-          "email": { "example": "String", "type": "string" },
+          "description": { "example": "string", "type": "string" },
+          "email": { "example": "string", "type": "string" },
           "endDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
+          "entity": { "$ref": "#/components/schemas/SOWEntity" },
           "id": {
             "description": "Unique identifer for SOW.",
             "example": "recO0FYb1Tccm9MZ2",
@@ -1357,42 +2103,180 @@
             "type": "string"
           },
           "openReqsCount": { "example": 0, "type": "number" },
-          "parentDealId": { "example": "String", "type": "string" },
-          "positions": { "example": "String", "type": "string" },
-          "positions2": { "type": "array" },
-          "positions3": { "example": "String", "type": "string" },
-          "positionsCopy": { "example": "String", "type": "string" },
-          "program": { "example": "String", "type": "string" },
-          "project": { "type": "array" },
-          "rateCards": { "type": "array" },
-          "recordId": { "example": "String", "type": "object" },
-          "reqs": { "type": "array" },
+          "parentDealId": { "example": "string", "type": "string" },
+          "positions": { "example": "string", "type": "string" },
+          "positions2": {
+            "items": { "$ref": "#/components/schemas/SOWPositions2" },
+            "type": "array"
+          },
+          "positions3": { "example": "string", "type": "string" },
+          "positionsCopy": { "example": "string", "type": "string" },
+          "program": { "example": "string", "type": "string" },
+          "project": {
+            "items": { "$ref": "#/components/schemas/SOWProject" },
+            "type": "array"
+          },
+          "rateCards": {
+            "items": { "$ref": "#/components/schemas/SOWRateCards" },
+            "type": "array"
+          },
+          "recordId": { "example": "string", "type": "object" },
+          "reqs": {
+            "items": { "$ref": "#/components/schemas/SOWReqs" },
+            "type": "array"
+          },
           "requiresBackgroundCheck": { "example": true, "type": "boolean" },
-          "resourcing": { "type": "array" },
-          "rootDealId": { "example": "String", "type": "string" },
-          "servicesDivision": { "example": "String", "type": "string" },
+          "resourcing": {
+            "items": { "$ref": "#/components/schemas/SOWResourcing" },
+            "type": "array"
+          },
+          "rootDealId": { "example": "string", "type": "string" },
+          "servicesDivision": { "example": "string", "type": "string" },
           "servicesOwner": { "$ref": "#/components/schemas/SOWServicesOwner" },
-          "sowNum": { "example": "String", "type": "string" },
-          "stage": { "example": "String", "type": "string" },
+          "sowNum": { "example": "string", "type": "string" },
+          "stage": { "example": "string", "type": "string" },
           "startDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "status": { "example": "String", "type": "object" },
+          "status": { "example": "string", "type": "object" },
           "teamMemberCount": { "example": 0, "type": "number" },
-          "teams": { "type": "array" }
+          "teams": {
+            "items": { "$ref": "#/components/schemas/SOWTeams" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SOWAssignments": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Assignments",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SOWClient": {
+        "properties": {
+          "brand": { "type": "array" },
+          "hubspotLink": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for Client",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "name": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
       "SOWDepartment": {
         "properties": {
-          "departments": { "example": "String", "type": "string" },
-          "entity": { "example": "String", "type": "string" },
-          "entityNameFromDivisions": { "example": "String", "type": "string" },
+          "departments": { "example": "string", "type": "string" },
+          "entityNameFromDivisions": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Department",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SOWEntity": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Entity",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SOWPositions2": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Positions 2",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SOWProject": {
+        "properties": {
+          "additionalInformation": {
+            "example": ["https://example.com"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for Project",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "project": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "recordId": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SOWRateCards": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Rate Cards",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SOWReqs": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for REQs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SOWResourcing": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Resourcing",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "teamMember": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "teamMemberName": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "teamMemberPhotoUrl": {
+            "example": ["https://example.com"],
+            "items": { "type": "string" },
+            "type": "array"
           }
         },
         "type": "object"
@@ -1404,37 +2288,47 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
+          "name": { "example": "string", "type": "string" },
           "picture": { "example": "https://example.com", "type": "string" }
+        },
+        "type": "object"
+      },
+      "SOWTeams": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Teams",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
       "Signup": {
         "properties": {
-          "additionalNotes": { "example": "String", "type": "string" },
-          "addressLine2": { "example": "String", "type": "string" },
-          "authorizedToWork": { "example": "String", "type": "string" },
-          "calculatedMailingAddress": { "example": "String", "type": "object" },
+          "additionalNotes": { "example": "string", "type": "string" },
+          "addressLine2": { "example": "string", "type": "string" },
+          "authorizedToWork": { "example": "string", "type": "string" },
+          "calculatedMailingAddress": { "example": "string", "type": "object" },
           "candidateProvidedInformation": {
             "example": true,
             "type": "boolean"
           },
-          "city": { "example": "String", "type": "string" },
-          "companyName": { "example": "String", "type": "string" },
-          "companyTaxID": { "example": "String", "type": "string" },
+          "city": { "example": "string", "type": "string" },
+          "companyName": { "example": "string", "type": "string" },
+          "companyTaxID": { "example": "string", "type": "string" },
           "compensation": { "example": 0, "type": "number" },
-          "compensationType": { "example": "String", "type": "string" },
+          "compensationType": { "example": "string", "type": "string" },
           "completedPractical": {
             "$ref": "#/components/schemas/SignupCompletedPractical"
           },
-          "computerElection": { "example": "String", "type": "string" },
-          "computerShippingAddress": { "example": "String", "type": "string" },
-          "computerShippingAddress2": { "example": "String", "type": "string" },
+          "computerElection": { "example": "string", "type": "string" },
+          "computerShippingAddress": { "example": "string", "type": "string" },
+          "computerShippingAddress2": { "example": "string", "type": "string" },
           "computerShippingAddressIsDifferent": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
-          "computerShippingCity": { "example": "String", "type": "string" },
+          "computerShippingCity": { "example": "string", "type": "string" },
           "computerShippingCountry": {
             "$ref": "#/components/schemas/SignupComputerShippingCountry"
           },
@@ -1442,19 +2336,19 @@
             "$ref": "#/components/schemas/SignupComputerShippingCountryStateprovince"
           },
           "computerShippingPostalCode": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
-          "computerSize": { "example": "String", "type": "string" },
-          "computerType": { "example": "String", "type": "string" },
-          "contractType": { "example": "String", "type": "string" },
+          "computerSize": { "example": "string", "type": "string" },
+          "computerType": { "example": "string", "type": "string" },
+          "contractType": { "example": "string", "type": "string" },
           "contractWitnessEmail": {
             "example": "me@example.com",
             "type": "string"
           },
-          "contractWitnessName": { "example": "String", "type": "string" },
+          "contractWitnessName": { "example": "string", "type": "string" },
           "country": { "$ref": "#/components/schemas/SignupCountry" },
-          "currency": { "example": "String", "type": "string" },
+          "currency": { "example": "string", "type": "string" },
           "dateApproved": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
@@ -1477,38 +2371,44 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "legalFirstName": { "example": "String", "type": "string" },
-          "legalLastName": { "example": "String", "type": "string" },
-          "legalMiddleName": { "example": "String", "type": "string" },
+          "legalFirstName": { "example": "string", "type": "string" },
+          "legalLastName": { "example": "string", "type": "string" },
+          "legalMiddleName": { "example": "string", "type": "string" },
           "leverReport": { "$ref": "#/components/schemas/SignupLeverReport" },
-          "leverid": { "example": "String", "type": "string" },
-          "mailingAddress": { "example": "String", "type": "string" },
-          "mailingAddress2": { "example": "String", "type": "string" },
+          "leverid": { "example": "string", "type": "string" },
+          "mailingAddress": { "example": "string", "type": "string" },
+          "mailingAddress2": { "example": "string", "type": "string" },
           "mailingAddressIsDifferent": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
-          "mailingCity": { "example": "String", "type": "string" },
+          "mailingCity": { "example": "string", "type": "string" },
           "mailingCountry": {
             "$ref": "#/components/schemas/SignupMailingCountry"
           },
           "mailingCountryStateprovince": {
             "$ref": "#/components/schemas/SignupMailingCountryStateprovince"
           },
-          "mailingPostalCode": { "example": "String", "type": "string" },
-          "peopleList": { "type": "array" },
-          "phoneNumber": { "example": "String", "type": "string" },
-          "postalCode": { "example": "String", "type": "string" },
-          "practicalPaymentStatus": { "example": "String", "type": "string" },
-          "preferredFirstName": { "example": "String", "type": "string" },
-          "preferredLastName": { "example": "String", "type": "string" },
-          "preferredName": { "example": "String", "type": "object" },
+          "mailingPostalCode": { "example": "string", "type": "string" },
+          "peopleList": {
+            "items": { "$ref": "#/components/schemas/SignupPeopleList" },
+            "type": "array"
+          },
+          "phoneNumber": { "example": "string", "type": "string" },
+          "postalCode": { "example": "string", "type": "string" },
+          "practicalPaymentStatus": { "example": "string", "type": "string" },
+          "preferredFirstName": { "example": "string", "type": "string" },
+          "preferredLastName": { "example": "string", "type": "string" },
+          "preferredName": { "example": "string", "type": "object" },
           "recruiter": { "$ref": "#/components/schemas/SignupRecruiter" },
-          "relocationConsiderations": { "example": "String", "type": "string" },
-          "reqs": { "type": "array" },
+          "relocationConsiderations": { "example": "string", "type": "string" },
+          "reqs": {
+            "items": { "$ref": "#/components/schemas/SignupReqs" },
+            "type": "array"
+          },
           "role": { "$ref": "#/components/schemas/SignupRole" },
           "signOnBonusConsiderations": {
-            "example": "String",
+            "example": "string",
             "type": "string"
           },
           "startDate": {
@@ -1518,9 +2418,9 @@
           "stateprovince": {
             "$ref": "#/components/schemas/SignupStateprovince"
           },
-          "status": { "example": "String", "type": "string" },
-          "streetAddress": { "example": "String", "type": "string" },
-          "taxID": { "example": "String", "type": "string" },
+          "status": { "example": "string", "type": "string" },
+          "streetAddress": { "example": "string", "type": "string" },
+          "taxID": { "example": "string", "type": "string" },
           "teamMemberType": {
             "$ref": "#/components/schemas/SignupTeamMemberType"
           }
@@ -1534,7 +2434,7 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -1560,13 +2460,13 @@
       },
       "SignupCountry": {
         "properties": {
-          "abbreviation": { "example": "String", "type": "string" },
+          "abbreviation": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Country",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -1577,14 +2477,14 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
+          "name": { "example": "string", "type": "string" },
           "picture": { "example": "https://example.com", "type": "string" }
         },
         "type": "object"
       },
       "SignupGroup": {
         "properties": {
-          "groupName": { "example": "String", "type": "string" },
+          "groupName": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Group",
             "example": "recO0FYb1Tccm9MZ2",
@@ -1595,14 +2495,14 @@
       },
       "SignupLeverReport": {
         "properties": {
-          "email": { "example": "String", "type": "string" },
+          "email": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Lever Report",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "leverLink": { "example": "String", "type": "string" },
-          "name": { "example": "String", "type": "string" }
+          "leverLink": { "example": "string", "type": "string" },
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -1626,6 +2526,16 @@
         },
         "type": "object"
       },
+      "SignupPeopleList": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for People List",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "SignupRecruiter": {
         "properties": {
           "id": {
@@ -1636,16 +2546,66 @@
         },
         "type": "object"
       },
+      "SignupReqs": {
+        "properties": {
+          "calculatedProject": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "calculatedProjectLink": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "entityNameFromDivisionsFromDepartmentFromSOW": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "id": {
+            "description": "Unique identifer for REQs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          },
+          "lateStageCandidate": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "lateStageCandidateEmail": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "lateStageCandidateLeverLink": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "lateStageCandidateName": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "req": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SignupRole": {
         "properties": {
-          "hrTitle": { "example": "String", "type": "string" },
+          "hrTitle": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Role",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "offerJobDescription": { "example": "String", "type": "string" },
-          "roleName": { "example": "String", "type": "string" }
+          "offerJobDescription": { "example": "string", "type": "string" },
+          "roleName": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -1656,7 +2616,7 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -1667,20 +2627,33 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "type": { "example": "String", "type": "string" }
+          "type": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
       "State": {
         "properties": {
-          "country": { "type": "array" },
-          "countryCode": { "example": "String", "type": "string" },
+          "country": {
+            "items": { "$ref": "#/components/schemas/StateCountry" },
+            "type": "array"
+          },
+          "countryCode": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for State.",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
+        },
+        "type": "object"
+      },
+      "StateCountry": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Countries",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
@@ -1691,19 +2664,31 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
-          "pipelines": { "type": "array" },
-          "positions": { "type": "array" },
-          "positionsCopy": { "example": "String", "type": "string" },
+          "name": { "example": "string", "type": "string" },
+          "pipelines": {
+            "items": { "$ref": "#/components/schemas/TeamPipelines" },
+            "type": "array"
+          },
+          "positions": {
+            "items": { "$ref": "#/components/schemas/TeamPositions" },
+            "type": "array"
+          },
+          "positionsCopy": { "example": "string", "type": "string" },
           "program": { "$ref": "#/components/schemas/TeamProgram" },
           "project": { "$ref": "#/components/schemas/TeamProject" },
-          "recordId": { "example": "String", "type": "object" },
-          "reference": { "example": "String", "type": "object" },
-          "slackHandle": { "example": "String", "type": "string" },
-          "slackHandleUID": { "example": "String", "type": "string" },
-          "sows": { "type": "array" },
-          "status": { "example": "String", "type": "string" },
-          "teamLead": { "type": "array" }
+          "recordId": { "example": "string", "type": "object" },
+          "reference": { "example": "string", "type": "object" },
+          "slackHandle": { "example": "string", "type": "string" },
+          "slackHandleUID": { "example": "string", "type": "string" },
+          "sows": {
+            "items": { "$ref": "#/components/schemas/TeamSows" },
+            "type": "array"
+          },
+          "status": { "example": "string", "type": "string" },
+          "teamLead": {
+            "items": { "$ref": "#/components/schemas/TeamTeamLead" },
+            "type": "array"
+          }
         },
         "type": "object"
       },
@@ -1729,9 +2714,9 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "slot": { "example": "String", "type": "object" },
+          "slot": { "example": "string", "type": "object" },
           "sow": { "$ref": "#/components/schemas/TeamAssignmentSow" },
-          "status": { "example": "String", "type": "object" },
+          "status": { "example": "string", "type": "object" },
           "teamMember": {
             "$ref": "#/components/schemas/TeamAssignmentTeamMember"
           }
@@ -1804,16 +2789,16 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "gender": { "example": "String", "type": "string" },
-          "githubUsername": { "example": "String", "type": "string" },
+          "gender": { "example": "string", "type": "string" },
+          "githubUsername": { "example": "string", "type": "string" },
           "hiringManager": {
             "$ref": "#/components/schemas/TeamMemberHiringManager"
           },
           "hiringRecruiter": {
             "$ref": "#/components/schemas/TeamMemberHiringRecruiter"
           },
-          "hiringSource": { "example": "String", "type": "string" },
-          "hiringSourceMech": { "example": "String", "type": "string" },
+          "hiringSource": { "example": "string", "type": "string" },
+          "hiringSourceMech": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Team Member.",
             "example": "recO0FYb1Tccm9MZ2",
@@ -1823,26 +2808,35 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "legalName": { "example": "String", "type": "string" },
-          "leverOpportunityID": { "example": "String", "type": "string" },
-          "leverReport": { "type": "array" },
-          "name": { "example": "String", "type": "string" },
-          "namelyProfileID": { "example": "String", "type": "string" },
+          "legalName": { "example": "string", "type": "string" },
+          "leverOpportunityID": { "example": "string", "type": "string" },
+          "leverReport": {
+            "items": { "$ref": "#/components/schemas/TeamMemberLeverReport" },
+            "type": "array"
+          },
+          "name": { "example": "string", "type": "string" },
+          "namelyProfileID": { "example": "string", "type": "string" },
           "offerDate": {
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
           "picture": { "example": "https://example.com", "type": "string" },
-          "pipelines": { "type": "array" },
+          "pipelines": {
+            "items": { "$ref": "#/components/schemas/TeamMemberPipelines" },
+            "type": "array"
+          },
           "practiceArea": {
             "$ref": "#/components/schemas/TeamMemberPracticeArea"
           },
           "projectCount": { "example": 0, "type": "number" },
           "projectNames": { "type": "array" },
           "rejectedOffer": { "example": true, "type": "boolean" },
-          "slackHandle": { "example": "String", "type": "string" },
-          "slackUID": { "example": "String", "type": "string" },
-          "sows": { "type": "array" },
+          "slackHandle": { "example": "string", "type": "string" },
+          "slackUID": { "example": "string", "type": "string" },
+          "sows": {
+            "items": { "$ref": "#/components/schemas/TeamMemberSows" },
+            "type": "array"
+          },
           "startingProject": {
             "$ref": "#/components/schemas/TeamMemberStartingProject"
           },
@@ -1850,24 +2844,24 @@
             "$ref": "#/components/schemas/TeamMemberStartingRole"
           },
           "state": { "$ref": "#/components/schemas/TeamMemberState" },
-          "status": { "example": "String", "type": "object" },
+          "status": { "example": "string", "type": "object" },
           "teamMemberType": {
             "$ref": "#/components/schemas/TeamMemberTeamMemberType"
           },
-          "timezoneLabel": { "example": "String", "type": "string" },
+          "timezoneLabel": { "example": "string", "type": "string" },
           "timezoneOffset": { "example": 0, "type": "number" }
         },
         "type": "object"
       },
       "TeamMemberCountry": {
         "properties": {
-          "continentName": { "example": "String", "type": "string" },
+          "continentName": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Country",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -1883,16 +2877,21 @@
       },
       "TeamMemberCurrentRole": {
         "properties": {
-          "hrTitleName": { "example": "String", "type": "string" },
+          "hrTitleName": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Current Role",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "roleName": { "example": "String", "type": "string" },
-          "topologyPermissionCodes": { "example": ["String"], "type": "array" },
+          "roleName": { "example": "string", "type": "string" },
+          "topologyPermissionCodes": {
+            "example": ["string"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
           "topologyPermissionExcludeCodes": {
-            "example": ["String"],
+            "example": ["string"],
+            "items": { "type": "string" },
             "type": "array"
           }
         },
@@ -1910,6 +2909,7 @@
       },
       "TeamMemberEntityWorksWith": {
         "properties": {
+          "groupName": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Entity Works With",
             "example": "recO0FYb1Tccm9MZ2",
@@ -1938,6 +2938,26 @@
         },
         "type": "object"
       },
+      "TeamMemberLeverReport": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Lever Report",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberPipelines": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Pipelines",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TeamMemberPracticeArea": {
         "properties": {
           "id": {
@@ -1945,7 +2965,17 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "practiceArea": { "example": "String", "type": "string" }
+          "practiceArea": { "example": "string", "type": "string" }
+        },
+        "type": "object"
+      },
+      "TeamMemberSows": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for SOWs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
@@ -1976,7 +3006,7 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" }
+          "name": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -2002,8 +3032,18 @@
             "type": "string"
           },
           "countOfCountries": { "example": 0, "type": "number" },
-          "countriesWithTeamMembers": { "type": "array" },
-          "employeecontractor": { "type": "array" },
+          "countriesWithTeamMembers": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeCountriesWithTeamMembers"
+            },
+            "type": "array"
+          },
+          "employeecontractor": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeEmployeecontractor"
+            },
+            "type": "array"
+          },
           "entity": { "$ref": "#/components/schemas/TeamMemberTypeEntity" },
           "id": {
             "description": "Unique identifer for Team Member Type.",
@@ -2014,24 +3054,54 @@
             "example": "2023-01-05T19:00:44.544Z",
             "type": "string"
           },
-          "leverReport": { "type": "array" },
+          "leverReport": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeLeverReport"
+            },
+            "type": "array"
+          },
           "manual": { "type": "array" },
-          "namelyEmployeeType": { "example": "String", "type": "string" },
-          "newTeamMemberData": { "type": "array" },
+          "namelyEmployeeType": { "example": "string", "type": "string" },
+          "newTeamMemberData": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeNewTeamMemberData"
+            },
+            "type": "array"
+          },
           "numberOfCurrentTeamMembers": { "example": 0, "type": "number" },
           "numberOfCurrentTeamMembersJoined2021": {
             "example": 0,
             "type": "number"
           },
-          "officevibeTeams": { "type": "array" },
-          "paymentCurrency": { "example": "String", "type": "string" },
-          "paymentType": { "example": "String", "type": "string" },
+          "officevibeTeams": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeOfficevibeTeams"
+            },
+            "type": "array"
+          },
+          "paymentCurrency": { "example": "string", "type": "string" },
+          "paymentType": { "example": "string", "type": "string" },
           "peo": { "$ref": "#/components/schemas/TeamMemberTypePeo" },
           "probationaryPeriodLength": { "example": 0, "type": "number" },
-          "probationaryPeriodMessageTemplates": { "type": "array" },
-          "supportedCountry": { "type": "array" },
-          "theoremTeam": { "type": "array" },
-          "type": { "example": "String", "type": "string" }
+          "probationaryPeriodMessageTemplates": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeProbationaryPeriodMessageTemplates"
+            },
+            "type": "array"
+          },
+          "supportedCountry": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeSupportedCountry"
+            },
+            "type": "array"
+          },
+          "theoremTeam": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberTypeTheoremTeam"
+            },
+            "type": "array"
+          },
+          "type": { "example": "string", "type": "string" }
         },
         "type": "object"
       },
@@ -2039,6 +3109,26 @@
         "properties": {
           "id": {
             "description": "Unique identifer for Benefits Email Template",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberTypeCountriesWithTeamMembers": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Countries With Team Members",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberTypeEmployeecontractor": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Employee/Contractor",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           }
@@ -2055,10 +3145,90 @@
         },
         "type": "object"
       },
+      "TeamMemberTypeLeverReport": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Lever Report",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberTypeNewTeamMemberData": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for New Team Member Data",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberTypeOfficevibeTeams": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for OfficeVibe Teams",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TeamMemberTypePeo": {
         "properties": {
           "id": {
             "description": "Unique identifer for PEO",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberTypeProbationaryPeriodMessageTemplates": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Probationary Period Message Templates",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberTypeSupportedCountry": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Supported Country",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamMemberTypeTheoremTeam": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Theorem Team",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamPipelines": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Pipelines",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamPositions": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Positions",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           }
@@ -2082,23 +3252,56 @@
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "recordId": { "example": "String", "type": "object" }
+          "recordId": { "example": "string", "type": "object" }
+        },
+        "type": "object"
+      },
+      "TeamSows": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for SOWs",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamTeamLead": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Team Lead",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
       "TopologyPermission": {
         "properties": {
-          "category": { "example": "String", "type": "string" },
-          "code": { "example": "String", "type": "string" },
-          "description": { "example": "String", "type": "string" },
+          "category": { "example": "string", "type": "string" },
+          "code": { "example": "string", "type": "string" },
+          "description": { "example": "string", "type": "string" },
           "id": {
             "description": "Unique identifer for Topology Permission.",
             "example": "recO0FYb1Tccm9MZ2",
             "type": "string"
           },
-          "name": { "example": "String", "type": "string" },
-          "parentPermissionCode": { "example": "String", "type": "string" },
-          "roles": { "type": "array" }
+          "name": { "example": "string", "type": "string" },
+          "parentPermissionCode": { "example": "string", "type": "string" },
+          "roles": {
+            "items": { "$ref": "#/components/schemas/TopologyPermissionRoles" },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "TopologyPermissionRoles": {
+        "properties": {
+          "id": {
+            "description": "Unique identifer for Roles",
+            "example": "recO0FYb1Tccm9MZ2",
+            "type": "string"
+          }
         },
         "type": "object"
       },
@@ -2188,6 +3391,21 @@
   },
   "openapi": "3.0.1",
   "paths": {
+    "/healthcheck": {
+      "get": {
+        "description": "Check if the application server is running.",
+        "operationId": "healthCheckHealthcheck",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": { "*/*": { "schema": { "type": "string" } } },
+            "description": "Any response to indicate that application server is running"
+          }
+        },
+        "summary": "Check server health",
+        "tags": ["HealthCheck"]
+      }
+    },
     "/v1/assignments": {
       "get": {
         "description": "Finds all assignments. Returns assignments matching query paramenters.",
@@ -6515,21 +7733,6 @@
         "security": [{ "BearerAuth": [] }],
         "summary": "Find feedback by id",
         "tags": ["Feedbacks"]
-      }
-    },
-    "/v1/healthcheck": {
-      "get": {
-        "description": "Check if the application server is running.",
-        "operationId": "healthCheckHealthcheck",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": { "*/*": { "schema": { "type": "string" } } },
-            "description": "Any response to indicate that application server is running"
-          }
-        },
-        "summary": "Check server health",
-        "tags": ["HealthCheck"]
       }
     },
     "/v1/interviews": {
