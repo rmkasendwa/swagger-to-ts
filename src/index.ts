@@ -331,6 +331,22 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
               if (
                 requestBody.content[requestContentType].schema.type === 'array'
               ) {
+                if (
+                  requestBody.content[requestContentType].schema.items?.$ref
+                ) {
+                  const pathLevels =
+                    requestBody.content[
+                      requestContentType
+                    ].schema.items.$ref.split('/');
+                  const apiRequestBodyTypeInterfaceName =
+                    pathLevels[pathLevels.length - 1];
+                  return `${apiRequestBodyTypeInterfaceName}[]`;
+                }
+                if (
+                  requestBody.content[requestContentType].schema.items?.type
+                ) {
+                  return `${requestBody.content[requestContentType].schema.items.type}[]`;
+                }
                 return 'any[]';
               }
               return requestBody.content[requestContentType].schema.type;
@@ -459,65 +475,76 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
           }
         }
 
-        const jsDocCommentSnippet = (() => {
+        const { paramsString, jsDocCommentSnippet } = (() => {
           const lines: string[] = [];
           if (description) {
-            lines.push(description);
+            lines.push(description, '');
           }
           if (pathParams.length > 0) {
-            if (lines.length > 0) {
-              lines.push('');
-            }
             lines.push(
               ...pathParams.map(({ name, description }) => {
                 return `@param ${name} ${description}`.trim();
               })
             );
           }
+
+          const paramsString = [
+            ...pathParams.map(({ name, type }) => {
+              return `${name}: ${type}`;
+            }),
+            ...(() => {
+              if (apiRequestBodyTypeInterfaceName) {
+                lines.push(
+                  `@param requestPayload ${
+                    requestBody.description || ''
+                  }`.trim()
+                );
+                return [`requestPayload: ${apiRequestBodyTypeInterfaceName}`];
+              }
+              return [];
+            })(),
+            ...(() => {
+              if (headerParams.length > 0) {
+                lines.push(`@param headers`);
+                return [`headers: ${pascalCaseActionName}Headers`];
+              }
+              return [];
+            })(),
+            ...(() => {
+              if (queryParams.length > 0) {
+                lines.push(`@param queryParams`);
+                return [`queryParams: ${pascalCaseActionName}QueryParams = {}`];
+              }
+              return [];
+            })(),
+            `{ ...rest }: RequestOptions`,
+          ].join(', ');
+
           if (apiReturnType) {
             lines.push(`@returns ${apiReturnType.description}`);
           }
-          if (lines.length > 0) {
-            const linesString = lines
-              .map((line) => {
-                return ` * ${line}`;
-              })
-              .join('\n');
-            return `
-              /**
-               ${linesString}
-               */
-            `
-              .trimIndent()
-              .trim();
-          }
-          return '';
-        })();
 
-        const paramsString = [
-          ...pathParams.map(({ name, type }) => {
-            return `${name}: ${type}`;
-          }),
-          ...(() => {
-            if (apiRequestBodyTypeInterfaceName) {
-              return [`requestPayload: ${apiRequestBodyTypeInterfaceName}`];
-            }
-            return [];
-          })(),
-          ...(() => {
-            if (headerParams.length > 0) {
-              return [`headers: ${pascalCaseActionName}Headers`];
-            }
-            return [];
-          })(),
-          ...(() => {
-            if (queryParams.length > 0) {
-              return [`queryParams: ${pascalCaseActionName}QueryParams = {}`];
-            }
-            return [];
-          })(),
-          `{ ...rest }: RequestOptions`,
-        ].join(', ');
+          return {
+            paramsString,
+            jsDocCommentSnippet: (() => {
+              if (lines.length > 0) {
+                const linesString = lines
+                  .map((line) => {
+                    return ` * ${line}`;
+                  })
+                  .join('\n');
+                return `
+                  /**
+                   ${linesString}
+                  */
+                `
+                  .trimIndent()
+                  .trim();
+              }
+              return '';
+            })(),
+          };
+        })();
 
         const interpolatedEndpointPathString = (() => {
           if (pathParams.length > 0) {
