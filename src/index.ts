@@ -53,7 +53,6 @@ const getInterfaceProperties = (baseModelRefPath: string): string => {
   const modelPropertiesPath =
     baseModelRefPath.replace(/^#\//g, '').replaceAll('/', '.') + '.properties';
   const modelProperties = get(swaggerDocs, modelPropertiesPath);
-  console.log({ model: modelProperties, modelPath: modelPropertiesPath });
   if (modelProperties) {
     const modelPropertiesString = Object.keys(modelProperties)
       .map((key) => {
