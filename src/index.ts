@@ -5,7 +5,7 @@ import { dirname } from 'path';
 
 import { OS3Parameter, OS3Paths, OpenSpec3 } from '@tsed/openspec';
 import { ensureDirSync } from 'fs-extra';
-import { pick } from 'lodash';
+import { get, pick } from 'lodash';
 import prettier from 'prettier';
 
 type Parameter = {
@@ -48,6 +48,35 @@ const ouputSubFolders = ['api', 'data-keys', 'endpoint-paths', 'interfaces'];
 
 const PATHS_LIB = `@infinite-debugger/rmk-utils/paths`;
 const API_ADAPTER_PATH = `./Adapter`;
+
+const getInterfaceProperties = (baseModelRefPath: string): string => {
+  const modelPropertiesPath =
+    baseModelRefPath.replace(/^#\//g, '').replaceAll('/', '.') + '.properties';
+  const modelProperties = get(swaggerDocs, modelPropertiesPath);
+  console.log({ model: modelProperties, modelPath: modelPropertiesPath });
+  if (modelProperties) {
+    const modelPropertiesString = Object.keys(modelProperties)
+      .map((key) => {
+        if (modelProperties[key].type) {
+          const type = (() => {
+            if (modelProperties[key].type === 'array') {
+              return `string[]`;
+            }
+            return modelProperties[key].type;
+          })();
+          return `${key}: ${type}`;
+        }
+        if (modelProperties[key].$ref) {
+          return `${key}: ${getInterfaceProperties(modelProperties[key].$ref)}`;
+        }
+        return `${key}: any`;
+      })
+      .join(';\n');
+
+    return `{\n${modelPropertiesString}\n}`;
+  }
+  return `{}`;
+};
 
 // Cumulatively finding entites
 const entities = Object.keys(swaggerDocs.paths).reduce(
@@ -211,10 +240,9 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
               ) {
                 accumulator[entityGroupName].interfaceSnippets[
                   apiReturnTypeInterfaceName
-                ] = `
-                  export type ${apiReturnTypeInterfaceName} = {
-                  }
-                `;
+                ] = `export type ${apiReturnTypeInterfaceName} = ${getInterfaceProperties(
+                  baseModelRefPath
+                )}`;
               }
 
               if (
@@ -241,7 +269,7 @@ const entities = Object.keys(swaggerDocs.paths).reduce(
               return apiReturnType.content[returnContentType].schema.type;
             }
           } else {
-            console.log({ apiReturnType, swaggerDocsPath });
+            // console.log({ apiReturnType, swaggerDocsPath });
           }
         })();
 

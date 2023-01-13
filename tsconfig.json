@@ -10,7 +10,7 @@
     "incremental": true,
     "inlineSourceMap": true,
     "isolatedModules": false,
-    "lib": ["es7", "dom", "ESNext.AsyncIterable"],
+    "lib": ["ESNext"],
     "listEmittedFiles": false /* Print names of generated files part of the compilation. */,
     "listFiles": false /* Print names of files part of the compilation. */,
     "module": "commonjs",
