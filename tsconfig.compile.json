@@ -1,14 +1,11 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "declaration": true,
     "emitDeclarationOnly": false,
-    "inlineSources": true,
     "moduleResolution": "node",
     "noEmit": false,
     "noResolve": false,
     "outDir": "./dist",
     "preserveConstEnums": true
   },
-  "extends": "./tsconfig.json"
+  "extends": "./tsconfig"
 }

@@ -346,7 +346,7 @@ export const generateTypescriptAPI = async ({
           if (queryParams.length > 0) {
             const interfaceName = `${pascalCaseActionName}QueryParams`;
             const queryParamPropertiesString = queryParams
-              .map(({ name, type, description }) => {
+              .map(({ name, type }) => {
                 const interfaceType = (() => {
                   if (['number', 'string'].includes(type)) {
                     return type;
