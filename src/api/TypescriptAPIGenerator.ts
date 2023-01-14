@@ -1,10 +1,9 @@
 import '@infinite-debugger/rmk-js-extensions/String';
 
-import { writeFileSync } from 'fs';
 import { dirname } from 'path';
 
 import { OS3Parameter, OS3Paths, OpenSpec3 } from '@tsed/openspec';
-import { ensureDirSync } from 'fs-extra';
+import { ensureDirSync, existsSync, writeFileSync } from 'fs-extra';
 import { pick } from 'lodash';
 import prettier from 'prettier';
 
@@ -712,14 +711,16 @@ export const generateTypescriptAPI = async ({
   // Outputting api adapter file
   const apiAdapterFilePath = `${outputRootPath}/api/Adapter.ts`;
 
-  ensureDirSync(dirname(apiAdapterFilePath));
-  writeFileSync(
-    apiAdapterFilePath,
-    prettier.format(`export * from '@infinite-debugger/axios-api-adapter';`, {
-      filepath: apiAdapterFilePath,
-      ...prettierConfig,
-    })
-  );
+  if (!existsSync(apiAdapterFilePath)) {
+    ensureDirSync(dirname(apiAdapterFilePath));
+    writeFileSync(
+      apiAdapterFilePath,
+      prettier.format(`export * from '@infinite-debugger/axios-api-adapter';`, {
+        filepath: apiAdapterFilePath,
+        ...prettierConfig,
+      })
+    );
+  }
 
   // Outputting index file
   const indexFilePath = `${outputRootPath}/index.ts`;
