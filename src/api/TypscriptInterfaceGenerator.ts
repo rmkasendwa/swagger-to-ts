@@ -1,12 +1,23 @@
 import { OpenSpec3 } from '@tsed/openspec';
 import { get } from 'lodash';
 
+export interface GetInterfacePropertiesOptions {
+  expandRefs?: boolean;
+}
+
 export const getInterfaceProperties = (
   swaggerDocs: OpenSpec3,
-  baseModelRefPath: string
+  baseModelRefPath: string,
+  options: GetInterfacePropertiesOptions = {}
 ): string => {
+  const { expandRefs = true } = options;
   const modelPropertiesPath =
-    baseModelRefPath.replace(/^#\//g, '').replaceAll('/', '.') + '.properties';
+    (() => {
+      if (baseModelRefPath.match(/^#\//g)) {
+        return baseModelRefPath.replace(/^#\//g, '').replaceAll('/', '.');
+      }
+      return `components.schemas.${baseModelRefPath}`;
+    })() + '.properties';
   const modelProperties = get(swaggerDocs, modelPropertiesPath);
   if (modelProperties) {
     const modelPropertiesString = Object.keys(modelProperties)
@@ -19,10 +30,17 @@ export const getInterfaceProperties = (
                   return modelProperties[key].items.type;
                 }
                 if (modelProperties[key].items?.$ref) {
-                  return `(${getInterfaceProperties(
-                    swaggerDocs,
-                    modelProperties[key].items?.$ref
-                  )})`;
+                  if (expandRefs) {
+                    return `(${getInterfaceProperties(
+                      swaggerDocs,
+                      modelProperties[key].items.$ref,
+                      options
+                    )})`;
+                  } else {
+                    return modelProperties[key].items.$ref
+                      .split('/')
+                      .slice(-1)[0];
+                  }
                 }
                 return 'any';
               })();
@@ -30,15 +48,22 @@ export const getInterfaceProperties = (
             }
             return modelProperties[key].type;
           })();
-          return `${key}: ${type}`;
+          return `${key}?: ${type}`;
         }
         if (modelProperties[key].$ref) {
-          return `${key}: ${getInterfaceProperties(
-            swaggerDocs,
-            modelProperties[key].$ref
-          )}`;
+          if (expandRefs) {
+            return `${key}?: ${getInterfaceProperties(
+              swaggerDocs,
+              modelProperties[key].$ref,
+              options
+            )}`;
+          } else {
+            return `${key}?: ${
+              modelProperties[key].$ref.split('/').slice(-1)[0]
+            }`;
+          }
         }
-        return `${key}: any`;
+        return `${key}?: any`;
       })
       .join(';\n');
 

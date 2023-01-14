@@ -42,10 +42,16 @@ const prettierConfig: prettier.Options = {
   endOfLine: 'auto',
 };
 
-const ouputSubFolders = ['api', 'data-keys', 'endpoint-paths', 'interfaces'];
+const ouputSubFolders = [
+  'api',
+  'data-keys',
+  'endpoint-paths',
+  'interfaces',
+] as const;
 
 const PATHS_LIB = `@infinite-debugger/rmk-utils/paths`;
 const API_ADAPTER_PATH = `./Adapter`;
+const interfacesFileLocationRelativetoAPI = `../interfaces`;
 
 export interface GenerateTypescriptAPIConfig {
   swaggerDocs: OpenSpec3;
@@ -97,7 +103,6 @@ export const generateTypescriptAPI = async ({
           }
 
           const endpointPathsFileLocationRelativetoAPI = `../endpoint-paths/${entityNamePascalCase}`;
-          const interfacesFileLocationRelativetoAPI = `../interfaces/${entityNamePascalCase}`;
 
           const name = summary.toCamelCase();
           const pascalCaseActionName = summary.toPascalCase();
@@ -212,22 +217,9 @@ export const generateTypescriptAPI = async ({
               const baseModelRefPath =
                 apiReturnType.content[returnContentType].schema.$ref;
               if (baseModelRefPath) {
-                const pathLevels = baseModelRefPath.split('/');
-                const apiReturnTypeInterfaceName =
-                  pathLevels[pathLevels.length - 1];
-
-                if (
-                  !accumulator[entityGroupName].interfaceSnippets[
-                    apiReturnTypeInterfaceName
-                  ]
-                ) {
-                  accumulator[entityGroupName].interfaceSnippets[
-                    apiReturnTypeInterfaceName
-                  ] = `export type ${apiReturnTypeInterfaceName} = ${getInterfaceProperties(
-                    swaggerDocs,
-                    baseModelRefPath
-                  )}`;
-                }
+                const apiReturnTypeInterfaceName = baseModelRefPath
+                  .split('/')
+                  .slice(-1)[0];
 
                 if (
                   !accumulator[entityGroupName].apiModuleImports[
@@ -263,22 +255,9 @@ export const generateTypescriptAPI = async ({
               const baseModelRefPath =
                 requestBody.content[requestContentType].schema.$ref;
               if (baseModelRefPath) {
-                const pathLevels = baseModelRefPath.split('/');
-                const apiRequestBodyTypeInterfaceName =
-                  pathLevels[pathLevels.length - 1];
-
-                if (
-                  !accumulator[entityGroupName].interfaceSnippets[
-                    apiRequestBodyTypeInterfaceName
-                  ]
-                ) {
-                  accumulator[entityGroupName].interfaceSnippets[
-                    apiRequestBodyTypeInterfaceName
-                  ] = `export type ${apiRequestBodyTypeInterfaceName} = ${getInterfaceProperties(
-                    swaggerDocs,
-                    baseModelRefPath
-                  )}`;
-                }
+                const apiRequestBodyTypeInterfaceName = baseModelRefPath
+                  .split('/')
+                  .slice(-1)[0];
 
                 if (
                   !accumulator[entityGroupName].apiModuleImports[
@@ -599,6 +578,33 @@ export const generateTypescriptAPI = async ({
     {} as Record<string, APIEntity>
   );
 
+  // Outputting all Schemas
+  if (swaggerDocs.components?.schemas) {
+    const interfacesFilePath = `${outputRootPath}/interfaces/Utils.ts`;
+    ensureDirSync(dirname(interfacesFilePath));
+    writeFileSync(
+      interfacesFilePath,
+      prettier.format(
+        Object.keys(swaggerDocs.components.schemas)
+          .map((schemaKey) => {
+            const schemaPropertiesString = getInterfaceProperties(
+              swaggerDocs,
+              schemaKey,
+              {
+                expandRefs: false,
+              }
+            );
+            return `export type ${schemaKey} = ${schemaPropertiesString}`;
+          })
+          .join('\n\n'),
+        {
+          filepath: interfacesFilePath,
+          ...prettierConfig,
+        }
+      )
+    );
+  }
+
   // Outputting files
   Object.values(entities).forEach(
     ({
@@ -695,10 +701,29 @@ export const generateTypescriptAPI = async ({
     writeFileSync(
       indexFilePath,
       prettier.format(
-        Object.values(entities)
-          .map(({ entityNamePascalCase }) => {
-            return `export * from './${entityNamePascalCase}';`;
+        [
+          ...Object.values(entities).map(
+            ({ entityNamePascalCase }) => entityNamePascalCase
+          ),
+          ...(() => {
+            switch (subFolderName) {
+              case 'api':
+                return ['Adapter'];
+              case 'interfaces':
+                return ['Utils'];
+            }
+            return [];
+          })(),
+        ]
+          .filter((importFileName) => {
+            return existsSync(
+              `${outputRootPath}/${subFolderName}/${importFileName}.ts`
+            );
           })
+          .map((importFileName) => {
+            return `export * from './${importFileName}';`;
+          })
+          .sort()
           .join('\n'),
         {
           filepath: indexFilePath,
