@@ -10,7 +10,6 @@ export const getInterfaceProperties = (
   baseModelRefPath: string,
   options: GetInterfacePropertiesOptions = {}
 ): string => {
-  const { expandRefs = true } = options;
   const modelPropertiesPath =
     (() => {
       if (baseModelRefPath.match(/^#\//g)) {
@@ -22,52 +21,79 @@ export const getInterfaceProperties = (
   if (modelProperties) {
     const modelPropertiesString = Object.keys(modelProperties)
       .map((key) => {
-        if (modelProperties[key].type) {
-          const type = (() => {
-            if (modelProperties[key].type === 'array') {
-              const itemType = (() => {
-                if (modelProperties[key].items?.type) {
-                  return modelProperties[key].items.type;
-                }
-                if (modelProperties[key].items?.$ref) {
-                  if (expandRefs) {
-                    return `(${getInterfaceProperties(
-                      swaggerDocs,
-                      modelProperties[key].items.$ref,
-                      options
-                    )})`;
-                  } else {
-                    return modelProperties[key].items.$ref
-                      .split('/')
-                      .slice(-1)[0];
-                  }
-                }
-                return 'any';
-              })();
-              return `${itemType}[]`;
-            }
-            return modelProperties[key].type;
-          })();
-          return `${key}?: ${type}`;
-        }
-        if (modelProperties[key].$ref) {
-          if (expandRefs) {
-            return `${key}?: ${getInterfaceProperties(
-              swaggerDocs,
-              modelProperties[key].$ref,
-              options
-            )}`;
-          } else {
-            return `${key}?: ${
-              modelProperties[key].$ref.split('/').slice(-1)[0]
-            }`;
-          }
-        }
-        return `${key}?: any`;
+        const interfacePropertyTypeString = getInterfacePropertyType(
+          modelProperties[key],
+          swaggerDocs,
+          options
+        );
+        return `${key}?: ${interfacePropertyTypeString}`;
       })
       .join(';\n');
 
     return `{\n${modelPropertiesString}\n}`;
   }
   return `{}`;
+};
+
+export const getInterfacePropertyType = (
+  modelSchema: any,
+  swaggerDocs: OpenSpec3,
+  options: GetInterfacePropertiesOptions = {}
+) => {
+  const { expandRefs = true } = options;
+  if (Array.isArray(modelSchema.enum)) {
+    const enumTypeString = (() => {
+      return modelSchema.enum
+        .map((enumValue: string) => {
+          if (enumValue.match(/^#\//g)) {
+            if (expandRefs) {
+              return `(${getInterfaceProperties(
+                swaggerDocs,
+                enumValue,
+                options
+              )})`;
+            } else {
+              return enumValue.split('/').slice(-1)[0];
+            }
+          }
+          return `'${enumValue}'`;
+        })
+        .join(' | ');
+    })();
+    return enumTypeString;
+  }
+  if (modelSchema.type) {
+    const type = (() => {
+      if (modelSchema.type === 'array') {
+        const itemType = (() => {
+          if (modelSchema.items?.type) {
+            return modelSchema.items.type;
+          }
+          if (modelSchema.items?.$ref) {
+            if (expandRefs) {
+              return `(${getInterfaceProperties(
+                swaggerDocs,
+                modelSchema.items.$ref,
+                options
+              )})`;
+            } else {
+              return modelSchema.items.$ref.split('/').slice(-1)[0];
+            }
+          }
+          return 'any';
+        })();
+        return `${itemType}[]`;
+      }
+      return modelSchema.type;
+    })();
+    return type;
+  }
+  if (modelSchema.$ref) {
+    if (expandRefs) {
+      return getInterfaceProperties(swaggerDocs, modelSchema.$ref, options);
+    } else {
+      return modelSchema.$ref.split('/').slice(-1)[0];
+    }
+  }
+  return 'any';
 };

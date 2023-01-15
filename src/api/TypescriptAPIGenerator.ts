@@ -7,7 +7,10 @@ import { ensureDirSync, existsSync, writeFileSync } from 'fs-extra';
 import { pick } from 'lodash';
 import prettier from 'prettier';
 
-import { getInterfaceProperties } from './TypscriptInterfaceGenerator';
+import {
+  getInterfaceProperties,
+  getInterfacePropertyType,
+} from './TypscriptInterfaceGenerator';
 
 type Parameter = {
   name: string;
@@ -325,16 +328,12 @@ export const generateTypescriptAPI = async ({
           if (queryParams.length > 0) {
             const interfaceName = `${pascalCaseActionName}QueryParams`;
             const queryParamPropertiesString = queryParams
-              .map(({ name, type }) => {
-                const interfaceType = (() => {
-                  if (['number', 'string'].includes(type)) {
-                    return type;
-                  }
-                  if (type === 'array') {
-                    return 'any[]';
-                  }
-                  return 'any';
-                })();
+              .map((schema) => {
+                const { name } = schema;
+                const interfaceType = getInterfacePropertyType(
+                  schema,
+                  swaggerDocs
+                );
                 // TODO: Add examples and defaults in jsdoc comment
                 return `${name}?: ${interfaceType};`;
               })
@@ -749,20 +748,21 @@ export const generateTypescriptAPI = async ({
 
   // Outputting index file
   const indexFilePath = `${outputRootPath}/index.ts`;
-
-  ensureDirSync(dirname(indexFilePath));
-  writeFileSync(
-    indexFilePath,
-    prettier.format(
-      ouputSubFolders
-        .map((subFolderName) => {
-          return `export * from './${subFolderName}';`;
-        })
-        .join('\n'),
-      {
-        filepath: indexFilePath,
-        ...prettierConfig,
-      }
-    )
-  );
+  if (!existsSync(indexFilePath)) {
+    ensureDirSync(dirname(indexFilePath));
+    writeFileSync(
+      indexFilePath,
+      prettier.format(
+        ouputSubFolders
+          .map((subFolderName) => {
+            return `export * from './${subFolderName}';`;
+          })
+          .join('\n'),
+        {
+          filepath: indexFilePath,
+          ...prettierConfig,
+        }
+      )
+    );
+  }
 };
