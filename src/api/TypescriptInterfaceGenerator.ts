@@ -44,19 +44,22 @@ export const getInterfacePropertyType = (
   if (Array.isArray(modelSchema.enum)) {
     const enumTypeString = (() => {
       return modelSchema.enum
-        .map((enumValue: string) => {
-          if (enumValue.match(/^#\//g)) {
-            if (expandRefs) {
-              return `(${getInterfaceProperties(
-                swaggerDocs,
-                enumValue,
-                options
-              )})`;
-            } else {
-              return enumValue.split('/').slice(-1)[0];
+        .map((enumValue: any) => {
+          if (typeof enumValue === 'string') {
+            if (enumValue.match(/^#\//g)) {
+              if (expandRefs) {
+                return `(${getInterfaceProperties(
+                  swaggerDocs,
+                  enumValue,
+                  options
+                )})`;
+              } else {
+                return enumValue.split('/').slice(-1)[0];
+              }
             }
+            return `'${enumValue}'`;
           }
-          return `'${enumValue}'`;
+          return enumValue;
         })
         .join(' | ');
     })();

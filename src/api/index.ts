@@ -1,2 +1,2 @@
 export * from './TypescriptAPIGenerator';
-export * from './TypscriptInterfaceGenerator';
+export * from './TypescriptInterfaceGenerator';

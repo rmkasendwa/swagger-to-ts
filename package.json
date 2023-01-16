@@ -1,6 +1,6 @@
 {
   "name": "swagger-to-ts",
-  "version": "0.1.0-alpha.16",
+  "version": "0.1.0-alpha.17",
   "description": "Generates typescript api client from open api/swagger api documentation.",
   "keywords": [
     "swagger",

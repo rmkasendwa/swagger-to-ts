@@ -10,13 +10,14 @@ import prettier from 'prettier';
 import {
   getInterfaceProperties,
   getInterfacePropertyType,
-} from './TypscriptInterfaceGenerator';
+} from './TypescriptInterfaceGenerator';
 
 type Parameter = {
   name: string;
   description?: string;
-  type: string;
   required?: boolean;
+  type: string;
+  schema: any;
 };
 
 interface APIAction {
@@ -320,7 +321,7 @@ export const generateTypescriptAPI = async ({
             .map((baseParameter) => {
               const parameter = baseParameter as OS3Parameter;
               return {
-                ...pick(parameter, 'name', 'description', 'required'),
+                ...pick(parameter, 'name', 'description', 'required', 'schema'),
                 type: (parameter.schema as any).type, // TODO: Deal with complex types
               } as Parameter;
             });
@@ -328,8 +329,7 @@ export const generateTypescriptAPI = async ({
           if (queryParams.length > 0) {
             const interfaceName = `${pascalCaseActionName}QueryParams`;
             const queryParamPropertiesString = queryParams
-              .map((schema) => {
-                const { name } = schema;
+              .map(({ name, schema }) => {
                 const interfaceType = getInterfacePropertyType(
                   schema,
                   swaggerDocs
