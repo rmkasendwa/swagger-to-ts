@@ -26,7 +26,7 @@ export const getInterfaceProperties = (
           swaggerDocs,
           options
         );
-        return `${key}?: ${interfacePropertyTypeString}`;
+        return `'${key}'?: ${interfacePropertyTypeString}`;
       })
       .join(';\n');
 

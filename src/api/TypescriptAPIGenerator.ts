@@ -335,7 +335,7 @@ export const generateTypescriptAPI = async ({
                   swaggerDocs
                 );
                 // TODO: Add examples and defaults in jsdoc comment
-                return `${name}?: ${interfaceType};`;
+                return `'${name}'?: ${interfaceType};`;
               })
               .join('\n');
 
@@ -475,7 +475,7 @@ export const generateTypescriptAPI = async ({
                 }
                 return [];
               })(),
-              `{ ...rest }: RequestOptions`,
+              `{ ...rest }: RequestOptions = {}`,
             ].join(', ');
 
             if (apiReturnType) {
