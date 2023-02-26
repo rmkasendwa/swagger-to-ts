@@ -57,6 +57,9 @@ const PATHS_LIB = `@infinite-debugger/rmk-utils/paths`;
 const API_ADAPTER_PATH = `./Adapter`;
 const interfacesFileLocationRelativetoAPI = `../interfaces`;
 
+export const TYPESCRIPT_ENVIRONMENT_INTERFACES = ['ArrayBuffer'];
+export const BINARY_RESPONSE_TYPES = ['ArrayBuffer'];
+
 export interface GenerateTypescriptAPIConfig {
   swaggerDocs: OpenSpec3;
   outputRootPath: string;
@@ -224,6 +227,14 @@ export const generateTypescriptAPI = async ({
                 const apiReturnTypeInterfaceName = baseModelRefPath
                   .split('/')
                   .slice(-1)[0];
+
+                if (
+                  TYPESCRIPT_ENVIRONMENT_INTERFACES.includes(
+                    apiReturnTypeInterfaceName
+                  )
+                ) {
+                  return apiReturnTypeInterfaceName;
+                }
 
                 if (
                   !accumulator[entityGroupName].apiModuleImports[
@@ -551,6 +562,9 @@ export const generateTypescriptAPI = async ({
             return 'any';
           })();
 
+          const isBinaryResponseType =
+            BINARY_RESPONSE_TYPES.includes(returnTypeString);
+
           accumulator[entityGroupName].actions.push({
             name,
             enpointPathString,
@@ -561,7 +575,9 @@ export const generateTypescriptAPI = async ({
                 const { data } = await ${httpActionString}<${returnTypeString}>(${interpolatedEndpointPathWithQueryParamsString}, {
                   label: '${actionDescription}',${
               headerParams.length > 0 ? '\nheaders,' : ''
-            }${apiRequestBodyTypeInterfaceName ? '\ndata: requestPayload,' : ''}
+            }${
+              apiRequestBodyTypeInterfaceName ? '\ndata: requestPayload,' : ''
+            }${isBinaryResponseType ? "\nresponseType: 'blob'," : ''}
                   ...rest,
                 });
                 return data;
@@ -585,6 +601,9 @@ export const generateTypescriptAPI = async ({
       interfacesFilePath,
       prettier.format(
         Object.keys(swaggerDocs.components.schemas)
+          .filter((schemaKey) => {
+            return !TYPESCRIPT_ENVIRONMENT_INTERFACES.includes(schemaKey);
+          })
           .map((schemaKey) => {
             const schemaPropertiesString = getInterfaceProperties(
               swaggerDocs,
