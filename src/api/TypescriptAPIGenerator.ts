@@ -550,7 +550,10 @@ export const generateTypescriptAPI = async ({
                   `addSearchParams`
                 );
               }
-              return `addSearchParams(${interpolatedEndpointPathString}, {...queryParams})`;
+              return `addSearchParams(${interpolatedEndpointPathString},
+                {...queryParams}, {
+                arrayParamStyle: 'append'
+              })`;
             }
             return interpolatedEndpointPathString;
           })();

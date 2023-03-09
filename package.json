@@ -1,6 +1,6 @@
 {
   "name": "swagger-to-ts",
-  "version": "0.1.0-alpha.25",
+  "version": "0.1.0-alpha.26",
   "description": "Generates typescript api client from open api/swagger api documentation.",
   "keywords": [
     "swagger",
@@ -29,7 +29,7 @@
     "eslint": "eslint --fix",
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,html,htm,json,css,scss,md}\"",
     "prepare": "husky install",
-    "publish:dev": "npm run build && cd ./dist && npm publish --registry http://localhost:4873",
+    "publish:dev": "npm run build && cd ./dist && npm publish --registry http://localhost:4873 && npm i -g --registry http://localhost:4873 swagger-to-ts@latest",
     "start": "tsnd --ignore-watch node_modules --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
     "test": "jest"
   },
