@@ -1,6 +1,6 @@
 {
   "name": "swagger-to-ts",
-  "version": "0.1.0-alpha.26",
+  "version": "0.1.0-alpha.27",
   "description": "Generates typescript api client from open api/swagger api documentation.",
   "keywords": [
     "swagger",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@infinite-debugger/axios-api-adapter": "^0.1.0-alpha.1",
-    "@infinite-debugger/rmk-utils": "^0.1.0-alpha.7",
+    "@infinite-debugger/rmk-utils": "^0.1.0-alpha.12",
     "@tsed/openspec": "^7.10.0",
     "@types/eslint": "^8.4.10",
     "@types/fs-extra": "^11.0.1",

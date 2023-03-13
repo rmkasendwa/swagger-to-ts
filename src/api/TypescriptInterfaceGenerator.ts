@@ -57,13 +57,15 @@ export const getInterfacePropertyType = (
                 return enumValue.split('/').slice(-1)[0];
               }
             }
-            return `'${enumValue}'`;
+            return `"${enumValue}"`;
           }
           return enumValue;
         })
         .join(' | ');
     })();
-    return enumTypeString;
+    if (enumTypeString.length > 0) {
+      return enumTypeString;
+    }
   }
   if (modelSchema.type) {
     const type = (() => {
