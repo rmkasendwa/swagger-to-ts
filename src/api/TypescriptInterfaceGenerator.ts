@@ -10,14 +10,17 @@ export const getInterfaceProperties = (
   baseModelRefPath: string,
   options: GetInterfacePropertiesOptions = {}
 ): string => {
-  const modelPropertiesPath =
-    (() => {
-      if (baseModelRefPath.match(/^#\//g)) {
-        return baseModelRefPath.replace(/^#\//g, '').replaceAll('/', '.');
-      }
-      return `components.schemas.${baseModelRefPath}`;
-    })() + '.properties';
+  const modelPath = (() => {
+    if (baseModelRefPath.match(/^#\//g)) {
+      return baseModelRefPath.replace(/^#\//g, '').replaceAll('/', '.');
+    }
+    return `components.schemas.${baseModelRefPath}`;
+  })();
+  const modelPropertiesPath = modelPath + '.properties';
+  const modelRequiredPropertiesPath = modelPath + '.required';
   const modelProperties = get(swaggerDocs, modelPropertiesPath);
+  const modelRequiredProperties: string[] =
+    get(swaggerDocs, modelRequiredPropertiesPath) || [];
   if (modelProperties) {
     const modelPropertiesString = Object.keys(modelProperties)
       .map((key) => {
@@ -26,6 +29,9 @@ export const getInterfaceProperties = (
           swaggerDocs,
           options
         );
+        if (modelRequiredProperties.includes(key)) {
+          return `'${key}': ${interfacePropertyTypeString}`;
+        }
         return `'${key}'?: ${interfacePropertyTypeString}`;
       })
       .join(';\n');
