@@ -63,7 +63,10 @@ export const getInterfacePropertyType = (
                 return enumValue.split('/').slice(-1)[0];
               }
             }
-            return `"${enumValue}"`;
+            if (enumValue.includes('"') && !enumValue.includes("'")) {
+              return `'${enumValue}'`;
+            }
+            return `"${enumValue.replace(/(['"])/g, '\\$1')}"`;
           }
           return enumValue;
         })
