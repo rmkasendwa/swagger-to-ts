@@ -110,6 +110,7 @@ export const generateTypescriptAPI = async ({
           }
 
           const endpointPathsFileLocationRelativetoAPI = `../endpoint-paths/${entityNamePascalCase}`;
+          const dataKeysFileLocationRelativetoAPI = `../data-keys/${entityNamePascalCase}`;
 
           const name = summary.toCamelCase();
           const pascalCaseActionName = summary.toPascalCase();
@@ -118,6 +119,8 @@ export const generateTypescriptAPI = async ({
             .replace(/\s+/g, '_')
             .toUpperCase()}_ENDPOINT_PATH`;
           const enpointPathString = pathKey.replace(/\{(\w+)\}/g, ':$1');
+
+          const dataKeyString = `${entityNameUpperCase}_DATA_KEY`;
 
           accumulator[entityGroupName].endpointPaths[
             endpointPathIdentifierString
@@ -568,6 +571,31 @@ export const generateTypescriptAPI = async ({
           const isBinaryResponseType =
             BINARY_RESPONSE_TYPES.includes(returnTypeString);
 
+          const cacheIdString = (() => {
+            if (httpActionString.match(/get/gi)) {
+              if (
+                !accumulator[entityGroupName].apiModuleImports[
+                  dataKeysFileLocationRelativetoAPI
+                ]
+              ) {
+                accumulator[entityGroupName].apiModuleImports[
+                  dataKeysFileLocationRelativetoAPI
+                ] = [];
+              }
+              if (
+                !accumulator[entityGroupName].apiModuleImports[
+                  dataKeysFileLocationRelativetoAPI
+                ].includes(dataKeyString)
+              ) {
+                accumulator[entityGroupName].apiModuleImports[
+                  dataKeysFileLocationRelativetoAPI
+                ].push(dataKeyString);
+              }
+              return `\ncacheId: ${dataKeyString},`;
+            }
+            return '';
+          })();
+
           accumulator[entityGroupName].actions.push({
             name,
             enpointPathString,
@@ -580,7 +608,9 @@ export const generateTypescriptAPI = async ({
               headerParams.length > 0 ? '\nheaders,' : ''
             }${
               apiRequestBodyTypeInterfaceName ? '\ndata: requestPayload,' : ''
-            }${isBinaryResponseType ? "\nresponseType: 'blob'," : ''}
+            }${cacheIdString}${
+              isBinaryResponseType ? "\nresponseType: 'blob'," : ''
+            }
                   ...rest,
                 });
                 return data;
