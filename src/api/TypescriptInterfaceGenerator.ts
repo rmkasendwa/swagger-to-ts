@@ -2,14 +2,22 @@ import { OpenSpec3 } from '@tsed/openspec';
 import { get } from 'lodash';
 
 export interface GetInterfacePropertiesOptions {
+  swaggerDocs: OpenSpec3;
+  modelName: string;
+  baseModelRefPath: string;
   expandRefs?: boolean;
 }
 
-export const getInterfaceProperties = (
-  swaggerDocs: OpenSpec3,
-  baseModelRefPath: string,
-  options: GetInterfacePropertiesOptions = {}
-): string => {
+export const getModelDefinitions = ({
+  swaggerDocs,
+  baseModelRefPath,
+  modelName,
+  expandRefs,
+}: GetInterfacePropertiesOptions): {
+  modelDefinition: string;
+  dependencyModelDefinitions: string[];
+} => {
+  const dependencyModelDefinitions: string[] = [];
   const modelPath = (() => {
     if (baseModelRefPath.match(/^#\//g)) {
       return baseModelRefPath.replace(/^#\//g, '').replaceAll('/', '.');
@@ -24,56 +32,116 @@ export const getInterfaceProperties = (
   if (modelProperties) {
     const modelPropertiesString = Object.keys(modelProperties)
       .map((key) => {
-        const interfacePropertyTypeString = getInterfacePropertyType(
-          modelProperties[key],
+        const {
+          propertyType,
+          dependencyModelDefinitions: propertyTypedependencyModelDefinitions,
+        } = getModelPropertyType({
+          modelSchema: modelProperties[key],
           swaggerDocs,
-          options
+          modelName,
+          propertyName: key,
+          expandRefs,
+        });
+        dependencyModelDefinitions.push(
+          ...propertyTypedependencyModelDefinitions
         );
         if (modelRequiredProperties.includes(key)) {
-          return `'${key}': ${interfacePropertyTypeString}`;
+          return `'${key}': ${propertyType}`;
         }
-        return `'${key}'?: ${interfacePropertyTypeString}`;
+        return `'${key}'?: ${propertyType}`;
       })
       .join(';\n');
 
-    return `{\n${modelPropertiesString}\n}`;
+    return {
+      modelDefinition: `export type ${modelName} = {\n${modelPropertiesString}\n}`,
+      dependencyModelDefinitions,
+    };
   }
-  return `{}`;
+  return {
+    modelDefinition: `export type ${modelName} = {}`,
+    dependencyModelDefinitions,
+  };
 };
 
-export const getInterfacePropertyType = (
-  modelSchema: any,
-  swaggerDocs: OpenSpec3,
-  options: GetInterfacePropertiesOptions = {}
-) => {
-  const { expandRefs = true } = options;
+export interface GetInterfacePropertyTypeOptions {
+  swaggerDocs: OpenSpec3;
+  modelSchema: any;
+  propertyName: string;
+  modelName: string;
+  expandRefs?: boolean;
+}
+
+export const getModelPropertyType = (
+  options: GetInterfacePropertyTypeOptions
+): {
+  propertyType: string;
+  dependencyModelDefinitions: string[];
+} => {
+  const dependencyModelDefinitions: string[] = [];
+  const {
+    swaggerDocs,
+    modelSchema,
+    expandRefs = true,
+    modelName,
+    propertyName,
+  } = options;
   if (Array.isArray(modelSchema.enum)) {
-    const enumTypeString = (() => {
-      return modelSchema.enum
-        .map((enumValue: any) => {
-          if (typeof enumValue === 'string') {
-            if (enumValue.match(/^#\//g)) {
-              if (expandRefs) {
-                return `(${getInterfaceProperties(
-                  swaggerDocs,
-                  enumValue,
-                  options
-                )})`;
-              } else {
-                return enumValue.split('/').slice(-1)[0];
-              }
+    const enumValues = (() => {
+      return modelSchema.enum.map((enumValue: any) => {
+        if (typeof enumValue === 'string') {
+          if (enumValue.match(/^#\//g)) {
+            if (expandRefs) {
+              const nestedModelName = `${modelName.toPascalCase()}${propertyName.toPascalCase()}`;
+              const {
+                modelDefinition,
+                dependencyModelDefinitions: modeldependencyModelDefinitions,
+              } = getModelDefinitions({
+                swaggerDocs,
+                baseModelRefPath: enumValue,
+                modelName: nestedModelName,
+                expandRefs,
+              });
+              dependencyModelDefinitions.push(
+                ...modeldependencyModelDefinitions,
+                modelDefinition
+              );
+              return nestedModelName;
+            } else {
+              return enumValue.split('/').slice(-1)[0];
             }
-            if (enumValue.includes('"') && !enumValue.includes("'")) {
-              return `'${enumValue}'`;
-            }
-            return `"${enumValue.replace(/(['"])/g, '\\$1')}"`;
           }
-          return enumValue;
-        })
-        .join(' | ');
+          if (enumValue.includes('"') && !enumValue.includes("'")) {
+            return `'${enumValue}'`;
+          }
+          return `"${enumValue.replace(/(['"])/g, '\\$1')}"`;
+        }
+        return enumValue;
+      });
     })();
-    if (enumTypeString.length > 0) {
-      return enumTypeString;
+    if (enumValues.length > 0) {
+      if (modelName && propertyName) {
+        const propertyType = `${modelName.toPascalCase()}${propertyName.toPascalCase()}`;
+        const optionsVariableName = `${
+          propertyType.charAt(0).toLowerCase() + propertyType.slice(1)
+        }Options`;
+        dependencyModelDefinitions.push(
+          `
+          export const ${optionsVariableName} = [${enumValues.join(
+            ', '
+          )}] as const;
+
+          export type ${propertyType} = typeof ${optionsVariableName}[number];
+        `.trimIndent()
+        );
+        return {
+          propertyType: propertyType,
+          dependencyModelDefinitions,
+        };
+      }
+      return {
+        propertyType: enumValues.join(' | '),
+        dependencyModelDefinitions,
+      };
     }
   }
   if (modelSchema.type) {
@@ -85,11 +153,21 @@ export const getInterfacePropertyType = (
           }
           if (modelSchema.items?.$ref) {
             if (expandRefs) {
-              return `(${getInterfaceProperties(
+              const nestedModelName = `${modelName.toPascalCase()}${propertyName.toPascalCase()}`;
+              const {
+                modelDefinition,
+                dependencyModelDefinitions: modeldependencyModelDefinitions,
+              } = getModelDefinitions({
                 swaggerDocs,
-                modelSchema.items.$ref,
-                options
-              )})`;
+                baseModelRefPath: modelSchema.items.$ref,
+                modelName: nestedModelName,
+                expandRefs,
+              });
+              dependencyModelDefinitions.push(
+                ...modeldependencyModelDefinitions,
+                modelDefinition
+              );
+              return nestedModelName;
             } else {
               return modelSchema.items.$ref.split('/').slice(-1)[0];
             }
@@ -100,14 +178,40 @@ export const getInterfacePropertyType = (
       }
       return modelSchema.type;
     })();
-    return type;
+    return {
+      propertyType: type,
+      dependencyModelDefinitions,
+    };
   }
   if (modelSchema.$ref) {
     if (expandRefs) {
-      return getInterfaceProperties(swaggerDocs, modelSchema.$ref, options);
+      const nestedModelName = `${modelName.toPascalCase()}${propertyName.toPascalCase()}`;
+      const {
+        modelDefinition,
+        dependencyModelDefinitions: modeldependencyModelDefinitions,
+      } = getModelDefinitions({
+        swaggerDocs,
+        baseModelRefPath: modelSchema.$ref,
+        modelName: nestedModelName,
+        expandRefs,
+      });
+      dependencyModelDefinitions.push(
+        ...modeldependencyModelDefinitions,
+        modelDefinition
+      );
+      return {
+        propertyType: nestedModelName,
+        dependencyModelDefinitions,
+      };
     } else {
-      return modelSchema.$ref.split('/').slice(-1)[0];
+      return {
+        propertyType: modelSchema.$ref.split('/').slice(-1)[0],
+        dependencyModelDefinitions,
+      };
     }
   }
-  return 'any';
+  return {
+    propertyType: 'any',
+    dependencyModelDefinitions,
+  };
 };

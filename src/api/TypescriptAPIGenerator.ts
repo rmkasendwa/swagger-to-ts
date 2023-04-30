@@ -8,8 +8,8 @@ import { pick } from 'lodash';
 import prettier from 'prettier';
 
 import {
-  getInterfaceProperties,
-  getInterfacePropertyType,
+  getModelDefinitions,
+  getModelPropertyType,
 } from './TypescriptInterfaceGenerator';
 
 type Parameter = {
@@ -341,15 +341,24 @@ export const generateTypescriptAPI = async ({
             });
 
           if (queryParams.length > 0) {
-            const interfaceName = `${pascalCaseActionName}QueryParams`;
+            const modelName = `${pascalCaseActionName}QueryParams`;
+            const dependencyModelDefinitions: string[] = [];
             const queryParamPropertiesString = queryParams
-              .map(({ name, schema }) => {
-                const interfaceType = getInterfacePropertyType(
-                  schema,
-                  swaggerDocs
+              .map(({ name: propertyName, schema: modelSchema }) => {
+                const {
+                  propertyType,
+                  dependencyModelDefinitions: typeDependencyModelDefinitions,
+                } = getModelPropertyType({
+                  modelSchema,
+                  swaggerDocs,
+                  modelName,
+                  propertyName,
+                });
+                dependencyModelDefinitions.push(
+                  ...typeDependencyModelDefinitions
                 );
                 // TODO: Add examples and defaults in jsdoc comment
-                return `'${name}'?: ${interfaceType};`;
+                return `'${propertyName}'?: ${propertyType};`;
               })
               .join('\n');
 
@@ -365,21 +374,23 @@ export const generateTypescriptAPI = async ({
             if (
               !accumulator[entityGroupName].apiModuleImports[
                 interfacesFileLocationRelativetoAPI
-              ].includes(interfaceName)
+              ].includes(modelName)
             ) {
               accumulator[entityGroupName].apiModuleImports[
                 interfacesFileLocationRelativetoAPI
-              ].push(interfaceName);
+              ].push(modelName);
             }
 
-            if (
-              !accumulator[entityGroupName].interfaceSnippets[interfaceName]
-            ) {
-              accumulator[entityGroupName].interfaceSnippets[interfaceName] = `
-                export type ${interfaceName} = {
+            if (!accumulator[entityGroupName].interfaceSnippets[modelName]) {
+              accumulator[entityGroupName].interfaceSnippets[modelName] = `
+                //#region ${modelName} model definitions
+                ${dependencyModelDefinitions.join('\n\n')}
+
+                export type ${modelName} = {
                   ${queryParamPropertiesString}
                 }
-              `;
+                //#endregion
+              `.trimIndent();
             }
           }
 
@@ -637,16 +648,17 @@ export const generateTypescriptAPI = async ({
           .filter((schemaKey) => {
             return !TYPESCRIPT_ENVIRONMENT_INTERFACES.includes(schemaKey);
           })
-          .map((schemaKey) => {
-            const schemaPropertiesString = getInterfaceProperties(
-              swaggerDocs,
-              schemaKey,
-              {
+          .reduce((accumulator, schemaKey) => {
+            const { modelDefinition, dependencyModelDefinitions } =
+              getModelDefinitions({
+                swaggerDocs,
+                baseModelRefPath: schemaKey,
                 expandRefs: false,
-              }
-            );
-            return `export type ${schemaKey} = ${schemaPropertiesString}`;
-          })
+                modelName: schemaKey,
+              });
+            accumulator.push(...dependencyModelDefinitions, modelDefinition);
+            return accumulator;
+          }, [] as string[])
           .join('\n\n'),
         {
           filepath: interfacesFilePath,
