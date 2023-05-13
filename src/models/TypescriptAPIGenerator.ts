@@ -1,4 +1,8 @@
-import { Request, RequestMethod } from './OpenAPISpecification/Request';
+import {
+  Request,
+  RequestMethod,
+  RequestParameter,
+} from './OpenAPISpecification/Request';
 
 export const TYPESCRIPT_ENVIRONMENT_INTERFACES = ['ArrayBuffer'];
 export const BINARY_RESPONSE_TYPES = ['ArrayBuffer'];
@@ -6,7 +10,9 @@ export const BINARY_RESPONSE_TYPES = ['ArrayBuffer'];
 export interface TypescriptAPIGeneratorRequest extends Request {
   method: RequestMethod;
   operationName: string;
-  requestPath: string;
+  endpointPath: string;
+  endpointPathName: string;
+  pathParameters?: RequestParameter[];
 }
 
 export interface ZodValidationSchemaProperty {

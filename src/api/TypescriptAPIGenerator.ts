@@ -34,7 +34,7 @@ export const generateTypescriptAPI = async ({
           accumulator[tag].push({
             ...request,
             method: method as RequestMethod,
-            requestPath: path,
+            endpointPath: path,
             operationName: (() => {
               if (
                 requestOperationName === 'requestSummary' &&
@@ -43,6 +43,28 @@ export const generateTypescriptAPI = async ({
                 return request.summary.toCamelCase();
               }
               return request.operationId;
+            })(),
+            endpointPathName:
+              (() => {
+                if (
+                  requestOperationName === 'requestSummary' &&
+                  request.summary
+                ) {
+                  return request.summary.replace(/\s/g, '_').toUpperCase();
+                }
+                return request.operationId.replace(/\s/g, '_').toUpperCase();
+              })() + `_ENDPOINT_PATH`,
+            ...(() => {
+              if (request.parameters) {
+                const pathParameters = request.parameters.filter(
+                  (parameter) => parameter.in === 'path'
+                );
+                if (pathParameters.length > 0) {
+                  return {
+                    pathParameters,
+                  };
+                }
+              }
             })(),
           });
         });
@@ -130,6 +152,55 @@ export const generateTypescriptAPI = async ({
     modelsIndexOutputFilePath,
     prettier.format(
       Object.keys(models)
+        .map((entityName) => {
+          return `export * from './${entityName.toPascalCase()}';`;
+        })
+        .join('\n'),
+      {
+        filepath: modelsIndexOutputFilePath,
+        ...prettierConfig,
+      }
+    )
+  );
+  //#endregion
+
+  //#region Write api output files
+  const apiOutputFilePath = `${outputRootPath}/api`;
+  ensureDirSync(apiOutputFilePath);
+  Object.keys(requestGroupings).forEach((entityName) => {
+    const pascalCaseEntityName = entityName.toPascalCase();
+    const apiFileName = `${pascalCaseEntityName}.ts`;
+    const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
+
+    const entityAPIEndpointPathsOutputCode = requestGroupings[entityName]
+      .map(({ endpointPath, endpointPathName, pathParameters }) => {
+        if (pathParameters && pathParameters.length > 0) {
+          const parametersCode = pathParameters
+            .reduce((accumulator, { name }) => {
+              accumulator.push(`${name}: string`);
+              return accumulator;
+            }, [] as string[])
+            .join(';\n');
+          return `export const ${endpointPathName}: TemplatePath<{${parametersCode}}> = '${endpointPath}';`;
+        }
+        return `export const ${endpointPathName} = '${endpointPath}';`;
+      })
+      .join('\n');
+
+    writeFileSync(
+      entityAPIOutputFilePath,
+      prettier.format([entityAPIEndpointPathsOutputCode].join('\n\n'), {
+        filepath: entityAPIOutputFilePath,
+        ...prettierConfig,
+      })
+    );
+  });
+
+  const apiIndexOutputFilePath = `${apiOutputFilePath}/index.ts`;
+  writeFileSync(
+    apiIndexOutputFilePath,
+    prettier.format(
+      Object.keys(requestGroupings)
         .map((entityName) => {
           return `export * from './${entityName.toPascalCase()}';`;
         })

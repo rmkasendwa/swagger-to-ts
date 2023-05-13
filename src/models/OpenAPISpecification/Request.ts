@@ -12,7 +12,7 @@ export type BaseRequestParameter = {
 };
 
 export type RequestParameter = {
-  in: 'query' | 'header';
+  in: 'query' | 'header' | 'path';
   required: boolean;
   name: string;
   description?: string;
