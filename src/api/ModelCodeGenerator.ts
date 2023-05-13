@@ -2,6 +2,8 @@ import { isEmpty } from 'lodash';
 
 import { ModuleImports, OpenAPISpecification } from '../models';
 import {
+  BINARY_RESPONSE_TYPE_MODEL_NAME,
+  ENVIRONMENT_DEFINED_MODELS,
   GeneratedSchemaCodeConfiguration,
   RequestGroupings,
   ZodValidationSchemaProperty,
@@ -38,20 +40,35 @@ export const generateModelMappings = ({
               return [];
             })(),
           ].forEach(({ content }) => {
-            if (
-              content &&
-              'application/json' in content &&
-              '$ref' in content['application/json'].schema
-            ) {
-              const schemaReference = content['application/json'].schema.$ref;
-              const schemaName = schemaReference.split('/').pop()!;
-              [
-                schemaName,
-                ...findSchemaReferencedSchemas({
+            if (content) {
+              if (
+                'application/json' in content &&
+                '$ref' in content['application/json'].schema
+              ) {
+                const schemaReference = content['application/json'].schema.$ref;
+                const schemaName = schemaReference.split('/').pop()!;
+                [
                   schemaName,
-                  swaggerDocs,
-                }),
-              ].forEach((schemaName) => {
+                  ...findSchemaReferencedSchemas({
+                    schemaName,
+                    swaggerDocs,
+                  }),
+                ].forEach((schemaName) => {
+                  if (!accumulator[schemaName]) {
+                    accumulator[schemaName] = [];
+                  }
+                  tags.forEach((tag) => {
+                    if (!accumulator[schemaName].includes(tag)) {
+                      accumulator[schemaName].push(tag);
+                    }
+                  });
+                });
+              }
+              if (
+                'image/png' in content &&
+                '$ref' in content['image/png'].schema
+              ) {
+                const schemaName = BINARY_RESPONSE_TYPE_MODEL_NAME;
                 if (!accumulator[schemaName]) {
                   accumulator[schemaName] = [];
                 }
@@ -60,7 +77,7 @@ export const generateModelMappings = ({
                     accumulator[schemaName].push(tag);
                   }
                 });
-              });
+              }
             }
           });
 
@@ -153,69 +170,74 @@ export const generateModelMappings = ({
     .sort()
     .reduce(
       (accumulator, entityName) => {
-        entitySchemaGroups[entityName].sort().forEach((schemaName) => {
-          if (!accumulator[entityName]) {
-            accumulator[entityName] = {
-              models: {},
-            };
-          }
-          const {
-            generatedVariables,
-            zodValidationSchemaCode,
-            zodValidationSchemaConfiguration,
-            referencedSchemas,
-            inferedTypeCode,
-            zodValidationSchemaName,
-            imports,
-          } = generateModelCode({
-            schemaName,
-            swaggerDocs,
-          });
-
-          referencedSchemas.forEach((referencedSchemaName) => {
-            const referencedSchemaEntityName =
-              schemaToEntityMappings[referencedSchemaName];
-            if (referencedSchemaEntityName != entityName) {
-              addModuleImport({
-                imports,
-                importName: referencedSchemaName,
-                importFilePath: `./${referencedSchemaEntityName}`,
-              });
+        entitySchemaGroups[entityName]
+          .filter((schemaName) => {
+            return !ENVIRONMENT_DEFINED_MODELS.includes(schemaName as any);
+          })
+          .sort()
+          .forEach((schemaName) => {
+            if (!accumulator[entityName]) {
+              accumulator[entityName] = {
+                models: {},
+              };
             }
-          });
+            const {
+              generatedVariables,
+              zodValidationSchemaCode,
+              zodValidationSchemaConfiguration,
+              referencedSchemas,
+              inferedTypeCode,
+              zodValidationSchemaName,
+              imports,
+            } = generateModelCode({
+              schemaName,
+              swaggerDocs,
+            });
 
-          accumulator[entityName].models[schemaName] = {
-            name: schemaName,
-            zodValidationSchemaCode,
-            zodValidationSchemaConfiguration,
-            zodValidationSchemaName,
-            inferedTypeCode,
-            generatedVariables,
-            imports,
-            ...(() => {
-              if (referencedSchemas.length > 0) {
-                return {
-                  referencedSchemas,
-                };
-              }
-            })(),
-          };
-
-          if (imports) {
-            if (!accumulator[entityName].imports) {
-              accumulator[entityName].imports = {};
-            }
-            Object.keys(imports).forEach((importFilePath) => {
-              imports[importFilePath].forEach((importName) => {
+            referencedSchemas.forEach((referencedSchemaName) => {
+              const referencedSchemaEntityName =
+                schemaToEntityMappings[referencedSchemaName];
+              if (referencedSchemaEntityName != entityName) {
                 addModuleImport({
-                  imports: accumulator[entityName].imports!,
-                  importName: importName,
-                  importFilePath,
+                  imports,
+                  importName: referencedSchemaName,
+                  importFilePath: `./${referencedSchemaEntityName}`,
+                });
+              }
+            });
+
+            accumulator[entityName].models[schemaName] = {
+              name: schemaName,
+              zodValidationSchemaCode,
+              zodValidationSchemaConfiguration,
+              zodValidationSchemaName,
+              inferedTypeCode,
+              generatedVariables,
+              imports,
+              ...(() => {
+                if (referencedSchemas.length > 0) {
+                  return {
+                    referencedSchemas,
+                  };
+                }
+              })(),
+            };
+
+            if (imports) {
+              if (!accumulator[entityName].imports) {
+                accumulator[entityName].imports = {};
+              }
+              Object.keys(imports).forEach((importFilePath) => {
+                imports[importFilePath].forEach((importName) => {
+                  addModuleImport({
+                    imports: accumulator[entityName].imports!,
+                    importName: importName,
+                    importFilePath,
+                  });
                 });
               });
-            });
-          }
-        });
+            }
+          });
         return accumulator;
       },
       {} as Record<

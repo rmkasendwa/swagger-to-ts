@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import {
   API_ADAPTER_PATH,
-  BINARY_RESPONSE_TYPES,
+  ENVIRONMENT_DEFINED_MODELS,
   GeneratedSchemaCodeConfiguration,
   ModuleImports,
   PATHS_LIBRARY_PATH,
@@ -355,19 +355,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               return interpolatedEndpointPathString;
             })();
 
-            const isBinaryResponseType = Boolean(
-              successResponseSchemaName &&
-                BINARY_RESPONSE_TYPES.includes(successResponseSchemaName)
-            );
-
-            const cacheIdString = (() => {
-              if (method.match(/get/gi)) {
-                return `\ncacheId: ${dataKeyVariableName},`;
-              }
-              return '';
-            })();
-
-            const httpActionName = (() => {
+            let httpActionName = (() => {
               if (method === 'delete') {
                 return `_delete`;
               }
@@ -380,6 +368,24 @@ export const getAPIFunctionsCodeConfiguration = ({
               importFilePath: API_ADAPTER_PATH,
             });
 
+            const isEnvironmentDefinedModel = Boolean(
+              successResponseSchemaName &&
+                ENVIRONMENT_DEFINED_MODELS.includes(
+                  successResponseSchemaName as any
+                )
+            );
+
+            if (isEnvironmentDefinedModel) {
+              httpActionName += `<${successResponseSchemaName}>`;
+            }
+
+            const cacheIdString = (() => {
+              if (method.match(/get/gi)) {
+                return `\ncacheId: ${dataKeyVariableName},`;
+              }
+              return '';
+            })();
+
             return `
               ${jsDocCommentSnippet}
               export const ${operationName} = async (${paramsString}) => {
@@ -389,7 +395,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                 ? '\nheaders,'
                 : ''
             }${requestBody ? '\ndata: requestPayload,' : ''}${cacheIdString}${
-              isBinaryResponseType ? "\nresponseType: 'blob'," : ''
+              isEnvironmentDefinedModel ? "\nresponseType: 'blob'," : ''
             }
                   ...rest,
                 });

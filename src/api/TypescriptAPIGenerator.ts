@@ -8,6 +8,7 @@ import { ModuleImports, OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
 import {
+  BINARY_RESPONSE_TYPE_MODEL_NAME,
   PATHS_LIBRARY_PATH,
   RequestGroupings,
   TagNameToEntityLabelsMap,
@@ -123,17 +124,25 @@ export const generateTypescriptAPI = async ({
               );
               if (
                 successResponse &&
-                request.responses[successResponse].content &&
-                'application/json' in
-                  request.responses[successResponse].content!
+                request.responses[successResponse].content
               ) {
-                const successResponseSchemaName = (
-                  request.responses[successResponse] as any
-                ).content['application/json'].schema.$ref.replace(
-                  '#/components/schemas/',
-                  ''
-                );
-                return successResponseSchemaName;
+                if (
+                  'application/json' in
+                  request.responses[successResponse].content!
+                ) {
+                  const successResponseSchemaName = (
+                    request.responses[successResponse] as any
+                  ).content['application/json'].schema.$ref.replace(
+                    '#/components/schemas/',
+                    ''
+                  );
+                  return successResponseSchemaName;
+                }
+                if (
+                  'image/png' in request.responses[successResponse].content!
+                ) {
+                  return BINARY_RESPONSE_TYPE_MODEL_NAME;
+                }
               }
             })(),
             ...(() => {

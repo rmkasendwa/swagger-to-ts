@@ -5,8 +5,9 @@ import {
 } from './OpenAPISpecification/Request';
 import { ModuleImports } from './Utils';
 
-export const TYPESCRIPT_ENVIRONMENT_INTERFACES = ['ArrayBuffer'];
-export const BINARY_RESPONSE_TYPES = ['ArrayBuffer'];
+export const BINARY_RESPONSE_TYPE_MODEL_NAME = 'ArrayBuffer';
+
+export const ENVIRONMENT_DEFINED_MODELS = ['ArrayBuffer'] as const;
 
 export interface TypescriptAPIGeneratorRequest extends Request {
   method: RequestMethod;
