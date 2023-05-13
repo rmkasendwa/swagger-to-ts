@@ -202,7 +202,18 @@ export const generateTypescriptAPI = async ({
           ...getImportsCode({
             imports: requestGroupings[entityName].imports,
           }),
-          entityAPIEndpointPathsOutputCode,
+          `
+            //#region Endpoint Paths
+            ${entityAPIEndpointPathsOutputCode}
+            //#endregion
+          `.trimIndent(),
+          `
+            //#region Data Keys
+            export const ${entityName
+              .replace(/\s/g, '_')
+              .toUpperCase()}_DATA_KEY = '${entityName.toCamelCase()}';
+            //#endregion
+          `.trimIndent(),
         ].join('\n\n'),
         {
           filepath: entityAPIOutputFilePath,
