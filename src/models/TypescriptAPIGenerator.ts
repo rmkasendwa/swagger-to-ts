@@ -13,7 +13,8 @@ export interface ZodValidationSchemaProperty {
 
 export interface SchemaCode {
   zodValidationSchemaName: string;
-  zodValidationSchemaCode: Record<string, ZodValidationSchemaProperty>;
+  zodValidationSchemaConfiguration: Record<string, ZodValidationSchemaProperty>;
+  zodValidationSchemaCode: string;
   inferedTypeCode: string;
   imports?: Record<string, string[]>;
   referencedSchemas?: string[];

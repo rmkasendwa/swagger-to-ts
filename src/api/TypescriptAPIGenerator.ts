@@ -118,16 +118,18 @@ export const generateTypescriptAPI = async ({
         if (!accumulator[entityName]) {
           accumulator[entityName] = {};
         }
-        const { generatedVariables, code, referencedSchemas } =
-          generateSchemaCode({
-            schemaName,
-            swaggerDocs,
-          });
-        const zodValidationSchemaName = `${schemaName}ValidationSchema`;
-        const inferedTypeCode = `export type ${schemaName} = z.infer<typeof ${zodValidationSchemaName}>`;
-        const imports: Record<string, string[]> = {
-          zod: ['z'],
-        };
+        const {
+          generatedVariables,
+          zodValidationSchemaCode,
+          zodValidationSchemaConfiguration,
+          referencedSchemas,
+          inferedTypeCode,
+          zodValidationSchemaName,
+          imports,
+        } = generateSchemaCode({
+          schemaName,
+          swaggerDocs,
+        });
 
         referencedSchemas.forEach((referencedSchemaName) => {
           const referencedSchemaEntityName =
@@ -142,7 +144,8 @@ export const generateTypescriptAPI = async ({
         });
 
         accumulator[entityName][schemaName] = {
-          zodValidationSchemaCode: code,
+          zodValidationSchemaCode,
+          zodValidationSchemaConfiguration,
           zodValidationSchemaName,
           inferedTypeCode,
           referencedSchemas,
