@@ -11,7 +11,7 @@ import {
   TypescriptAPIGeneratorRequest,
 } from '../models/TypescriptAPIGenerator';
 import { findSchemaReferencedSchemas } from './FindSchemaReferencedSchemas';
-import { generateSchemaCode } from './SchemaCodeGenerator';
+import { generateSchemaCode } from './ModelCodeGenerator';
 
 export interface GenerateTypescriptAPIConfig {
   swaggerDocs: OpenAPISpecification;
@@ -260,6 +260,22 @@ export const generateTypescriptAPI = async ({
       )
     );
   });
+
+  const modelsIndexOutputFilePath = `${modelsOutputFilePath}/index.ts`;
+  writeFileSync(
+    modelsIndexOutputFilePath,
+    prettier.format(
+      Object.keys(models)
+        .map((entityName) => {
+          return `export * from './${entityName.toPascalCase()}';`;
+        })
+        .join('\n'),
+      {
+        filepath: modelsIndexOutputFilePath,
+        ...prettierConfig,
+      }
+    )
+  );
   //#endregion
 
   if (outputInternalState) {

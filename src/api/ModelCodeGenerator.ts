@@ -92,17 +92,23 @@ export const generateSchemaCode = ({
     })
     .join(',\n');
 
+  const code = [
+    ...(() => {
+      if (!isEmpty(generatedVariables)) {
+        return Object.values(generatedVariables);
+      }
+      return [];
+    })(),
+    `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`,
+    inferedTypeCode,
+  ].join('\n\n');
+
   return {
-    zodValidationSchemaCode: [
-      ...(() => {
-        if (!isEmpty(generatedVariables)) {
-          return Object.values(generatedVariables);
-        }
-        return [];
-      })(),
-      `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`,
-      inferedTypeCode,
-    ].join('\n\n'),
+    zodValidationSchemaCode: `
+      //#region ${schemaName}
+      ${code}
+      //#endregion
+    `.trimIndent(),
     zodValidationSchemaConfiguration,
     referencedSchemas,
     zodValidationSchemaName,
