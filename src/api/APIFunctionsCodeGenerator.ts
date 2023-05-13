@@ -8,7 +8,8 @@ import {
   PATHS_LIBRARY_PATH,
   RequestGroupings,
   TagNameToEntityLabelsMap,
-} from '../models/TypescriptAPIGenerator';
+} from '../models';
+import { addModuleImport } from './Utils';
 
 //#region API adapter code generator
 export const getAPIAdapterCode = () => {
@@ -166,19 +167,19 @@ export const getAPIFunctionsCodeConfiguration = ({
                         }`.trim()
                       );
 
-                      const schemaSource = `../models/${
-                        tagToEntityLabelMappings[
-                          schemaToEntityMappings[requestBodySchemaName]
-                        ].PascalCaseEntities
-                      }`;
-                      if (!imports[schemaSource]) {
-                        imports[schemaSource] = [];
-                      }
-                      if (
-                        !imports[schemaSource].includes(requestBodySchemaName)
-                      ) {
-                        imports[schemaSource].push(requestBodySchemaName);
-                      }
+                      const schemaSource = `
+                        ../models/${
+                          tagToEntityLabelMappings[
+                            schemaToEntityMappings[requestBodySchemaName]
+                          ].PascalCaseEntities
+                        }
+                      `.trimIndent();
+
+                      addModuleImport({
+                        imports,
+                        importName: requestBodySchemaName,
+                        importFilePath: schemaSource,
+                      });
 
                       return [`requestPayload: ${requestBodySchemaName}`];
                     }
@@ -195,23 +196,21 @@ export const getAPIFunctionsCodeConfiguration = ({
                     ) {
                       jsDocCommentLines.push(`@param headers`);
 
-                      const schemaSource = `../models/${
-                        tagToEntityLabelMappings[
-                          schemaToEntityMappings[headerParametersModelReference]
-                        ].PascalCaseEntities
-                      }`;
-                      if (!imports[schemaSource]) {
-                        imports[schemaSource] = [];
-                      }
-                      if (
-                        !imports[schemaSource].includes(
-                          headerParametersModelReference
-                        )
-                      ) {
-                        imports[schemaSource].push(
-                          headerParametersModelReference
-                        );
-                      }
+                      const schemaSource = `
+                        ../models/${
+                          tagToEntityLabelMappings[
+                            schemaToEntityMappings[
+                              headerParametersModelReference
+                            ]
+                          ].PascalCaseEntities
+                        }
+                      `.trimIndent();
+
+                      addModuleImport({
+                        imports,
+                        importName: headerParametersModelReference,
+                        importFilePath: schemaSource,
+                      });
 
                       return [`headers: ${headerParametersModelReference}`];
                     }
@@ -228,23 +227,21 @@ export const getAPIFunctionsCodeConfiguration = ({
                     ) {
                       jsDocCommentLines.push(`@param queryParams`);
 
-                      const schemaSource = `../models/${
-                        tagToEntityLabelMappings[
-                          schemaToEntityMappings[queryParametersModelReference]
-                        ].PascalCaseEntities
-                      }`;
-                      if (!imports[schemaSource]) {
-                        imports[schemaSource] = [];
-                      }
-                      if (
-                        !imports[schemaSource].includes(
-                          queryParametersModelReference
-                        )
-                      ) {
-                        imports[schemaSource].push(
-                          queryParametersModelReference
-                        );
-                      }
+                      const schemaSource = `
+                        ../models/${
+                          tagToEntityLabelMappings[
+                            schemaToEntityMappings[
+                              queryParametersModelReference
+                            ]
+                          ].PascalCaseEntities
+                        }
+                      `.trimIndent();
+
+                      addModuleImport({
+                        imports,
+                        importName: queryParametersModelReference,
+                        importFilePath: schemaSource,
+                      });
 
                       // Check if query params are required
                       if (
@@ -282,21 +279,13 @@ export const getAPIFunctionsCodeConfiguration = ({
                     ].PascalCaseEntities
                   }`;
 
-                  if (!imports[validationSchemaSource]) {
-                    imports[validationSchemaSource] = [];
-                  }
-                  if (
-                    !imports[validationSchemaSource].includes(
-                      successResponseValidationSchemaName
-                    )
-                  ) {
-                    imports[validationSchemaSource].push(
-                      successResponseValidationSchemaName
-                    );
-                  }
+                  addModuleImport({
+                    imports,
+                    importName: successResponseValidationSchemaName,
+                    importFilePath: validationSchemaSource,
+                  });
 
                   returnValueString = `${successResponseValidationSchemaName}.parse(data)`;
-
                   jsDocCommentLines.push(
                     `@returns ${successResponseSchemaName}`
                   ); // TODO: Replace this with the response description.
@@ -311,12 +300,10 @@ export const getAPIFunctionsCodeConfiguration = ({
                         })
                         .join('\n');
                       return `
-                  /**
-                   ${linesString}
-                  */
-                `
-                        .trimIndent()
-                        .trim();
+                        /**
+                         ${linesString}
+                        */
+                      `.trimIndent();
                     }
                     return '';
                   })(),
@@ -328,32 +315,34 @@ export const getAPIFunctionsCodeConfiguration = ({
             const interpolatedEndpointPathString = (() => {
               const interpolatedEndpointPathString = (() => {
                 if (pathParameters && pathParameters.length > 0) {
-                  if (!imports[PATHS_LIBRARY_PATH]) {
-                    imports[PATHS_LIBRARY_PATH] = [];
-                  }
-                  if (
-                    !imports[PATHS_LIBRARY_PATH].includes(`getInterpolatedPath`)
-                  ) {
-                    imports[PATHS_LIBRARY_PATH].push(`getInterpolatedPath`);
-                  }
-                  return `getInterpolatedPath(${endpointPathName}, {
-                  ${pathParameters.map(({ name }) => name).join(',\n')}
-                })`;
+                  const interpolationFunctionName = 'getInterpolatedPath';
+                  addModuleImport({
+                    imports,
+                    importName: interpolationFunctionName,
+                    importFilePath: PATHS_LIBRARY_PATH,
+                  });
+                  return `
+                    ${interpolationFunctionName}(${endpointPathName}, {
+                      ${pathParameters.map(({ name }) => name).join(',\n')}
+                    })
+                  `;
                 }
                 return endpointPathName;
               })();
 
               if (queryParameters && queryParameters.length > 0) {
-                if (!imports[PATHS_LIBRARY_PATH]) {
-                  imports[PATHS_LIBRARY_PATH] = [];
-                }
-                if (!imports[PATHS_LIBRARY_PATH].includes(`addSearchParams`)) {
-                  imports[PATHS_LIBRARY_PATH].push(`addSearchParams`);
-                }
-                return `addSearchParams(${interpolatedEndpointPathString},
-                {...queryParams}, {
-                arrayParamStyle: 'append'
-              })`;
+                const searchParamsFunctionName = 'addSearchParams';
+                addModuleImport({
+                  imports,
+                  importName: searchParamsFunctionName,
+                  importFilePath: PATHS_LIBRARY_PATH,
+                });
+                return `
+                  ${searchParamsFunctionName}(${interpolatedEndpointPathString},
+                    {...queryParams}, {
+                    arrayParamStyle: 'append'
+                  })
+                `.trimIndent();
               }
               return interpolatedEndpointPathString;
             })();
@@ -371,21 +360,21 @@ export const getAPIFunctionsCodeConfiguration = ({
             })();
 
             return `
-          ${jsDocCommentSnippet}
-          export const ${operationName} = async (${paramsString}) => {
-            const { data } = await ${method}(${interpolatedEndpointPathString}, {
-              label: '${operationDescription}',${
+              ${jsDocCommentSnippet}
+              export const ${operationName} = async (${paramsString}) => {
+                const { data } = await ${method}(${interpolatedEndpointPathString}, {
+                  label: '${operationDescription}',${
               headerParameters && headerParameters.length > 0
                 ? '\nheaders,'
                 : ''
             }${requestBody ? '\ndata: requestPayload,' : ''}${cacheIdString}${
               isBinaryResponseType ? "\nresponseType: 'blob'," : ''
             }
-              ...rest,
-            });
-            return ${returnValueString};
-          };
-        `.trimIndent();
+                  ...rest,
+                });
+                return ${returnValueString};
+              };
+            `.trimIndent();
           }
         )
         .join('\n\n');

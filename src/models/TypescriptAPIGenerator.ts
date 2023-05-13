@@ -3,6 +3,7 @@ import {
   RequestMethod,
   RequestParameter,
 } from './OpenAPISpecification/Request';
+import { ModuleImports } from './Utils';
 
 export const TYPESCRIPT_ENVIRONMENT_INTERFACES = ['ArrayBuffer'];
 export const BINARY_RESPONSE_TYPES = ['ArrayBuffer'];
@@ -29,8 +30,6 @@ export interface TypescriptAPIGeneratorRequest extends Request {
 export interface ZodValidationSchemaProperty {
   code: string;
 }
-
-export type ModuleImports = Record<string, string[]>;
 
 export interface GeneratedSchemaCodeConfiguration {
   name: string;

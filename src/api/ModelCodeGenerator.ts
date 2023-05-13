@@ -1,12 +1,13 @@
 import { isEmpty } from 'lodash';
 
-import { OpenAPISpecification } from '../models';
+import { ModuleImports, OpenAPISpecification } from '../models';
 import {
   GeneratedSchemaCodeConfiguration,
   RequestGroupings,
   ZodValidationSchemaProperty,
 } from '../models/TypescriptAPIGenerator';
 import { findSchemaReferencedSchemas } from './SchemaGenerator';
+import { addModuleImport } from './Utils';
 
 //#region Generate model mappings
 export interface GenerateModelMappingsOptions {
@@ -148,11 +149,11 @@ export const generateModelMappings = ({
             const referencedSchemaEntityName =
               schemaToEntityMappings[referencedSchemaName];
             if (referencedSchemaEntityName != entityName) {
-              const importFilePath = `./${referencedSchemaEntityName}`;
-              if (!imports[importFilePath]) {
-                imports[importFilePath] = [];
-              }
-              imports[importFilePath].push(referencedSchemaName);
+              addModuleImport({
+                imports,
+                importName: referencedSchemaName,
+                importFilePath: `./${referencedSchemaEntityName}`,
+              });
             }
           });
 
@@ -178,19 +179,12 @@ export const generateModelMappings = ({
               accumulator[entityName].imports = {};
             }
             Object.keys(imports).forEach((importFilePath) => {
-              if (!accumulator[entityName].imports![importFilePath]) {
-                accumulator[entityName].imports![importFilePath] = [];
-              }
               imports[importFilePath].forEach((importName) => {
-                if (
-                  !accumulator[entityName].imports![importFilePath]!.includes(
-                    importName
-                  )
-                ) {
-                  accumulator[entityName].imports![importFilePath]!.push(
-                    importName
-                  );
-                }
+                addModuleImport({
+                  imports: accumulator[entityName].imports!,
+                  importName: importName,
+                  importFilePath,
+                });
               });
             });
           }
@@ -201,7 +195,7 @@ export const generateModelMappings = ({
         string,
         {
           models: Record<string, GeneratedSchemaCodeConfiguration>;
-          imports?: Record<string, string[]>;
+          imports?: ModuleImports;
         }
       >
     );
@@ -243,7 +237,7 @@ export const generateModelCode = ({
   const generatedVariables: Record<string, string> = {};
   const zodValidationSchemaName = `${schemaName}ValidationSchema`;
   const inferedTypeCode = `export type ${schemaName} = z.infer<typeof ${zodValidationSchemaName}>`;
-  const imports: Record<string, string[]> = {
+  const imports: ModuleImports = {
     zod: ['z'],
   };
 

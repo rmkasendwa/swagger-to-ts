@@ -4,7 +4,7 @@ import { ensureDirSync, writeFileSync } from 'fs-extra';
 import { cloneDeep } from 'lodash';
 import prettier from 'prettier';
 
-import { OpenAPISpecification } from '../models';
+import { ModuleImports, OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
 import {
@@ -18,6 +18,7 @@ import {
 } from './APIFunctionsCodeGenerator';
 import { generateModelMappings } from './ModelCodeGenerator';
 import { generateSchemaFromRequestParameters } from './SchemaGenerator';
+import { addModuleImport } from './Utils';
 
 export const API_ADAPTER_PATH = `./Adapter`;
 
@@ -74,13 +75,14 @@ export const generateTypescriptAPI = async ({
               requests: [],
             };
           }
+
           const { imports, requests } = accumulator[tag];
-          if (!imports[API_ADAPTER_PATH]) {
-            imports[API_ADAPTER_PATH] = [];
-          }
-          if (!imports[API_ADAPTER_PATH].includes(method)) {
-            imports[API_ADAPTER_PATH].push(method);
-          }
+
+          addModuleImport({
+            imports,
+            importName: method,
+            importFilePath: API_ADAPTER_PATH,
+          });
 
           requests.push({
             ...request,
@@ -146,12 +148,11 @@ export const generateTypescriptAPI = async ({
                 );
                 if (pathParameters.length > 0) {
                   const pathParamType = `TemplatePath`;
-                  if (!imports[PATHS_LIBRARY_PATH]) {
-                    imports[PATHS_LIBRARY_PATH] = [];
-                  }
-                  if (!imports[PATHS_LIBRARY_PATH].includes(pathParamType)) {
-                    imports[PATHS_LIBRARY_PATH].push(pathParamType);
-                  }
+                  addModuleImport({
+                    imports,
+                    importName: pathParamType,
+                    importFilePath: PATHS_LIBRARY_PATH,
+                  });
                   return {
                     pathParameters,
                   };
@@ -472,7 +473,7 @@ export const generateTypescriptAPI = async ({
 };
 
 export interface GetImportsCodeOptions {
-  imports?: Record<string, string[]>;
+  imports?: ModuleImports;
 }
 export const getImportsCode = ({ imports }: GetImportsCodeOptions) => {
   if (imports) {
