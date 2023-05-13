@@ -47,9 +47,20 @@ export const generateTypescriptAPI = async ({
   // Find all Schemas referenced in the requests
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
     (accumulator, requests) => {
-      requests.forEach(({ tags, responses }) => {
-        Object.values(responses).forEach(({ content }) => {
-          if ('application/json' in content) {
+      requests.forEach(({ tags, responses, requestBody }) => {
+        [
+          ...Object.values(responses),
+          ...(() => {
+            if (requestBody) {
+              return [requestBody];
+            }
+            return [];
+          })(),
+        ].forEach(({ content }) => {
+          if (
+            'application/json' in content &&
+            '$ref' in content['application/json'].schema
+          ) {
             const schemaReference = content['application/json'].schema.$ref;
             const schemaName = schemaReference.split('/').pop()!;
             const schemaNames = [

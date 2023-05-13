@@ -1,3 +1,4 @@
+import { Content } from './Content';
 import { Responses } from './Response';
 import { Schema } from './Schema';
 
@@ -18,11 +19,17 @@ export type RequestParameter = {
   schema: Schema;
 };
 
+export type RequestBody = {
+  required: boolean;
+  content: Content;
+};
+
 export type Request = {
-  operationId: string;
-  responses: Responses;
   description?: string;
-  summary: string;
-  parameters: RequestParameter[];
+  operationId: string;
+  parameters?: RequestParameter[];
+  requestBody?: RequestBody;
+  responses: Responses;
+  summary?: string;
   tags: string[];
 };

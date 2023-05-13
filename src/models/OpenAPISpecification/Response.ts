@@ -1,23 +1,7 @@
-export type JsonResponseContent = {
-  'application/json': {
-    schema: {
-      $ref: string;
-    };
-  };
-};
-
-export type GenericResponseContent = {
-  '*/*': {
-    schema: {
-      type: string;
-    };
-  };
-};
-
-export type ResponseContent = JsonResponseContent | GenericResponseContent;
+import { Content } from './Content';
 
 export type Response = {
-  content: ResponseContent;
+  content: Content;
   description?: string;
 };
 
