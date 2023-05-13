@@ -1,7 +1,17 @@
 import { Schema } from './Schema';
 
-export type JsonContent = {
+export type JSONContent = {
   'application/json': {
+    schema:
+      | {
+          $ref: string;
+        }
+      | Schema;
+  };
+};
+
+export type PNGContent = {
+  'image/png': {
     schema:
       | {
           $ref: string;
@@ -18,4 +28,4 @@ export type GenericContent = {
   };
 };
 
-export type Content = JsonContent | GenericContent;
+export type Content = JSONContent | GenericContent;

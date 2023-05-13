@@ -45,7 +45,7 @@ export type SchemaProperty =
 
 export type Schema = {
   type: 'object';
-  properties: Record<string, SchemaProperty>;
+  properties?: Record<string, SchemaProperty>;
 
   /**
    * The required properties

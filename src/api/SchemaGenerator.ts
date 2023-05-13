@@ -14,7 +14,7 @@ export const findSchemaReferencedSchemas = ({
   const schemaReferencedSchemas: string[] = [];
   const findSchemaReferencedSchemasRecursive = (schemaName: string) => {
     const schema = swaggerDocs.components.schemas[schemaName];
-    if (schema.type === 'object') {
+    if (schema.type === 'object' && schema.properties) {
       Object.values(schema.properties).forEach((property) => {
         if ('type' in property) {
           switch (property.type) {

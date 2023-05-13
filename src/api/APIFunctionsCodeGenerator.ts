@@ -260,6 +260,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                     return [];
                   })(),
                   //#endregion
+
                   `{ ...rest }: RequestOptions = {}`,
                 ].join(', ');
 
@@ -269,15 +270,20 @@ export const getAPIFunctionsCodeConfiguration = ({
 
                 let returnValueString = 'data';
 
-                if (successResponseSchemaName) {
+                if (
+                  successResponseSchemaName &&
+                  modelsToValidationSchemaMappings[successResponseSchemaName]
+                ) {
                   const successResponseValidationSchemaName =
                     modelsToValidationSchemaMappings[successResponseSchemaName]
                       .zodValidationSchemaName;
-                  const validationSchemaSource = `../models/${
-                    tagToEntityLabelMappings[
-                      schemaToEntityMappings[successResponseSchemaName]
-                    ].PascalCaseEntities
-                  }`;
+                  const validationSchemaSource = `
+                    ../models/${
+                      tagToEntityLabelMappings[
+                        schemaToEntityMappings[successResponseSchemaName]
+                      ].PascalCaseEntities
+                    }
+                  `.trimIndent();
 
                   addModuleImport({
                     imports,
