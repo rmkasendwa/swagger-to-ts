@@ -5,4 +5,4 @@ export type Response = {
   description?: string;
 };
 
-export type Responses = Record<number, Response>;
+export type Responses = Record<string, Response>;

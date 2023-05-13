@@ -10,10 +10,17 @@ export const BINARY_RESPONSE_TYPES = ['ArrayBuffer'];
 export interface TypescriptAPIGeneratorRequest extends Request {
   method: RequestMethod;
   operationName: string;
+  pascalCaseOperationName: string;
   operationDescription?: string;
   endpointPath: string;
   endpointPathName: string;
   pathParameters?: RequestParameter[];
+  headerParameters?: RequestParameter[];
+  headerParametersModelReference?: string;
+  queryParameters?: RequestParameter[];
+  queryParametersModelReference?: string;
+  requestBodySchemaName?: string;
+  successResponseSchemaName?: string;
 }
 
 export interface ZodValidationSchemaProperty {

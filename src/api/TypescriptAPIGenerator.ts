@@ -1,6 +1,7 @@
 import '@infinite-debugger/rmk-js-extensions/String';
 
 import { ensureDirSync, writeFileSync } from 'fs-extra';
+import { cloneDeep } from 'lodash';
 import prettier from 'prettier';
 
 import { OpenAPISpecification } from '../models';
@@ -27,11 +28,39 @@ export const generateTypescriptAPI = async ({
   outputInternalState = false,
   requestOperationNameSource: requestOperationName = 'requestSummary',
 }: GenerateTypescriptAPIConfig) => {
+  swaggerDocs = cloneDeep(swaggerDocs);
   //#region Find all requests and group them by tag
   const requestGroupings = Object.keys(swaggerDocs.paths).reduce(
     (accumulator, path) => {
       Object.keys(swaggerDocs.paths[path]).forEach((method) => {
         const request = swaggerDocs.paths[path][method as RequestMethod];
+
+        //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
+        const { requestBody } = request;
+        const operationName = (() => {
+          if (requestOperationName === 'requestSummary' && request.summary) {
+            return request.summary.toCamelCase();
+          }
+          return request.operationId;
+        })();
+        const pascalCaseOperationName = operationName.toPascalCase();
+        if (requestBody) {
+          const { content } = requestBody;
+          if (
+            'application/json' in content &&
+            'type' in content['application/json'].schema
+          ) {
+            const schemaName = `${operationName.toPascalCase()}RequestPayload`;
+            swaggerDocs.components.schemas[schemaName] =
+              content['application/json'].schema;
+
+            (requestBody.content as any)['application/json'].schema = {
+              $ref: `#/components/schemas/${schemaName}`,
+            };
+          }
+        }
+        //#endregion
+
         request.tags.forEach((tag) => {
           if (!accumulator[tag]) {
             accumulator[tag] = {
@@ -50,15 +79,8 @@ export const generateTypescriptAPI = async ({
             ...request,
             method: method as RequestMethod,
             endpointPath: path,
-            operationName: (() => {
-              if (
-                requestOperationName === 'requestSummary' &&
-                request.summary
-              ) {
-                return request.summary.toCamelCase();
-              }
-              return request.operationId;
-            })(),
+            operationName,
+            pascalCaseOperationName,
             endpointPathName:
               (() => {
                 if (
@@ -92,6 +114,32 @@ export const generateTypescriptAPI = async ({
                 }
               }
             })(),
+            ...(() => {
+              if (request.parameters) {
+                const headerParameters = request.parameters.filter(
+                  (parameter) => parameter.in === 'header'
+                );
+                if (headerParameters.length > 0) {
+                  return {
+                    headerParameters,
+                    headerParametersModelReference: `${pascalCaseOperationName}HeaderParams`,
+                  };
+                }
+              }
+            })(),
+            ...(() => {
+              if (request.parameters) {
+                const queryParameters = request.parameters.filter(
+                  (parameter) => parameter.in === 'query'
+                );
+                if (queryParameters.length > 0) {
+                  return {
+                    queryParameters,
+                    queryParametersModelReference: `${pascalCaseOperationName}QueryParams`,
+                  };
+                }
+              }
+            })(),
             operationDescription: (() => {
               if (
                 requestOperationName === 'requestSummary' &&
@@ -101,6 +149,36 @@ export const generateTypescriptAPI = async ({
                 return (
                   verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ')
                 );
+              }
+            })(),
+            requestBodySchemaName: (() => {
+              if (
+                request.requestBody &&
+                'application/json' in request.requestBody.content &&
+                '$ref' in request.requestBody.content['application/json'].schema
+              ) {
+                const requestBodySchemaName = request.requestBody.content[
+                  'application/json'
+                ].schema.$ref.replace('#/components/schemas/', '');
+                return requestBodySchemaName;
+              }
+            })(),
+            successResponseSchemaName: (() => {
+              const successResponse = Object.keys(request.responses).find(
+                (responseCode) => responseCode.startsWith('2')
+              );
+              if (
+                successResponse &&
+                request.responses[successResponse] &&
+                'application/json' in request.responses[successResponse].content
+              ) {
+                const successResponseSchemaName = (
+                  request.responses[successResponse] as any
+                ).content['application/json'].schema.$ref.replace(
+                  '#/components/schemas/',
+                  ''
+                );
+                return successResponseSchemaName;
               }
             })(),
           });
@@ -217,15 +295,115 @@ export const generateTypescriptAPI = async ({
 
     const entityAPIOutputCode = requestGroupings[entityName].requests
       .map(
-        ({ method, operationName, endpointPathName, operationDescription }) => {
+        ({
+          method,
+          operationName,
+          endpointPathName,
+          operationDescription,
+          description,
+          pathParameters,
+          headerParameters,
+          headerParametersModelReference,
+          queryParameters,
+          queryParametersModelReference,
+          requestBody,
+          requestBodySchemaName,
+          successResponseSchemaName,
+        }) => {
+          const { paramsString, jsDocCommentSnippet } = (() => {
+            const lines: string[] = [];
+            if (description) {
+              lines.push(description, '');
+            }
+            if (pathParameters && pathParameters.length > 0) {
+              lines.push(
+                ...pathParameters.map(({ name, description }) => {
+                  return `@param ${name} ${description}`.trim();
+                })
+              );
+            }
+
+            const paramsString = [
+              ...(() => {
+                if (pathParameters) {
+                  return pathParameters.map(({ name }) => {
+                    // TODO: Generate the path parameter type
+                    return `${name}: string`;
+                  });
+                }
+                return [];
+              })(),
+              ...(() => {
+                if (requestBody && requestBodySchemaName) {
+                  lines.push(
+                    `@param requestPayload ${
+                      requestBody.description || ''
+                    }`.trim()
+                  );
+                  return [`requestPayload: ${requestBodySchemaName}`];
+                }
+                return [];
+              })(),
+              ...(() => {
+                if (
+                  headerParametersModelReference &&
+                  headerParameters &&
+                  headerParameters.length > 0
+                ) {
+                  lines.push(`@param headers`);
+                  return [`headers: ${headerParametersModelReference}`];
+                }
+                return [];
+              })(),
+              ...(() => {
+                if (
+                  queryParametersModelReference &&
+                  queryParameters &&
+                  queryParameters.length > 0
+                ) {
+                  lines.push(`@param queryParams`);
+                  return [`queryParams: ${queryParametersModelReference} = {}`];
+                }
+                return [];
+              })(),
+              `{ ...rest }: RequestOptions = {}`,
+            ].join(', ');
+
+            if (successResponseSchemaName) {
+              lines.push(`@returns ${successResponseSchemaName}`); // TODO: Replace this with the response description.
+            }
+
+            return {
+              paramsString,
+              jsDocCommentSnippet: (() => {
+                if (lines.length > 0) {
+                  const linesString = lines
+                    .map((line) => {
+                      return ` * ${line}`;
+                    })
+                    .join('\n');
+                  return `
+                    /**
+                     ${linesString}
+                    */
+                  `
+                    .trimIndent()
+                    .trim();
+                }
+                return '';
+              })(),
+            };
+          })();
+
           return `
-          export const ${operationName} = async () => {
-            const { data } = await ${method}(${endpointPathName}, {
-              label: '${operationDescription}',
-            });
-            return data;
-          };
-        `.trimIndent();
+            ${jsDocCommentSnippet}
+            export const ${operationName} = async (${paramsString}) => {
+              const { data } = await ${method}(${endpointPathName}, {
+                label: '${operationDescription}',
+              });
+              return data;
+            };
+          `.trimIndent();
         }
       )
       .join('\n\n');

@@ -1,4 +1,4 @@
-import { cloneDeep, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 
 import { OpenAPISpecification } from '../models';
 import {
@@ -17,31 +17,6 @@ export const generateModelMappings = ({
   requestGroupings,
   swaggerDocs,
 }: GenerateModelMappingsOptions) => {
-  swaggerDocs = cloneDeep(swaggerDocs);
-
-  //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
-  Object.values(requestGroupings).reduce((accumulator, { requests }) => {
-    requests.forEach(({ requestBody, operationName }) => {
-      if (requestBody) {
-        const { content } = requestBody;
-        if (
-          'application/json' in content &&
-          'type' in content['application/json'].schema
-        ) {
-          const schemaName = `${operationName.toPascalCase()}RequestPayload`;
-          swaggerDocs.components.schemas[schemaName] =
-            content['application/json'].schema;
-
-          (requestBody.content as any)['application/json'].schema = {
-            $ref: `#/components/schemas/${schemaName}`,
-          };
-        }
-      }
-    });
-    return accumulator;
-  }, {} as Record<string, string[]>);
-  //#endregion
-
   //#region Find all Schemas referenced in the requests
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
     (accumulator, { requests }) => {

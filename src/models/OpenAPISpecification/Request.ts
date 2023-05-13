@@ -22,6 +22,7 @@ export type RequestParameter = {
 export type RequestBody = {
   required: boolean;
   content: Content;
+  description?: string;
 };
 
 export type Request = {
