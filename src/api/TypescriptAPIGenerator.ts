@@ -24,7 +24,7 @@ export const generateTypescriptAPI = async ({
   outputRootPath,
   outputInternalState = false,
 }: GenerateTypescriptAPIConfig) => {
-  // Find all requests
+  //#region Find all requests and group them by tag
   const requestGroupings = Object.keys(swaggerDocs.paths).reduce(
     (accumulator, path) => {
       Object.keys(swaggerDocs.paths[path]).forEach((method) => {
@@ -43,8 +43,9 @@ export const generateTypescriptAPI = async ({
     },
     {} as Record<string, TypescriptAPIGeneratorRequest[]>
   );
+  //#endregion
 
-  // Find all Schemas referenced in the requests
+  //#region Find all Schemas referenced in the requests
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
     (accumulator, requests) => {
       requests.forEach(({ tags, responses, requestBody }) => {
@@ -87,8 +88,9 @@ export const generateTypescriptAPI = async ({
     },
     {} as Record<string, string[]>
   );
+  //#endregion
 
-  // Generate Schema to entity mappings
+  //#region Generate Schema to entity mappings
   const schemaEntityMappings = Object.keys(schemaEntityReferences).reduce(
     (accumulator, schemaName) => {
       if (schemaEntityReferences[schemaName].length === 1) {
@@ -100,8 +102,9 @@ export const generateTypescriptAPI = async ({
     },
     {} as Record<string, string>
   );
+  //#endregion
 
-  // Map schema references to entities
+  //#region Map schema references to entities
   const entitySchemaGroups = Object.keys(schemaEntityReferences).reduce(
     (accumulator, schemaName) => {
       if (schemaEntityReferences[schemaName].length === 1) {
@@ -122,6 +125,7 @@ export const generateTypescriptAPI = async ({
     },
     {} as Record<string, string[]>
   );
+  //#endregion
 
   //#region Generate validation schemas code
   const models = Object.keys(entitySchemaGroups)
