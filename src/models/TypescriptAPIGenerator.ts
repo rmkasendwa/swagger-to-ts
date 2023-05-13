@@ -11,7 +11,8 @@ export interface ZodValidationSchemaProperty {
   code: string;
 }
 
-export interface SchemaCode {
+export interface GeneratedSchemaCodeConfiguration {
+  name: string;
   zodValidationSchemaName: string;
   zodValidationSchemaConfiguration: Record<string, ZodValidationSchemaProperty>;
   zodValidationSchemaCode: string;

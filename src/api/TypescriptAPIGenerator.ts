@@ -1,11 +1,13 @@
 import '@infinite-debugger/rmk-js-extensions/String';
 
 import { ensureDirSync, writeFileSync } from 'fs-extra';
+import prettier from 'prettier';
 
 import { OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
+import { prettierConfig } from '../models/Prettier';
 import {
-  SchemaCode,
+  GeneratedSchemaCodeConfiguration,
   TypescriptAPIGeneratorRequest,
 } from '../models/TypescriptAPIGenerator';
 import { findSchemaReferencedSchemas } from './FindSchemaReferencedSchemas';
@@ -147,13 +149,20 @@ export const generateTypescriptAPI = async ({
           });
 
           accumulator[entityName].models[schemaName] = {
+            name: schemaName,
             zodValidationSchemaCode,
             zodValidationSchemaConfiguration,
             zodValidationSchemaName,
             inferedTypeCode,
-            referencedSchemas,
             generatedVariables,
             imports,
+            ...(() => {
+              if (referencedSchemas.length > 0) {
+                return {
+                  referencedSchemas,
+                };
+              }
+            })(),
           };
 
           if (imports) {
@@ -183,7 +192,7 @@ export const generateTypescriptAPI = async ({
       {} as Record<
         string,
         {
-          models: Record<string, SchemaCode>;
+          models: Record<string, GeneratedSchemaCodeConfiguration>;
           imports?: Record<string, string[]>;
         }
       >
@@ -199,27 +208,56 @@ export const generateTypescriptAPI = async ({
     const entityModelsOutputFilePath = `${modelsOutputFilePath}/${modelFileName}`;
 
     const entityModelsOutputCode = Object.values(models[entityName].models)
+      .sort(
+        (
+          { referencedSchemas: aReferencedSchemas, name: aName },
+          { referencedSchemas: bReferencedSchemas, name: bName }
+        ) => {
+          if (aReferencedSchemas && !bReferencedSchemas) {
+            return 1;
+          }
+          if (!aReferencedSchemas && bReferencedSchemas) {
+            return -1;
+          }
+          if (aReferencedSchemas && bReferencedSchemas) {
+            if (aReferencedSchemas.includes(bName)) {
+              return 1;
+            }
+            if (bReferencedSchemas.includes(aName)) {
+              return -1;
+            }
+          }
+          return 0;
+        }
+      )
       .map((model) => model.zodValidationSchemaCode)
       .join('\n\n');
 
     writeFileSync(
       entityModelsOutputFilePath,
-      [
-        ...(() => {
-          if (models[entityName].imports) {
-            return Object.keys(models[entityName].imports!).map(
-              (importFilePath) => {
-                const importNames = models[entityName].imports![importFilePath];
-                return `import { ${importNames.join(
-                  ', '
-                )} } from '${importFilePath}';`;
-              }
-            );
-          }
-          return [];
-        })(),
-        entityModelsOutputCode,
-      ].join('\n\n')
+      prettier.format(
+        [
+          ...(() => {
+            if (models[entityName].imports) {
+              return Object.keys(models[entityName].imports!).map(
+                (importFilePath) => {
+                  const importNames =
+                    models[entityName].imports![importFilePath];
+                  return `import { ${importNames.join(
+                    ', '
+                  )} } from '${importFilePath}';`;
+                }
+              );
+            }
+            return [];
+          })(),
+          entityModelsOutputCode,
+        ].join('\n\n'),
+        {
+          filepath: entityModelsOutputFilePath,
+          ...prettierConfig,
+        }
+      )
     );
   });
   //#endregion
