@@ -8,6 +8,7 @@ import { OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
 import {
+  BINARY_RESPONSE_TYPES,
   PATHS_LIBRARY,
   RequestGroupings,
 } from '../models/TypescriptAPIGenerator';
@@ -50,7 +51,7 @@ export const generateTypescriptAPI = async ({
             'application/json' in content &&
             'type' in content['application/json'].schema
           ) {
-            const schemaName = `${operationName.toPascalCase()}RequestPayload`;
+            const schemaName = `${pascalCaseOperationName}RequestPayload`;
             swaggerDocs.components.schemas[schemaName] =
               content['application/json'].schema;
 
@@ -68,14 +69,15 @@ export const generateTypescriptAPI = async ({
               requests: [],
             };
           }
-          if (!accumulator[tag].imports[API_ADAPTER_PATH]) {
-            accumulator[tag].imports[API_ADAPTER_PATH] = [];
+          const { imports, requests } = accumulator[tag];
+          if (!imports[API_ADAPTER_PATH]) {
+            imports[API_ADAPTER_PATH] = [];
           }
-          if (!accumulator[tag].imports[API_ADAPTER_PATH].includes(method)) {
-            accumulator[tag].imports[API_ADAPTER_PATH].push(method);
+          if (!imports[API_ADAPTER_PATH].includes(method)) {
+            imports[API_ADAPTER_PATH].push(method);
           }
 
-          accumulator[tag].requests.push({
+          requests.push({
             ...request,
             method: method as RequestMethod,
             endpointPath: path,
@@ -98,15 +100,11 @@ export const generateTypescriptAPI = async ({
                 );
                 if (pathParameters.length > 0) {
                   const pathParamType = `TemplatePath`;
-                  if (!accumulator[tag].imports[PATHS_LIBRARY]) {
-                    accumulator[tag].imports[PATHS_LIBRARY] = [];
+                  if (!imports[PATHS_LIBRARY]) {
+                    imports[PATHS_LIBRARY] = [];
                   }
-                  if (
-                    !accumulator[tag].imports[PATHS_LIBRARY].includes(
-                      pathParamType
-                    )
-                  ) {
-                    accumulator[tag].imports[PATHS_LIBRARY].push(pathParamType);
+                  if (!imports[PATHS_LIBRARY].includes(pathParamType)) {
+                    imports[PATHS_LIBRARY].push(pathParamType);
                   }
                   return {
                     pathParameters,
@@ -117,7 +115,12 @@ export const generateTypescriptAPI = async ({
             ...(() => {
               if (request.parameters) {
                 const headerParameters = request.parameters.filter(
-                  (parameter) => parameter.in === 'header'
+                  (parameter) => {
+                    return (
+                      parameter.in === 'header' &&
+                      !parameter.name.match(/authorization/gi)
+                    );
+                  }
                 );
                 if (headerParameters.length > 0) {
                   return {
@@ -192,9 +195,10 @@ export const generateTypescriptAPI = async ({
 
   const {
     entitySchemaGroups,
-    schemaEntityMappings,
+    schemaToEntityMappings,
     schemaEntityReferences,
     models,
+    modelsToValidationSchemaMappings,
   } = generateModelMappings({
     requestGroupings,
     swaggerDocs,
@@ -276,6 +280,7 @@ export const generateTypescriptAPI = async ({
     const apiFileName = `${pascalCaseEntityName}.ts`;
     const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
 
+    //#region Generate entity api endpoint paths
     const entityAPIEndpointPathsOutputCode = requestGroupings[
       entityName
     ].requests
@@ -292,7 +297,13 @@ export const generateTypescriptAPI = async ({
         return `export const ${endpointPathName} = '${endpointPath}';`;
       })
       .join('\n');
+    //#endregion
 
+    const dataKeyVariableName = `${entityName
+      .replace(/\s/g, '_')
+      .toUpperCase()}_DATA_KEY`;
+
+    //#region Generate entity api request functions
     const entityAPIOutputCode = requestGroupings[entityName].requests
       .map(
         ({
@@ -310,103 +321,194 @@ export const generateTypescriptAPI = async ({
           requestBodySchemaName,
           successResponseSchemaName,
         }) => {
-          const { paramsString, jsDocCommentSnippet } = (() => {
-            const lines: string[] = [];
-            if (description) {
-              lines.push(description, '');
-            }
-            if (pathParameters && pathParameters.length > 0) {
-              lines.push(
-                ...pathParameters.map(({ name, description }) => {
-                  return `@param ${name} ${description}`.trim();
-                })
-              );
-            }
+          const { imports } = requestGroupings[entityName];
+          const { jsDocCommentSnippet, paramsString, returnValueString } =
+            (() => {
+              const lines: string[] = [];
 
-            const paramsString = [
-              ...(() => {
-                if (pathParameters) {
-                  return pathParameters.map(({ name }) => {
-                    // TODO: Generate the path parameter type
-                    return `${name}: string`;
-                  });
+              if (description) {
+                lines.push(description, '');
+              }
+              if (pathParameters && pathParameters.length > 0) {
+                lines.push(
+                  ...pathParameters.map(({ name, description }) => {
+                    return `@param ${name} ${description}`.trim();
+                  })
+                );
+              }
+
+              const paramsString = [
+                ...(() => {
+                  if (pathParameters) {
+                    return pathParameters.map(({ name }) => {
+                      // TODO: Generate the path parameter type
+                      return `${name}: string`;
+                    });
+                  }
+                  return [];
+                })(),
+                ...(() => {
+                  if (requestBody && requestBodySchemaName) {
+                    lines.push(
+                      `@param requestPayload ${
+                        requestBody.description || ''
+                      }`.trim()
+                    );
+
+                    const schemaSource = `../models/${schemaToEntityMappings[requestBodySchemaName]}`;
+                    if (!imports[schemaSource]) {
+                      imports[schemaSource] = [];
+                    }
+                    if (
+                      !imports[schemaSource].includes(requestBodySchemaName)
+                    ) {
+                      imports[schemaSource].push(requestBodySchemaName);
+                    }
+                    return [`requestPayload: ${requestBodySchemaName}`];
+                  }
+                  return [];
+                })(),
+                ...(() => {
+                  if (
+                    headerParametersModelReference &&
+                    headerParameters &&
+                    headerParameters.length > 0
+                  ) {
+                    lines.push(`@param headers`);
+                    return [`headers: ${headerParametersModelReference}`];
+                  }
+                  return [];
+                })(),
+                ...(() => {
+                  if (
+                    queryParametersModelReference &&
+                    queryParameters &&
+                    queryParameters.length > 0
+                  ) {
+                    lines.push(`@param queryParams`);
+                    return [
+                      `queryParams: ${queryParametersModelReference} = {}`,
+                    ];
+                  }
+                  return [];
+                })(),
+                `{ ...rest }: RequestOptions = {}`,
+              ].join(', ');
+
+              if (!imports[API_ADAPTER_PATH].includes('RequestOptions')) {
+                imports[API_ADAPTER_PATH].push('RequestOptions');
+              }
+
+              let returnValueString = 'data';
+
+              if (successResponseSchemaName) {
+                const successResponseValidationSchemaName =
+                  modelsToValidationSchemaMappings[successResponseSchemaName]
+                    .zodValidationSchemaName;
+                const validationSchemaSource = `../models/${schemaToEntityMappings[successResponseSchemaName]}`;
+
+                if (!imports[validationSchemaSource]) {
+                  imports[validationSchemaSource] = [];
                 }
-                return [];
-              })(),
-              ...(() => {
-                if (requestBody && requestBodySchemaName) {
-                  lines.push(
-                    `@param requestPayload ${
-                      requestBody.description || ''
-                    }`.trim()
+                if (
+                  !imports[validationSchemaSource].includes(
+                    successResponseValidationSchemaName
+                  )
+                ) {
+                  imports[validationSchemaSource].push(
+                    successResponseValidationSchemaName
                   );
-                  return [`requestPayload: ${requestBodySchemaName}`];
                 }
-                return [];
-              })(),
-              ...(() => {
-                if (
-                  headerParametersModelReference &&
-                  headerParameters &&
-                  headerParameters.length > 0
-                ) {
-                  lines.push(`@param headers`);
-                  return [`headers: ${headerParametersModelReference}`];
-                }
-                return [];
-              })(),
-              ...(() => {
-                if (
-                  queryParametersModelReference &&
-                  queryParameters &&
-                  queryParameters.length > 0
-                ) {
-                  lines.push(`@param queryParams`);
-                  return [`queryParams: ${queryParametersModelReference} = {}`];
-                }
-                return [];
-              })(),
-              `{ ...rest }: RequestOptions = {}`,
-            ].join(', ');
 
-            if (successResponseSchemaName) {
-              lines.push(`@returns ${successResponseSchemaName}`); // TODO: Replace this with the response description.
+                returnValueString = `${successResponseValidationSchemaName}.parse(data)`;
+
+                lines.push(`@returns ${successResponseSchemaName}`); // TODO: Replace this with the response description.
+              }
+
+              return {
+                jsDocCommentSnippet: (() => {
+                  if (lines.length > 0) {
+                    const linesString = lines
+                      .map((line) => {
+                        return ` * ${line}`;
+                      })
+                      .join('\n');
+                    return `
+                  /**
+                   ${linesString}
+                  */
+                `
+                      .trimIndent()
+                      .trim();
+                  }
+                  return '';
+                })(),
+                paramsString,
+                returnValueString,
+              };
+            })();
+
+          const interpolatedEndpointPathString = (() => {
+            const interpolatedEndpointPathString = (() => {
+              if (pathParameters && pathParameters.length > 0) {
+                if (!imports[PATHS_LIBRARY]) {
+                  imports[PATHS_LIBRARY] = [];
+                }
+                if (!imports[PATHS_LIBRARY].includes(`getInterpolatedPath`)) {
+                  imports[PATHS_LIBRARY].push(`getInterpolatedPath`);
+                }
+                return `getInterpolatedPath(${endpointPathName}, {
+                  ${pathParameters.map(({ name }) => name).join(',\n')}
+                })`;
+              }
+              return endpointPathName;
+            })();
+
+            if (queryParameters && queryParameters.length > 0) {
+              if (!imports[PATHS_LIBRARY]) {
+                imports[PATHS_LIBRARY] = [];
+              }
+              if (!imports[PATHS_LIBRARY].includes(`addSearchParams`)) {
+                imports[PATHS_LIBRARY].push(`addSearchParams`);
+              }
+              return `addSearchParams(${interpolatedEndpointPathString},
+                {...queryParams}, {
+                arrayParamStyle: 'append'
+              })`;
             }
+            return interpolatedEndpointPathString;
+          })();
 
-            return {
-              paramsString,
-              jsDocCommentSnippet: (() => {
-                if (lines.length > 0) {
-                  const linesString = lines
-                    .map((line) => {
-                      return ` * ${line}`;
-                    })
-                    .join('\n');
-                  return `
-                    /**
-                     ${linesString}
-                    */
-                  `
-                    .trimIndent()
-                    .trim();
-                }
-                return '';
-              })(),
-            };
+          const isBinaryResponseType = Boolean(
+            successResponseSchemaName &&
+              BINARY_RESPONSE_TYPES.includes(successResponseSchemaName)
+          );
+
+          const cacheIdString = (() => {
+            if (method.match(/get/gi)) {
+              return `\ncacheId: ${dataKeyVariableName},`;
+            }
+            return '';
           })();
 
           return `
-            ${jsDocCommentSnippet}
-            export const ${operationName} = async (${paramsString}) => {
-              const { data } = await ${method}(${endpointPathName}, {
-                label: '${operationDescription}',
-              });
-              return data;
-            };
-          `.trimIndent();
+          ${jsDocCommentSnippet}
+          export const ${operationName} = async (${paramsString}) => {
+            const { data } = await ${method}(${interpolatedEndpointPathString}, {
+              label: '${operationDescription}',${
+            headerParameters && headerParameters.length > 0 ? '\nheaders,' : ''
+          }${requestBody ? '\ndata: requestPayload,' : ''}${cacheIdString}${
+            isBinaryResponseType ? "\nresponseType: 'blob'," : ''
+          }
+              ...rest,
+            });
+            return ${returnValueString};
+          };
+        `.trimIndent();
         }
       )
       .join('\n\n');
+    //#endregion
 
     writeFileSync(
       entityAPIOutputFilePath,
@@ -422,9 +524,7 @@ export const generateTypescriptAPI = async ({
           `.trimIndent(),
           `
             //#region Data Keys
-            export const ${entityName
-              .replace(/\s/g, '_')
-              .toUpperCase()}_DATA_KEY = '${entityName.toCamelCase()}';
+            export const ${dataKeyVariableName} = '${entityName.toCamelCase()}';
             //#endregion
           `.trimIndent(),
           `
@@ -541,7 +641,7 @@ export const generateTypescriptAPI = async ({
     );
     writeFileSync(
       `${outputRootPath}/schema-to-entity-mappings.output.json`,
-      JSON.stringify(schemaEntityMappings, null, 2)
+      JSON.stringify(schemaToEntityMappings, null, 2)
     );
     writeFileSync(
       `${outputRootPath}/schema-groupings.output.json`,
@@ -550,6 +650,10 @@ export const generateTypescriptAPI = async ({
     writeFileSync(
       `${outputRootPath}/validation-schemas.output.json`,
       JSON.stringify(models, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/models-to-validation-schema-mappings.output.json`,
+      JSON.stringify(modelsToValidationSchemaMappings, null, 2)
     );
   }
 };

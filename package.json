@@ -34,7 +34,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@infinite-debugger/rmk-js-extensions": "^0.1.0-alpha.17",
+    "@infinite-debugger/rmk-js-extensions": "^0.1.0-alpha.18",
     "fs-extra": "^11.1.1",
     "lodash": "^4.17.21",
     "prettier": "^2.8.8",

@@ -63,7 +63,7 @@ export const generateModelMappings = ({
   //#endregion
 
   //#region Generate Schema to entity mappings
-  const schemaEntityMappings = Object.keys(schemaEntityReferences).reduce(
+  const schemaToEntityMappings = Object.keys(schemaEntityReferences).reduce(
     (accumulator, schemaName) => {
       if (schemaEntityReferences[schemaName].length === 1) {
         accumulator[schemaName] = schemaEntityReferences[schemaName][0];
@@ -125,7 +125,7 @@ export const generateModelMappings = ({
 
           referencedSchemas.forEach((referencedSchemaName) => {
             const referencedSchemaEntityName =
-              schemaEntityMappings[referencedSchemaName];
+              schemaToEntityMappings[referencedSchemaName];
             if (referencedSchemaEntityName != entityName) {
               const importFilePath = `./${referencedSchemaEntityName}`;
               if (!imports[importFilePath]) {
@@ -186,11 +186,24 @@ export const generateModelMappings = ({
     );
   //#endregion
 
+  //#region Generate models to validation schema mappings
+  const modelsToValidationSchemaMappings = Object.keys(models).reduce(
+    (accumulator, entityName) => {
+      Object.keys(models[entityName].models).forEach((schemaName) => {
+        accumulator[schemaName] = models[entityName].models[schemaName];
+      });
+      return accumulator;
+    },
+    {} as Record<string, GeneratedSchemaCodeConfiguration>
+  );
+  //#endregion
+
   return {
     entitySchemaGroups,
-    schemaEntityMappings,
+    schemaToEntityMappings,
     schemaEntityReferences,
     models,
+    modelsToValidationSchemaMappings,
   };
 };
 //#endregion
