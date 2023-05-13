@@ -11,5 +11,5 @@ coverage
 sandbox
 __sandbox
 error.json
-output.json
+*.output.json
 dist

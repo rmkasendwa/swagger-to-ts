@@ -44,7 +44,6 @@
   "devDependencies": {
     "@infinite-debugger/axios-api-adapter": "^0.1.0-alpha.11",
     "@infinite-debugger/rmk-utils": "^0.1.0-alpha.12",
-    "@tsed/openspec": "^7.10.0",
     "@types/eslint": "^8.4.10",
     "@types/fs-extra": "^11.0.1",
     "@types/jest": "^29.2.5",

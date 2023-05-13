@@ -2,7 +2,9 @@ export type StringSchemaProperty = {
   type: 'string';
   description?: string;
   format?: 'date' | 'date-time';
+  enum?: string[];
   minLength?: number;
+  maxLength?: number;
   example?: string;
   default?: string;
 };
@@ -12,14 +14,13 @@ export type NumberSchemaProperty = {
   description?: string;
   example?: number;
   default?: number;
+  min?: number;
+  max?: number;
 };
 
 export type BooleanSchemaProperty = {
-  type: 'string';
+  type: 'boolean';
   description?: string;
-  enum?: string[];
-  minLength?: number;
-  example?: string;
   default?: string;
 };
 

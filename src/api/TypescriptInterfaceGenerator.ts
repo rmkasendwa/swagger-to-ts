@@ -1,8 +1,9 @@
-import { OpenSpec3 } from '@tsed/openspec';
 import { get } from 'lodash';
 
+import { OpenAPISpecification } from '../models';
+
 export interface GetInterfacePropertiesOptions {
-  swaggerDocs: OpenSpec3;
+  swaggerDocs: OpenAPISpecification;
   modelName: string;
   baseModelRefPath: string;
   expandRefs?: boolean;
@@ -64,7 +65,7 @@ export const getModelDefinitions = ({
 };
 
 export interface GetInterfacePropertyTypeOptions {
-  swaggerDocs: OpenSpec3;
+  swaggerDocs: OpenAPISpecification;
   modelSchema: any;
   propertyName: string;
   modelName: string;

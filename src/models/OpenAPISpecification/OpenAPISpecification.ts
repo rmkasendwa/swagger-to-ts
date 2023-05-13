@@ -52,7 +52,7 @@ export interface OpenAPISpecification {
   /**
    * The server request paths.
    */
-  paths: Record<RequestMethod, Request>;
+  paths: Record<string, Record<RequestMethod, Request>>;
 
   /**
    * The server endpoint groups.
