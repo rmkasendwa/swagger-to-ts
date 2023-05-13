@@ -240,6 +240,22 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
+  const indexOutputFilePath = `${outputRootPath}/index.ts`;
+  writeFileSync(
+    indexOutputFilePath,
+    prettier.format(
+      ['api', 'models']
+        .map((folderName) => {
+          return `export * from './${folderName}';`;
+        })
+        .join('\n'),
+      {
+        filepath: indexOutputFilePath,
+        ...prettierConfig,
+      }
+    )
+  );
+
   if (outputInternalState) {
     ensureDirSync(outputRootPath);
     writeFileSync(
