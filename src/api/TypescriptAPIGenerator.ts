@@ -1,5 +1,7 @@
 import '@infinite-debugger/rmk-js-extensions/String';
 
+import { join } from 'path';
+
 import { writeFileSync } from 'fs-extra';
 import prettier from 'prettier';
 
@@ -73,10 +75,13 @@ export interface SchemaCode {
 export interface GenerateTypescriptAPIConfig {
   swaggerDocs: OpenAPISpecification;
   outputRootPath: string;
+  outputInternalState?: boolean;
 }
 
 export const generateTypescriptAPI = async ({
   swaggerDocs,
+  outputRootPath,
+  outputInternalState = false,
 }: GenerateTypescriptAPIConfig) => {
   // Find all requests
   const requestGroupings = Object.keys(swaggerDocs.paths).reduce(
@@ -99,7 +104,7 @@ export const generateTypescriptAPI = async ({
   );
 
   // Find all Schemas referenced in the requests
-  const schemaReferences = Object.values(requestGroupings).reduce(
+  const schemaEntityReferences = Object.values(requestGroupings).reduce(
     (accumulator, requests) => {
       requests.forEach(({ tags, responses }) => {
         Object.values(responses).forEach(({ content }) => {
@@ -131,11 +136,24 @@ export const generateTypescriptAPI = async ({
     {} as Record<string, string[]>
   );
 
-  // Map schema references to entities
-  const schemaGroups = Object.keys(schemaReferences).reduce(
+  // Generate Schema to entity mappings
+  const schemaEntityMappings = Object.keys(schemaEntityReferences).reduce(
     (accumulator, schemaName) => {
-      if (schemaReferences[schemaName].length === 1) {
-        schemaReferences[schemaName].forEach((entityName) => {
+      if (schemaEntityReferences[schemaName].length === 1) {
+        accumulator[schemaName] = schemaEntityReferences[schemaName][0];
+      } else {
+        accumulator[schemaName] = 'Utils';
+      }
+      return accumulator;
+    },
+    {} as Record<string, string>
+  );
+
+  // Map schema references to entities
+  const entitySchemaGroups = Object.keys(schemaEntityReferences).reduce(
+    (accumulator, schemaName) => {
+      if (schemaEntityReferences[schemaName].length === 1) {
+        schemaEntityReferences[schemaName].forEach((entityName) => {
           if (!accumulator[entityName]) {
             accumulator[entityName] = [];
           }
@@ -154,10 +172,10 @@ export const generateTypescriptAPI = async ({
   );
 
   // Generate validation schemas code
-  const validationSchemas = Object.keys(schemaGroups)
+  const validationSchemas = Object.keys(entitySchemaGroups)
     .sort()
     .reduce((accumulator, entityName) => {
-      schemaGroups[entityName].sort().forEach((schemaName) => {
+      entitySchemaGroups[entityName].sort().forEach((schemaName) => {
         if (!accumulator[entityName]) {
           accumulator[entityName] = {};
         }
@@ -166,10 +184,22 @@ export const generateTypescriptAPI = async ({
           swaggerDocs,
         });
         const zodValidationSchemaName = `${schemaName}ValidationSchema`;
-        const inferedTypeCode = `z.infer<typeof ${zodValidationSchemaName}>`;
+        const inferedTypeCode = `export type ${schemaName} = z.infer<typeof ${zodValidationSchemaName}>`;
         const imports: Record<string, string[]> = {
           zod: ['z'],
         };
+
+        referencedSchemas.forEach((referencedSchemaName) => {
+          const referencedSchemaEntityName =
+            schemaEntityMappings[referencedSchemaName];
+          if (referencedSchemaEntityName != entityName) {
+            if (!imports[referencedSchemaEntityName]) {
+              imports[referencedSchemaEntityName] = [];
+            }
+            imports[referencedSchemaEntityName].push(referencedSchemaName);
+          }
+        });
+
         accumulator[entityName][schemaName] = {
           zodValidationSchemaCode: code,
           zodValidationSchemaName,
@@ -181,25 +211,28 @@ export const generateTypescriptAPI = async ({
       return accumulator;
     }, {} as Record<string, Record<string, SchemaCode>>);
 
-  writeFileSync(
-    `${__dirname}/request-groupings.output.json`,
-    JSON.stringify(requestGroupings, null, 2)
-  );
-
-  writeFileSync(
-    `${__dirname}/schema-references.output.json`,
-    JSON.stringify(schemaReferences, null, 2)
-  );
-
-  writeFileSync(
-    `${__dirname}/schema-groupings.output.json`,
-    JSON.stringify(schemaGroups, null, 2)
-  );
-
-  writeFileSync(
-    `${__dirname}/validation-schemas.output.json`,
-    JSON.stringify(validationSchemas, null, 2)
-  );
+  if (outputInternalState) {
+    writeFileSync(
+      `${outputRootPath}/request-groupings.output.json`,
+      JSON.stringify(requestGroupings, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/schema-references.output.json`,
+      JSON.stringify(schemaEntityReferences, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/schema-to-entity-mappings.output.json`,
+      JSON.stringify(schemaEntityMappings, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/schema-groupings.output.json`,
+      JSON.stringify(entitySchemaGroups, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/validation-schemas.output.json`,
+      JSON.stringify(validationSchemas, null, 2)
+    );
+  }
 };
 
 export interface FindSchemaReferencedSchemasOptions {
