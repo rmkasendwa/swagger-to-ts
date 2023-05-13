@@ -10,6 +10,7 @@ export const BINARY_RESPONSE_TYPES = ['ArrayBuffer'];
 export interface TypescriptAPIGeneratorRequest extends Request {
   method: RequestMethod;
   operationName: string;
+  operationDescription?: string;
   endpointPath: string;
   endpointPathName: string;
   pathParameters?: RequestParameter[];

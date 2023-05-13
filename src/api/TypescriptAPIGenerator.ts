@@ -12,6 +12,8 @@ import {
 } from '../models/TypescriptAPIGenerator';
 import { generateModelMappings } from './ModelCodeGenerator';
 
+export const API_ADAPTER_PATH = `./Adapter`;
+
 export interface GenerateTypescriptAPIConfig {
   swaggerDocs: OpenAPISpecification;
   outputRootPath: string;
@@ -37,6 +39,13 @@ export const generateTypescriptAPI = async ({
               requests: [],
             };
           }
+          if (!accumulator[tag].imports[API_ADAPTER_PATH]) {
+            accumulator[tag].imports[API_ADAPTER_PATH] = [];
+          }
+          if (!accumulator[tag].imports[API_ADAPTER_PATH].includes(method)) {
+            accumulator[tag].imports[API_ADAPTER_PATH].push(method);
+          }
+
           accumulator[tag].requests.push({
             ...request,
             method: method as RequestMethod,
@@ -81,6 +90,17 @@ export const generateTypescriptAPI = async ({
                     pathParameters,
                   };
                 }
+              }
+            })(),
+            operationDescription: (() => {
+              if (
+                requestOperationName === 'requestSummary' &&
+                request.summary
+              ) {
+                const [verb, ...restSummary] = request.summary.split(' ');
+                return (
+                  verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ')
+                );
               }
             })(),
           });
@@ -195,6 +215,21 @@ export const generateTypescriptAPI = async ({
       })
       .join('\n');
 
+    const entityAPIOutputCode = requestGroupings[entityName].requests
+      .map(
+        ({ method, operationName, endpointPathName, operationDescription }) => {
+          return `
+          export const ${operationName} = async () => {
+            const { data } = await ${method}(${endpointPathName}, {
+              label: '${operationDescription}',
+            });
+            return data;
+          };
+        `.trimIndent();
+        }
+      )
+      .join('\n\n');
+
     writeFileSync(
       entityAPIOutputFilePath,
       prettier.format(
@@ -214,6 +249,11 @@ export const generateTypescriptAPI = async ({
               .toUpperCase()}_DATA_KEY = '${entityName.toCamelCase()}';
             //#endregion
           `.trimIndent(),
+          `
+            //#region API
+            ${entityAPIOutputCode}
+            //#endregion
+          `.trimIndent(),
         ].join('\n\n'),
         {
           filepath: entityAPIOutputFilePath,
@@ -223,17 +263,72 @@ export const generateTypescriptAPI = async ({
     );
   });
 
+  const apiAdapterOutputFilePath = `${apiOutputFilePath}/Adapter.ts`;
+  writeFileSync(
+    apiAdapterOutputFilePath,
+    prettier.format(
+      `
+        import { getAPIAdapter } from '@infinite-debugger/axios-api-adapter';
+
+        declare module '@infinite-debugger/axios-api-adapter' {
+          interface IAPIAdapterConfiguration {
+            API_KEY?: string;
+          }
+        }
+
+        export {
+          IAPIAdapterConfiguration,
+          REDIRECTION_ERROR_MESSAGES,
+          RequestOptions,
+          ResponseProcessor,
+        } from '@infinite-debugger/axios-api-adapter';
+        export {
+          APIAdapterConfiguration,
+          RequestController,
+          _delete,
+          defaultRequestHeaders,
+          get,
+          logout,
+          patch,
+          patchDefaultRequestHeaders,
+          post,
+          put,
+        };
+
+        const {
+          APIAdapterConfiguration,
+          RequestController,
+          _delete,
+          defaultRequestHeaders,
+          get,
+          logout,
+          patch,
+          patchDefaultRequestHeaders,
+          post,
+          put,
+        } = getAPIAdapter({
+          id: 'api-client',
+        });
+
+      `.trimIndent(),
+      {
+        filepath: apiAdapterOutputFilePath,
+        ...prettierConfig,
+      }
+    )
+  );
+
   const apiIndexOutputFilePath = `${apiOutputFilePath}/index.ts`;
   writeFileSync(
     apiIndexOutputFilePath,
     prettier.format(
-      Object.keys(requestGroupings)
+      [...Object.keys(requestGroupings), 'Adapter']
         .map((entityName) => {
           return `export * from './${entityName.toPascalCase()}';`;
         })
         .join('\n'),
       {
-        filepath: modelsIndexOutputFilePath,
+        filepath: apiIndexOutputFilePath,
         ...prettierConfig,
       }
     )
