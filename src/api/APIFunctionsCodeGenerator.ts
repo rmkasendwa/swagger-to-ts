@@ -131,15 +131,33 @@ export const getAPIFunctionsCodeConfiguration = ({
                 }
 
                 const paramsString = [
+                  //#region Path parameters
                   ...(() => {
                     if (pathParameters) {
-                      return pathParameters.map(({ name }) => {
-                        // TODO: Generate the path parameter type
-                        return `${name}: string`;
+                      return pathParameters.map(({ name, schema }) => {
+                        const type = (() => {
+                          if (
+                            'type' in schema &&
+                            (
+                              [
+                                'boolean',
+                                'number',
+                                'string',
+                              ] as (typeof schema.type)[]
+                            ).includes(schema.type)
+                          ) {
+                            return schema.type;
+                          }
+                          return 'string';
+                        })();
+                        return `${name}: ${type}`;
                       });
                     }
                     return [];
                   })(),
+                  //#endregion
+
+                  //#region Request body parameters
                   ...(() => {
                     if (requestBody && requestBodySchemaName) {
                       jsDocCommentLines.push(
@@ -166,6 +184,9 @@ export const getAPIFunctionsCodeConfiguration = ({
                     }
                     return [];
                   })(),
+                  //#endregion
+
+                  //#region Header parameters
                   ...(() => {
                     if (
                       headerParametersModelReference &&
@@ -196,6 +217,9 @@ export const getAPIFunctionsCodeConfiguration = ({
                     }
                     return [];
                   })(),
+                  //#endregion
+
+                  //#region Query parameters
                   ...(() => {
                     if (
                       queryParametersModelReference &&
@@ -238,6 +262,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                     }
                     return [];
                   })(),
+                  //#endregion
                   `{ ...rest }: RequestOptions = {}`,
                 ].join(', ');
 
