@@ -6,7 +6,6 @@ import prettier from 'prettier';
 
 import { OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
-import { SchemaProperty } from '../models/OpenAPISpecification/Schema';
 import { prettierConfig } from '../models/Prettier';
 import {
   PATHS_LIBRARY_PATH,
@@ -18,6 +17,7 @@ import {
   getAPIFunctionsCodeConfiguration,
 } from './APIFunctionsCodeGenerator';
 import { generateModelMappings } from './ModelCodeGenerator';
+import { generateSchemaFromRequestParameters } from './SchemaGenerator';
 
 export const API_ADAPTER_PATH = `./Adapter`;
 
@@ -158,6 +158,8 @@ export const generateTypescriptAPI = async ({
                 }
               }
             })(),
+
+            //#region Header parameters
             ...(() => {
               if (request.parameters) {
                 const headerParameters = request.parameters.filter(
@@ -170,6 +172,11 @@ export const generateTypescriptAPI = async ({
                 );
                 if (headerParameters.length > 0) {
                   const headerParametersModelReference = `${pascalCaseOperationName}HeaderParams`;
+                  swaggerDocs.components.schemas[
+                    headerParametersModelReference
+                  ] = generateSchemaFromRequestParameters({
+                    requestParameters: headerParameters,
+                  });
                   return {
                     headerParameters,
                     headerParametersModelReference,
@@ -177,6 +184,9 @@ export const generateTypescriptAPI = async ({
                 }
               }
             })(),
+            //#endregion
+
+            //#region Query parameters
             ...(() => {
               if (request.parameters) {
                 const queryParameters = request.parameters.filter(
@@ -186,23 +196,9 @@ export const generateTypescriptAPI = async ({
                   const queryParametersModelReference = `${pascalCaseOperationName}QueryParams`;
                   swaggerDocs.components.schemas[
                     queryParametersModelReference
-                  ] = {
-                    type: 'object',
-                    properties: queryParameters.reduce(
-                      (accumulator, { name, schema }) => {
-                        accumulator[name] = schema;
-                        return accumulator;
-                      },
-                      {} as Record<string, SchemaProperty>
-                    ),
-                    required: queryParameters
-                      .filter(({ required }) => {
-                        return required;
-                      })
-                      .map(({ name }) => {
-                        return name;
-                      }),
-                  };
+                  ] = generateSchemaFromRequestParameters({
+                    requestParameters: queryParameters,
+                  });
                   return {
                     queryParameters,
                     queryParametersModelReference,
@@ -210,6 +206,7 @@ export const generateTypescriptAPI = async ({
                 }
               }
             })(),
+            //#endregion
           });
         });
       });
@@ -369,7 +366,7 @@ export const generateTypescriptAPI = async ({
           `.trimIndent(),
           `
             //#region Data Keys
-            export const ${dataKeyVariableName} = '${tagToEntityLabelMappings[tag].camelCaseEntities}';
+            export const ${dataKeyVariableName} = '${tagToEntityLabelMappings[tag].PascalCaseEntities}';
             //#endregion
           `.trimIndent(),
           `

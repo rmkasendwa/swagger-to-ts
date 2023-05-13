@@ -1,5 +1,8 @@
 import { OpenAPISpecification } from '../models';
+import { RequestParameter } from '../models/OpenAPISpecification/Request';
+import { Schema, SchemaProperty } from '../models/OpenAPISpecification/Schema';
 
+//#region Find all schemas referenced by a schema
 export interface FindSchemaReferencedSchemasOptions {
   swaggerDocs: OpenAPISpecification;
   schemaName: string;
@@ -31,4 +34,27 @@ export const findSchemaReferencedSchemas = ({
   };
   findSchemaReferencedSchemasRecursive(schemaName);
   return schemaReferencedSchemas;
+};
+//#endregion
+
+export interface GenerateSchemaFromRequestParametersOptions {
+  requestParameters: RequestParameter[];
+}
+export const generateSchemaFromRequestParameters = ({
+  requestParameters,
+}: GenerateSchemaFromRequestParametersOptions) => {
+  return {
+    type: 'object',
+    properties: requestParameters.reduce((accumulator, { name, schema }) => {
+      accumulator[name] = schema;
+      return accumulator;
+    }, {} as Record<string, SchemaProperty>),
+    required: requestParameters
+      .filter(({ required }) => {
+        return required;
+      })
+      .map(({ name }) => {
+        return name;
+      }),
+  } as Schema;
 };

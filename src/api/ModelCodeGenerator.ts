@@ -6,7 +6,7 @@ import {
   RequestGroupings,
   ZodValidationSchemaProperty,
 } from '../models/TypescriptAPIGenerator';
-import { findSchemaReferencedSchemas } from './FindSchemaReferencedSchemas';
+import { findSchemaReferencedSchemas } from './SchemaGenerator';
 
 //#region Generate model mappings
 export interface GenerateModelMappingsOptions {

@@ -173,6 +173,25 @@ export const getAPIFunctionsCodeConfiguration = ({
                       headerParameters.length > 0
                     ) {
                       jsDocCommentLines.push(`@param headers`);
+
+                      const schemaSource = `../models/${
+                        tagToEntityLabelMappings[
+                          schemaToEntityMappings[headerParametersModelReference]
+                        ].PascalCaseEntities
+                      }`;
+                      if (!imports[schemaSource]) {
+                        imports[schemaSource] = [];
+                      }
+                      if (
+                        !imports[schemaSource].includes(
+                          headerParametersModelReference
+                        )
+                      ) {
+                        imports[schemaSource].push(
+                          headerParametersModelReference
+                        );
+                      }
+
                       return [`headers: ${headerParametersModelReference}`];
                     }
                     return [];
