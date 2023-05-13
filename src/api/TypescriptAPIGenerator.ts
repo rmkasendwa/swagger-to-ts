@@ -6,6 +6,7 @@ import prettier from 'prettier';
 
 import { OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
+import { SchemaProperty } from '../models/OpenAPISpecification/Schema';
 import { prettierConfig } from '../models/Prettier';
 import {
   PATHS_LIBRARY_PATH,
@@ -168,9 +169,10 @@ export const generateTypescriptAPI = async ({
                   }
                 );
                 if (headerParameters.length > 0) {
+                  const headerParametersModelReference = `${pascalCaseOperationName}HeaderParams`;
                   return {
                     headerParameters,
-                    headerParametersModelReference: `${pascalCaseOperationName}HeaderParams`,
+                    headerParametersModelReference,
                   };
                 }
               }
@@ -181,9 +183,29 @@ export const generateTypescriptAPI = async ({
                   (parameter) => parameter.in === 'query'
                 );
                 if (queryParameters.length > 0) {
+                  const queryParametersModelReference = `${pascalCaseOperationName}QueryParams`;
+                  swaggerDocs.components.schemas[
+                    queryParametersModelReference
+                  ] = {
+                    type: 'object',
+                    properties: queryParameters.reduce(
+                      (accumulator, { name, schema }) => {
+                        accumulator[name] = schema;
+                        return accumulator;
+                      },
+                      {} as Record<string, SchemaProperty>
+                    ),
+                    required: queryParameters
+                      .filter(({ required }) => {
+                        return required;
+                      })
+                      .map(({ name }) => {
+                        return name;
+                      }),
+                  };
                   return {
                     queryParameters,
-                    queryParametersModelReference: `${pascalCaseOperationName}QueryParams`,
+                    queryParametersModelReference,
                   };
                 }
               }

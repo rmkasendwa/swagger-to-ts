@@ -148,7 +148,11 @@ export const getAPIFunctionsCodeConfiguration = ({
                         }`.trim()
                       );
 
-                      const schemaSource = `../models/${schemaToEntityMappings[requestBodySchemaName]}`;
+                      const schemaSource = `../models/${
+                        tagToEntityLabelMappings[
+                          schemaToEntityMappings[requestBodySchemaName]
+                        ].PascalCaseEntities
+                      }`;
                       if (!imports[schemaSource]) {
                         imports[schemaSource] = [];
                       }
@@ -157,6 +161,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                       ) {
                         imports[schemaSource].push(requestBodySchemaName);
                       }
+
                       return [`requestPayload: ${requestBodySchemaName}`];
                     }
                     return [];
@@ -179,6 +184,35 @@ export const getAPIFunctionsCodeConfiguration = ({
                       queryParameters.length > 0
                     ) {
                       jsDocCommentLines.push(`@param queryParams`);
+
+                      const schemaSource = `../models/${
+                        tagToEntityLabelMappings[
+                          schemaToEntityMappings[queryParametersModelReference]
+                        ].PascalCaseEntities
+                      }`;
+                      if (!imports[schemaSource]) {
+                        imports[schemaSource] = [];
+                      }
+                      if (
+                        !imports[schemaSource].includes(
+                          queryParametersModelReference
+                        )
+                      ) {
+                        imports[schemaSource].push(
+                          queryParametersModelReference
+                        );
+                      }
+
+                      // Check if query params are required
+                      if (
+                        queryParameters.filter(({ required }) => required)
+                          .length > 0
+                      ) {
+                        return [
+                          `queryParams: ${queryParametersModelReference}`,
+                        ];
+                      }
+
                       return [
                         `queryParams: ${queryParametersModelReference} = {}`,
                       ];
@@ -198,7 +232,11 @@ export const getAPIFunctionsCodeConfiguration = ({
                   const successResponseValidationSchemaName =
                     modelsToValidationSchemaMappings[successResponseSchemaName]
                       .zodValidationSchemaName;
-                  const validationSchemaSource = `../models/${schemaToEntityMappings[successResponseSchemaName]}`;
+                  const validationSchemaSource = `../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[successResponseSchemaName]
+                    ].PascalCaseEntities
+                  }`;
 
                   if (!imports[validationSchemaSource]) {
                     imports[validationSchemaSource] = [];

@@ -1,6 +1,6 @@
 import { Content } from './Content';
 import { Responses } from './Response';
-import { Schema } from './Schema';
+import { Schema, SchemaProperty } from './Schema';
 
 export type RequestMethod = 'get' | 'post' | 'put' | 'delete' | 'patch';
 
@@ -16,7 +16,7 @@ export type RequestParameter = {
   required: boolean;
   name: string;
   description?: string;
-  schema: Schema;
+  schema: SchemaProperty;
 };
 
 export type RequestBody = {

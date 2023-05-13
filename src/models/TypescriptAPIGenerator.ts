@@ -15,10 +15,13 @@ export interface TypescriptAPIGeneratorRequest extends Request {
   endpointPath: string;
   endpointPathName: string;
   pathParameters?: RequestParameter[];
+
   headerParameters?: RequestParameter[];
   headerParametersModelReference?: string;
+
   queryParameters?: RequestParameter[];
   queryParametersModelReference?: string;
+
   requestBodySchemaName?: string;
   successResponseSchemaName?: string;
 }
