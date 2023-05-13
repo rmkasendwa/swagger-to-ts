@@ -50,5 +50,5 @@ export type Schema = {
   /**
    * The required properties
    */
-  required: string[];
+  required?: string[];
 };
