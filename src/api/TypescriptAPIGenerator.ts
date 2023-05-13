@@ -9,7 +9,7 @@ import {
   TypescriptAPIGeneratorRequest,
 } from '../models/TypescriptAPIGenerator';
 import { findSchemaReferencedSchemas } from './FindSchemaReferencedSchemas';
-import { generateSchemaCode } from './GenerateSchemaCode';
+import { generateSchemaCode } from './SchemaCodeGenerator';
 
 export interface GenerateTypescriptAPIConfig {
   swaggerDocs: OpenAPISpecification;
@@ -110,54 +110,119 @@ export const generateTypescriptAPI = async ({
     {} as Record<string, string[]>
   );
 
-  // Generate validation schemas code
-  const validationSchemas = Object.keys(entitySchemaGroups)
+  //#region Generate validation schemas code
+  const models = Object.keys(entitySchemaGroups)
     .sort()
-    .reduce((accumulator, entityName) => {
-      entitySchemaGroups[entityName].sort().forEach((schemaName) => {
-        if (!accumulator[entityName]) {
-          accumulator[entityName] = {};
-        }
-        const {
-          generatedVariables,
-          zodValidationSchemaCode,
-          zodValidationSchemaConfiguration,
-          referencedSchemas,
-          inferedTypeCode,
-          zodValidationSchemaName,
-          imports,
-        } = generateSchemaCode({
-          schemaName,
-          swaggerDocs,
-        });
+    .reduce(
+      (accumulator, entityName) => {
+        entitySchemaGroups[entityName].sort().forEach((schemaName) => {
+          if (!accumulator[entityName]) {
+            accumulator[entityName] = {
+              models: {},
+            };
+          }
+          const {
+            generatedVariables,
+            zodValidationSchemaCode,
+            zodValidationSchemaConfiguration,
+            referencedSchemas,
+            inferedTypeCode,
+            zodValidationSchemaName,
+            imports,
+          } = generateSchemaCode({
+            schemaName,
+            swaggerDocs,
+          });
 
-        referencedSchemas.forEach((referencedSchemaName) => {
-          const referencedSchemaEntityName =
-            schemaEntityMappings[referencedSchemaName];
-          if (referencedSchemaEntityName != entityName) {
-            const importFilePath = `./${referencedSchemaEntityName}`;
-            if (!imports[importFilePath]) {
-              imports[importFilePath] = [];
+          referencedSchemas.forEach((referencedSchemaName) => {
+            const referencedSchemaEntityName =
+              schemaEntityMappings[referencedSchemaName];
+            if (referencedSchemaEntityName != entityName) {
+              const importFilePath = `./${referencedSchemaEntityName}`;
+              if (!imports[importFilePath]) {
+                imports[importFilePath] = [];
+              }
+              imports[importFilePath].push(referencedSchemaName);
             }
-            imports[importFilePath].push(referencedSchemaName);
+          });
+
+          accumulator[entityName].models[schemaName] = {
+            zodValidationSchemaCode,
+            zodValidationSchemaConfiguration,
+            zodValidationSchemaName,
+            inferedTypeCode,
+            referencedSchemas,
+            generatedVariables,
+            imports,
+          };
+
+          if (imports) {
+            if (!accumulator[entityName].imports) {
+              accumulator[entityName].imports = {};
+            }
+            Object.keys(imports).forEach((importFilePath) => {
+              if (!accumulator[entityName].imports![importFilePath]) {
+                accumulator[entityName].imports![importFilePath] = [];
+              }
+              imports[importFilePath].forEach((importName) => {
+                if (
+                  !accumulator[entityName].imports![importFilePath]!.includes(
+                    importName
+                  )
+                ) {
+                  accumulator[entityName].imports![importFilePath]!.push(
+                    importName
+                  );
+                }
+              });
+            });
           }
         });
+        return accumulator;
+      },
+      {} as Record<
+        string,
+        {
+          models: Record<string, SchemaCode>;
+          imports?: Record<string, string[]>;
+        }
+      >
+    );
+  //#endregion
 
-        accumulator[entityName][schemaName] = {
-          zodValidationSchemaCode,
-          zodValidationSchemaConfiguration,
-          zodValidationSchemaName,
-          inferedTypeCode,
-          referencedSchemas,
-          generatedVariables,
-          imports,
-        };
-      });
-      return accumulator;
-    }, {} as Record<string, Record<string, SchemaCode>>);
+  //#region Write model output files
+  const modelsOutputFilePath = `${outputRootPath}/models`;
+  ensureDirSync(modelsOutputFilePath);
+  Object.keys(models).forEach((entityName) => {
+    const pascalCaseEntityName = entityName.toPascalCase();
+    const modelFileName = `${pascalCaseEntityName}.ts`;
+    const entityModelsOutputFilePath = `${modelsOutputFilePath}/${modelFileName}`;
 
-  // Write model output files
-  // const modelsOutputPath = `${outputRootPath}/models`;
+    const entityModelsOutputCode = Object.values(models[entityName].models)
+      .map((model) => model.zodValidationSchemaCode)
+      .join('\n\n');
+
+    writeFileSync(
+      entityModelsOutputFilePath,
+      [
+        ...(() => {
+          if (models[entityName].imports) {
+            return Object.keys(models[entityName].imports!).map(
+              (importFilePath) => {
+                const importNames = models[entityName].imports![importFilePath];
+                return `import { ${importNames.join(
+                  ', '
+                )} } from '${importFilePath}';`;
+              }
+            );
+          }
+          return [];
+        })(),
+        entityModelsOutputCode,
+      ].join('\n\n')
+    );
+  });
+  //#endregion
 
   if (outputInternalState) {
     ensureDirSync(outputRootPath);
@@ -179,7 +244,7 @@ export const generateTypescriptAPI = async ({
     );
     writeFileSync(
       `${outputRootPath}/validation-schemas.output.json`,
-      JSON.stringify(validationSchemas, null, 2)
+      JSON.stringify(models, null, 2)
     );
   }
 };
