@@ -27,13 +27,15 @@ export interface ZodValidationSchemaProperty {
   code: string;
 }
 
+export type ModuleImports = Record<string, string[]>;
+
 export interface GeneratedSchemaCodeConfiguration {
   name: string;
   zodValidationSchemaName: string;
   zodValidationSchemaConfiguration: Record<string, ZodValidationSchemaProperty>;
   zodValidationSchemaCode: string;
   inferedTypeCode: string;
-  imports?: Record<string, string[]>;
+  imports?: ModuleImports;
   referencedSchemas?: string[];
   generatedVariables?: Record<string, string>;
 }
@@ -41,12 +43,14 @@ export interface GeneratedSchemaCodeConfiguration {
 export type RequestGroupings = Record<
   string,
   {
-    imports: Record<string, string[]>;
+    imports: ModuleImports;
     requests: TypescriptAPIGeneratorRequest[];
   }
 >;
 
-export const PATHS_LIBRARY = `@infinite-debugger/rmk-utils/paths`;
+export const PATHS_LIBRARY_PATH = `@infinite-debugger/rmk-utils/paths`;
+
+export const API_ADAPTER_PATH = `./Adapter`;
 
 export type TagNameToEntityLabelsMap = Record<
   string,
