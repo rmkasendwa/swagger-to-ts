@@ -324,14 +324,14 @@ export const generateTypescriptAPI = async ({
           const { imports } = requestGroupings[entityName];
           const { jsDocCommentSnippet, paramsString, returnValueString } =
             (() => {
-              const lines: string[] = [];
+              const jsDocCommentLines: string[] = [];
 
               if (description) {
-                lines.push(description, '');
+                jsDocCommentLines.push(description, '');
               }
               if (pathParameters && pathParameters.length > 0) {
-                lines.push(
-                  ...pathParameters.map(({ name, description }) => {
+                jsDocCommentLines.push(
+                  ...pathParameters.map(({ name, description = '' }) => {
                     return `@param ${name} ${description}`.trim();
                   })
                 );
@@ -349,7 +349,7 @@ export const generateTypescriptAPI = async ({
                 })(),
                 ...(() => {
                   if (requestBody && requestBodySchemaName) {
-                    lines.push(
+                    jsDocCommentLines.push(
                       `@param requestPayload ${
                         requestBody.description || ''
                       }`.trim()
@@ -374,7 +374,7 @@ export const generateTypescriptAPI = async ({
                     headerParameters &&
                     headerParameters.length > 0
                   ) {
-                    lines.push(`@param headers`);
+                    jsDocCommentLines.push(`@param headers`);
                     return [`headers: ${headerParametersModelReference}`];
                   }
                   return [];
@@ -385,7 +385,7 @@ export const generateTypescriptAPI = async ({
                     queryParameters &&
                     queryParameters.length > 0
                   ) {
-                    lines.push(`@param queryParams`);
+                    jsDocCommentLines.push(`@param queryParams`);
                     return [
                       `queryParams: ${queryParametersModelReference} = {}`,
                     ];
@@ -422,13 +422,13 @@ export const generateTypescriptAPI = async ({
 
                 returnValueString = `${successResponseValidationSchemaName}.parse(data)`;
 
-                lines.push(`@returns ${successResponseSchemaName}`); // TODO: Replace this with the response description.
+                jsDocCommentLines.push(`@returns ${successResponseSchemaName}`); // TODO: Replace this with the response description.
               }
 
               return {
                 jsDocCommentSnippet: (() => {
-                  if (lines.length > 0) {
-                    const linesString = lines
+                  if (jsDocCommentLines.length > 0) {
+                    const linesString = jsDocCommentLines
                       .map((line) => {
                         return ` * ${line}`;
                       })
