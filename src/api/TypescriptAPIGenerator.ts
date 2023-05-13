@@ -78,12 +78,6 @@ export const generateTypescriptAPI = async ({
 
           const { imports, requests } = accumulator[tag];
 
-          addModuleImport({
-            imports,
-            importName: method,
-            importFilePath: API_ADAPTER_PATH,
-          });
-
           requests.push({
             ...request,
             method: method as RequestMethod,
@@ -129,8 +123,9 @@ export const generateTypescriptAPI = async ({
               );
               if (
                 successResponse &&
-                request.responses[successResponse] &&
-                'application/json' in request.responses[successResponse].content
+                request.responses[successResponse].content &&
+                'application/json' in
+                  request.responses[successResponse].content!
               ) {
                 const successResponseSchemaName = (
                   request.responses[successResponse] as any
@@ -265,6 +260,53 @@ export const generateTypescriptAPI = async ({
   });
   //#endregion
 
+  //#region Generate API functions code configuration
+  const apiFunctionsCodeConfiguration = getAPIFunctionsCodeConfiguration({
+    requestGroupings,
+    modelsToValidationSchemaMappings,
+    schemaToEntityMappings,
+    tagToEntityLabelMappings,
+  });
+  //#endregion
+
+  //#region Write debug output files
+  if (outputInternalState) {
+    ensureDirSync(outputRootPath);
+    writeFileSync(
+      `${outputRootPath}/request-groupings.output.json`,
+      JSON.stringify(requestGroupings, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/tag-entity-label-mappings.output.json`,
+      JSON.stringify(tagToEntityLabelMappings, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/schema-references.output.json`,
+      JSON.stringify(schemaEntityReferences, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/schema-to-entity-mappings.output.json`,
+      JSON.stringify(schemaToEntityMappings, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/schema-groupings.output.json`,
+      JSON.stringify(entitySchemaGroups, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/validation-schemas.output.json`,
+      JSON.stringify(models, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/models-to-validation-schema-mappings.output.json`,
+      JSON.stringify(modelsToValidationSchemaMappings, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/api-functions-code-configuration.output.json`,
+      JSON.stringify(apiFunctionsCodeConfiguration, null, 2)
+    );
+  }
+  //#endregion
+
   //#region Write model output files
   const modelsOutputFilePath = `${outputRootPath}/models`;
   ensureDirSync(modelsOutputFilePath);
@@ -336,12 +378,6 @@ export const generateTypescriptAPI = async ({
   //#region Write api output files
   const apiOutputFilePath = `${outputRootPath}/api`;
   ensureDirSync(apiOutputFilePath);
-  const apiFunctionsCodeConfiguration = getAPIFunctionsCodeConfiguration({
-    requestGroupings,
-    modelsToValidationSchemaMappings,
-    schemaToEntityMappings,
-    tagToEntityLabelMappings,
-  });
   Object.keys(apiFunctionsCodeConfiguration).forEach((tag) => {
     const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
     const apiFileName = `${PascalCaseEntities}.ts`;
@@ -431,44 +467,6 @@ export const generateTypescriptAPI = async ({
       }
     )
   );
-  //#endregion
-
-  //#region Write debug output files
-  if (outputInternalState) {
-    ensureDirSync(outputRootPath);
-    writeFileSync(
-      `${outputRootPath}/request-groupings.output.json`,
-      JSON.stringify(requestGroupings, null, 2)
-    );
-    writeFileSync(
-      `${outputRootPath}/tag-entity-label-mappings.output.json`,
-      JSON.stringify(tagToEntityLabelMappings, null, 2)
-    );
-    writeFileSync(
-      `${outputRootPath}/schema-references.output.json`,
-      JSON.stringify(schemaEntityReferences, null, 2)
-    );
-    writeFileSync(
-      `${outputRootPath}/schema-to-entity-mappings.output.json`,
-      JSON.stringify(schemaToEntityMappings, null, 2)
-    );
-    writeFileSync(
-      `${outputRootPath}/schema-groupings.output.json`,
-      JSON.stringify(entitySchemaGroups, null, 2)
-    );
-    writeFileSync(
-      `${outputRootPath}/validation-schemas.output.json`,
-      JSON.stringify(models, null, 2)
-    );
-    writeFileSync(
-      `${outputRootPath}/models-to-validation-schema-mappings.output.json`,
-      JSON.stringify(modelsToValidationSchemaMappings, null, 2)
-    );
-    writeFileSync(
-      `${outputRootPath}/api-functions-code-configuration.output.json`,
-      JSON.stringify(apiFunctionsCodeConfiguration, null, 2)
-    );
-  }
   //#endregion
 };
 

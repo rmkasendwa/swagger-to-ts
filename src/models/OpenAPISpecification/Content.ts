@@ -28,4 +28,4 @@ export type GenericContent = {
   };
 };
 
-export type Content = JSONContent | GenericContent;
+export type Content = JSONContent | PNGContent | GenericContent;

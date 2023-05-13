@@ -26,7 +26,7 @@ export type BooleanSchemaProperty = {
 
 export type ArraySchemaProperty = {
   type: 'array';
-  items: SchemaProperty;
+  items?: SchemaProperty;
   description?: string;
   example?: any[];
   default?: any[];

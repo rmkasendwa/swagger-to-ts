@@ -22,7 +22,13 @@ export const generateModelMappings = ({
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
     (accumulator, { requests }) => {
       requests.forEach(
-        ({ tags, responses, requestBody, queryParametersModelReference }) => {
+        ({
+          tags,
+          responses,
+          requestBody,
+          headerParametersModelReference,
+          queryParametersModelReference,
+        }) => {
           [
             ...Object.values(responses),
             ...(() => {
@@ -33,6 +39,7 @@ export const generateModelMappings = ({
             })(),
           ].forEach(({ content }) => {
             if (
+              content &&
               'application/json' in content &&
               '$ref' in content['application/json'].schema
             ) {
@@ -56,6 +63,26 @@ export const generateModelMappings = ({
               });
             }
           });
+
+          if (headerParametersModelReference) {
+            const schemaName = headerParametersModelReference;
+            [
+              schemaName,
+              ...findSchemaReferencedSchemas({
+                schemaName,
+                swaggerDocs,
+              }),
+            ].forEach((schemaName) => {
+              if (!accumulator[schemaName]) {
+                accumulator[schemaName] = [];
+              }
+              tags.forEach((tag) => {
+                if (!accumulator[schemaName].includes(tag)) {
+                  accumulator[schemaName].push(tag);
+                }
+              });
+            });
+          }
 
           if (queryParametersModelReference) {
             const schemaName = queryParametersModelReference;
@@ -251,10 +278,12 @@ export const generateModelCode = ({
           const code = (() => {
             switch (property.type) {
               case 'array': {
-                if ('$ref' in property.items) {
+                if (property.items && '$ref' in property.items) {
                   const schemaName = property.items.$ref.split('/').pop()!;
                   referencedSchemas.push(schemaName);
                   return `z.array(${schemaName}ValidationSchema)`;
+                } else {
+                  return `z.array(z.any())`;
                 }
                 break;
               }
@@ -321,7 +350,7 @@ export const generateModelCode = ({
 
   const zodObjectPropertiesCode = Object.keys(zodValidationSchemaConfiguration)
     .map((key) => {
-      return `${key}: ${zodValidationSchemaConfiguration[key].code}`;
+      return `'${key}': ${zodValidationSchemaConfiguration[key].code}`;
     })
     .join(',\n');
 

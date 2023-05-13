@@ -264,9 +264,11 @@ export const getAPIFunctionsCodeConfiguration = ({
                   `{ ...rest }: RequestOptions = {}`,
                 ].join(', ');
 
-                if (!imports[API_ADAPTER_PATH].includes('RequestOptions')) {
-                  imports[API_ADAPTER_PATH].push('RequestOptions');
-                }
+                addModuleImport({
+                  imports,
+                  importName: 'RequestOptions',
+                  importFilePath: API_ADAPTER_PATH,
+                });
 
                 let returnValueString = 'data';
 
@@ -365,10 +367,23 @@ export const getAPIFunctionsCodeConfiguration = ({
               return '';
             })();
 
+            const httpActionName = (() => {
+              if (method === 'delete') {
+                return `_delete`;
+              }
+              return method;
+            })();
+
+            addModuleImport({
+              imports,
+              importName: httpActionName,
+              importFilePath: API_ADAPTER_PATH,
+            });
+
             return `
               ${jsDocCommentSnippet}
               export const ${operationName} = async (${paramsString}) => {
-                const { data } = await ${method}(${interpolatedEndpointPathString}, {
+                const { data } = await ${httpActionName}(${interpolatedEndpointPathString}, {
                   label: '${operationDescription}',${
               headerParameters && headerParameters.length > 0
                 ? '\nheaders,'

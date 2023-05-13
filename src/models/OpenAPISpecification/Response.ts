@@ -1,7 +1,7 @@
 import { Content } from './Content';
 
 export type Response = {
-  content: Content;
+  content?: Content;
   description?: string;
 };
 
