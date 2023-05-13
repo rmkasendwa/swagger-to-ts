@@ -6,7 +6,10 @@ import prettier from 'prettier';
 import { OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
-import { TypescriptAPIGeneratorRequest } from '../models/TypescriptAPIGenerator';
+import {
+  PATHS_LIBRARY,
+  RequestGroupings,
+} from '../models/TypescriptAPIGenerator';
 import { generateModelMappings } from './ModelCodeGenerator';
 
 export interface GenerateTypescriptAPIConfig {
@@ -29,9 +32,12 @@ export const generateTypescriptAPI = async ({
         const request = swaggerDocs.paths[path][method as RequestMethod];
         request.tags.forEach((tag) => {
           if (!accumulator[tag]) {
-            accumulator[tag] = [];
+            accumulator[tag] = {
+              imports: {},
+              requests: [],
+            };
           }
-          accumulator[tag].push({
+          accumulator[tag].requests.push({
             ...request,
             method: method as RequestMethod,
             endpointPath: path,
@@ -60,6 +66,17 @@ export const generateTypescriptAPI = async ({
                   (parameter) => parameter.in === 'path'
                 );
                 if (pathParameters.length > 0) {
+                  const pathParamType = `TemplatePath`;
+                  if (!accumulator[tag].imports[PATHS_LIBRARY]) {
+                    accumulator[tag].imports[PATHS_LIBRARY] = [];
+                  }
+                  if (
+                    !accumulator[tag].imports[PATHS_LIBRARY].includes(
+                      pathParamType
+                    )
+                  ) {
+                    accumulator[tag].imports[PATHS_LIBRARY].push(pathParamType);
+                  }
                   return {
                     pathParameters,
                   };
@@ -71,7 +88,7 @@ export const generateTypescriptAPI = async ({
       });
       return accumulator;
     },
-    {} as Record<string, TypescriptAPIGeneratorRequest[]>
+    {} as RequestGroupings
   );
   //#endregion
 
@@ -123,20 +140,9 @@ export const generateTypescriptAPI = async ({
       entityModelsOutputFilePath,
       prettier.format(
         [
-          ...(() => {
-            if (models[entityName].imports) {
-              return Object.keys(models[entityName].imports!).map(
-                (importFilePath) => {
-                  const importNames =
-                    models[entityName].imports![importFilePath];
-                  return `import { ${importNames.join(
-                    ', '
-                  )} } from '${importFilePath}';`;
-                }
-              );
-            }
-            return [];
-          })(),
+          ...getImportsCode({
+            imports: models[entityName].imports,
+          }),
           entityModelsOutputCode,
         ].join('\n\n'),
         {
@@ -172,7 +178,9 @@ export const generateTypescriptAPI = async ({
     const apiFileName = `${pascalCaseEntityName}.ts`;
     const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
 
-    const entityAPIEndpointPathsOutputCode = requestGroupings[entityName]
+    const entityAPIEndpointPathsOutputCode = requestGroupings[
+      entityName
+    ].requests
       .map(({ endpointPath, endpointPathName, pathParameters }) => {
         if (pathParameters && pathParameters.length > 0) {
           const parametersCode = pathParameters
@@ -189,10 +197,18 @@ export const generateTypescriptAPI = async ({
 
     writeFileSync(
       entityAPIOutputFilePath,
-      prettier.format([entityAPIEndpointPathsOutputCode].join('\n\n'), {
-        filepath: entityAPIOutputFilePath,
-        ...prettierConfig,
-      })
+      prettier.format(
+        [
+          ...getImportsCode({
+            imports: requestGroupings[entityName].imports,
+          }),
+          entityAPIEndpointPathsOutputCode,
+        ].join('\n\n'),
+        {
+          filepath: entityAPIOutputFilePath,
+          ...prettierConfig,
+        }
+      )
     );
   });
 
@@ -236,4 +252,17 @@ export const generateTypescriptAPI = async ({
       JSON.stringify(models, null, 2)
     );
   }
+};
+
+export interface GetImportsCodeOptions {
+  imports?: Record<string, string[]>;
+}
+export const getImportsCode = ({ imports }: GetImportsCodeOptions) => {
+  if (imports) {
+    return Object.keys(imports!).map((importFilePath) => {
+      const importNames = imports![importFilePath];
+      return `import { ${importNames.join(', ')} } from '${importFilePath}';`;
+    });
+  }
+  return [];
 };

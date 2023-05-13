@@ -29,3 +29,13 @@ export interface GeneratedSchemaCodeConfiguration {
   referencedSchemas?: string[];
   generatedVariables?: Record<string, string>;
 }
+
+export type RequestGroupings = Record<
+  string,
+  {
+    imports: Record<string, string[]>;
+    requests: TypescriptAPIGeneratorRequest[];
+  }
+>;
+
+export const PATHS_LIBRARY = `@infinite-debugger/rmk-utils/paths`;

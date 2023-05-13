@@ -3,7 +3,7 @@ import { cloneDeep, isEmpty } from 'lodash';
 import { OpenAPISpecification } from '../models';
 import {
   GeneratedSchemaCodeConfiguration,
-  TypescriptAPIGeneratorRequest,
+  RequestGroupings,
   ZodValidationSchemaProperty,
 } from '../models/TypescriptAPIGenerator';
 import { findSchemaReferencedSchemas } from './FindSchemaReferencedSchemas';
@@ -11,7 +11,7 @@ import { findSchemaReferencedSchemas } from './FindSchemaReferencedSchemas';
 //#region Generate model mappings
 export interface GenerateModelMappingsOptions {
   swaggerDocs: OpenAPISpecification;
-  requestGroupings: Record<string, TypescriptAPIGeneratorRequest[]>;
+  requestGroupings: RequestGroupings;
 }
 export const generateModelMappings = ({
   requestGroupings,
@@ -20,7 +20,7 @@ export const generateModelMappings = ({
   swaggerDocs = cloneDeep(swaggerDocs);
 
   //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
-  Object.values(requestGroupings).reduce((accumulator, requests) => {
+  Object.values(requestGroupings).reduce((accumulator, { requests }) => {
     requests.forEach(({ requestBody, operationName }) => {
       if (requestBody) {
         const { content } = requestBody;
@@ -44,7 +44,7 @@ export const generateModelMappings = ({
 
   //#region Find all Schemas referenced in the requests
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
-    (accumulator, requests) => {
+    (accumulator, { requests }) => {
       requests.forEach(({ tags, responses, requestBody }) => {
         [
           ...Object.values(responses),
