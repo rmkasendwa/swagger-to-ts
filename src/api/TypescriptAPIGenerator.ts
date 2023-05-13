@@ -11,7 +11,9 @@ import {
   BINARY_RESPONSE_TYPES,
   PATHS_LIBRARY,
   RequestGroupings,
+  TagNameToEntityLabelsMap,
 } from '../models/TypescriptAPIGenerator';
+import { getAPIAdapterCode } from './APIFunctionsCodeGenerator';
 import { generateModelMappings } from './ModelCodeGenerator';
 
 export const API_ADAPTER_PATH = `./Adapter`;
@@ -93,6 +95,47 @@ export const generateTypescriptAPI = async ({
                 }
                 return request.operationId.replace(/\s/g, '_').toUpperCase();
               })() + `_ENDPOINT_PATH`,
+            operationDescription: (() => {
+              if (
+                requestOperationName === 'requestSummary' &&
+                request.summary
+              ) {
+                const [verb, ...restSummary] = request.summary.split(' ');
+                return (
+                  verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ')
+                );
+              }
+            })(),
+            requestBodySchemaName: (() => {
+              if (
+                request.requestBody &&
+                'application/json' in request.requestBody.content &&
+                '$ref' in request.requestBody.content['application/json'].schema
+              ) {
+                const requestBodySchemaName = request.requestBody.content[
+                  'application/json'
+                ].schema.$ref.replace('#/components/schemas/', '');
+                return requestBodySchemaName;
+              }
+            })(),
+            successResponseSchemaName: (() => {
+              const successResponse = Object.keys(request.responses).find(
+                (responseCode) => responseCode.startsWith('2')
+              );
+              if (
+                successResponse &&
+                request.responses[successResponse] &&
+                'application/json' in request.responses[successResponse].content
+              ) {
+                const successResponseSchemaName = (
+                  request.responses[successResponse] as any
+                ).content['application/json'].schema.$ref.replace(
+                  '#/components/schemas/',
+                  ''
+                );
+                return successResponseSchemaName;
+              }
+            })(),
             ...(() => {
               if (request.parameters) {
                 const pathParameters = request.parameters.filter(
@@ -143,47 +186,6 @@ export const generateTypescriptAPI = async ({
                 }
               }
             })(),
-            operationDescription: (() => {
-              if (
-                requestOperationName === 'requestSummary' &&
-                request.summary
-              ) {
-                const [verb, ...restSummary] = request.summary.split(' ');
-                return (
-                  verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ')
-                );
-              }
-            })(),
-            requestBodySchemaName: (() => {
-              if (
-                request.requestBody &&
-                'application/json' in request.requestBody.content &&
-                '$ref' in request.requestBody.content['application/json'].schema
-              ) {
-                const requestBodySchemaName = request.requestBody.content[
-                  'application/json'
-                ].schema.$ref.replace('#/components/schemas/', '');
-                return requestBodySchemaName;
-              }
-            })(),
-            successResponseSchemaName: (() => {
-              const successResponse = Object.keys(request.responses).find(
-                (responseCode) => responseCode.startsWith('2')
-              );
-              if (
-                successResponse &&
-                request.responses[successResponse] &&
-                'application/json' in request.responses[successResponse].content
-              ) {
-                const successResponseSchemaName = (
-                  request.responses[successResponse] as any
-                ).content['application/json'].schema.$ref.replace(
-                  '#/components/schemas/',
-                  ''
-                );
-                return successResponseSchemaName;
-              }
-            })(),
           });
         });
       });
@@ -193,6 +195,42 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
+  //#region Generate tag to entity mappings
+  const tagToEntityLabelMappings = [
+    ...Object.keys(requestGroupings),
+    'Utils',
+  ].reduce((accumulator, tag) => {
+    const labelPlural = tag;
+    const labelSingular = (() => {
+      if (tag.endsWith('s')) {
+        return tag.slice(0, -1);
+      }
+      return tag;
+    })();
+    accumulator[tag] = {
+      'Entities Label': labelPlural,
+      'Entity Label': labelSingular,
+
+      'entities label': labelPlural.toLowerCase(),
+      'entity label': labelSingular.toLowerCase(),
+
+      PascalCaseEntities: labelPlural.toPascalCase(),
+      PascalCaseEntity: labelSingular.toPascalCase(),
+
+      camelCaseEntities: labelPlural.toCamelCase(),
+      camelCaseEntity: labelSingular.toCamelCase(),
+
+      UPPER_CASE_ENTITIES: labelPlural.replace(/\s/g, '_').toUpperCase(),
+      UPPER_CASE_ENTITY: labelSingular.replace(/\s/g, '_').toUpperCase(),
+
+      'kebab-case-entities': labelPlural.toKebabCase(),
+      'kebab-case-entity': labelSingular.toKebabCase(),
+    };
+    return accumulator;
+  }, {} as TagNameToEntityLabelsMap);
+  //#endregion
+
+  //#region Generate model mappings.
   const {
     entitySchemaGroups,
     schemaToEntityMappings,
@@ -203,16 +241,17 @@ export const generateTypescriptAPI = async ({
     requestGroupings,
     swaggerDocs,
   });
+  //#endregion
 
   //#region Write model output files
   const modelsOutputFilePath = `${outputRootPath}/models`;
   ensureDirSync(modelsOutputFilePath);
-  Object.keys(models).forEach((entityName) => {
-    const pascalCaseEntityName = entityName.toPascalCase();
-    const modelFileName = `${pascalCaseEntityName}.ts`;
+  Object.keys(models).forEach((tag) => {
+    const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
+    const modelFileName = `${PascalCaseEntities}.ts`;
     const entityModelsOutputFilePath = `${modelsOutputFilePath}/${modelFileName}`;
 
-    const entityModelsOutputCode = Object.values(models[entityName].models)
+    const entityModelsOutputCode = Object.values(models[tag].models)
       .sort(
         (
           { referencedSchemas: aReferencedSchemas, name: aName },
@@ -243,7 +282,7 @@ export const generateTypescriptAPI = async ({
       prettier.format(
         [
           ...getImportsCode({
-            imports: models[entityName].imports,
+            imports: models[tag].imports,
           }),
           entityModelsOutputCode,
         ].join('\n\n'),
@@ -260,8 +299,8 @@ export const generateTypescriptAPI = async ({
     modelsIndexOutputFilePath,
     prettier.format(
       Object.keys(models)
-        .map((entityName) => {
-          return `export * from './${entityName.toPascalCase()}';`;
+        .map((tag) => {
+          return `export * from './${tagToEntityLabelMappings[tag].PascalCaseEntities}';`;
         })
         .join('\n'),
       {
@@ -275,15 +314,13 @@ export const generateTypescriptAPI = async ({
   //#region Write api output files
   const apiOutputFilePath = `${outputRootPath}/api`;
   ensureDirSync(apiOutputFilePath);
-  Object.keys(requestGroupings).forEach((entityName) => {
-    const pascalCaseEntityName = entityName.toPascalCase();
-    const apiFileName = `${pascalCaseEntityName}.ts`;
+  Object.keys(requestGroupings).forEach((tag) => {
+    const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
+    const apiFileName = `${PascalCaseEntities}.ts`;
     const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
 
     //#region Generate entity api endpoint paths
-    const entityAPIEndpointPathsOutputCode = requestGroupings[
-      entityName
-    ].requests
+    const entityAPIEndpointPathsOutputCode = requestGroupings[tag].requests
       .map(({ endpointPath, endpointPathName, pathParameters }) => {
         if (pathParameters && pathParameters.length > 0) {
           const parametersCode = pathParameters
@@ -299,12 +336,11 @@ export const generateTypescriptAPI = async ({
       .join('\n');
     //#endregion
 
-    const dataKeyVariableName = `${entityName
-      .replace(/\s/g, '_')
-      .toUpperCase()}_DATA_KEY`;
+    const dataKeyVariableName = `${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
+    const { imports } = requestGroupings[tag];
 
     //#region Generate entity api request functions
-    const entityAPIOutputCode = requestGroupings[entityName].requests
+    const entityAPIOutputCode = requestGroupings[tag].requests
       .map(
         ({
           method,
@@ -321,7 +357,6 @@ export const generateTypescriptAPI = async ({
           requestBodySchemaName,
           successResponseSchemaName,
         }) => {
-          const { imports } = requestGroupings[entityName];
           const { jsDocCommentSnippet, paramsString, returnValueString } =
             (() => {
               const jsDocCommentLines: string[] = [];
@@ -515,7 +550,7 @@ export const generateTypescriptAPI = async ({
       prettier.format(
         [
           ...getImportsCode({
-            imports: requestGroupings[entityName].imports,
+            imports,
           }),
           `
             //#region Endpoint Paths
@@ -524,7 +559,7 @@ export const generateTypescriptAPI = async ({
           `.trimIndent(),
           `
             //#region Data Keys
-            export const ${dataKeyVariableName} = '${entityName.toCamelCase()}';
+            export const ${dataKeyVariableName} = '${tag.toCamelCase()}';
             //#endregion
           `.trimIndent(),
           `
@@ -544,65 +579,24 @@ export const generateTypescriptAPI = async ({
   const apiAdapterOutputFilePath = `${apiOutputFilePath}/Adapter.ts`;
   writeFileSync(
     apiAdapterOutputFilePath,
-    prettier.format(
-      `
-        import { getAPIAdapter } from '@infinite-debugger/axios-api-adapter';
-
-        declare module '@infinite-debugger/axios-api-adapter' {
-          interface IAPIAdapterConfiguration {
-            API_KEY?: string;
-          }
-        }
-
-        export {
-          IAPIAdapterConfiguration,
-          REDIRECTION_ERROR_MESSAGES,
-          RequestOptions,
-          ResponseProcessor,
-        } from '@infinite-debugger/axios-api-adapter';
-        export {
-          APIAdapterConfiguration,
-          RequestController,
-          _delete,
-          defaultRequestHeaders,
-          get,
-          logout,
-          patch,
-          patchDefaultRequestHeaders,
-          post,
-          put,
-        };
-
-        const {
-          APIAdapterConfiguration,
-          RequestController,
-          _delete,
-          defaultRequestHeaders,
-          get,
-          logout,
-          patch,
-          patchDefaultRequestHeaders,
-          post,
-          put,
-        } = getAPIAdapter({
-          id: 'api-client',
-        });
-
-      `.trimIndent(),
-      {
-        filepath: apiAdapterOutputFilePath,
-        ...prettierConfig,
-      }
-    )
+    prettier.format(getAPIAdapterCode(), {
+      filepath: apiAdapterOutputFilePath,
+      ...prettierConfig,
+    })
   );
 
   const apiIndexOutputFilePath = `${apiOutputFilePath}/index.ts`;
   writeFileSync(
     apiIndexOutputFilePath,
     prettier.format(
-      [...Object.keys(requestGroupings), 'Adapter']
-        .map((entityName) => {
-          return `export * from './${entityName.toPascalCase()}';`;
+      [
+        ...Object.keys(requestGroupings).map((tag) => {
+          return tagToEntityLabelMappings[tag].PascalCaseEntities;
+        }),
+        'Adapter',
+      ]
+        .map((PascalCaseEntities) => {
+          return `export * from './${PascalCaseEntities}';`;
         })
         .join('\n'),
       {
@@ -613,6 +607,7 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
+  //#region Write index output file
   const indexOutputFilePath = `${outputRootPath}/index.ts`;
   writeFileSync(
     indexOutputFilePath,
@@ -628,12 +623,18 @@ export const generateTypescriptAPI = async ({
       }
     )
   );
+  //#endregion
 
+  //#region Write debug output files
   if (outputInternalState) {
     ensureDirSync(outputRootPath);
     writeFileSync(
       `${outputRootPath}/request-groupings.output.json`,
       JSON.stringify(requestGroupings, null, 2)
+    );
+    writeFileSync(
+      `${outputRootPath}/tag-entity-label-mappings.output.json`,
+      JSON.stringify(tagToEntityLabelMappings, null, 2)
     );
     writeFileSync(
       `${outputRootPath}/schema-references.output.json`,
@@ -656,6 +657,7 @@ export const generateTypescriptAPI = async ({
       JSON.stringify(modelsToValidationSchemaMappings, null, 2)
     );
   }
+  //#endregion
 };
 
 export interface GetImportsCodeOptions {

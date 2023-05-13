@@ -47,3 +47,26 @@ export type RequestGroupings = Record<
 >;
 
 export const PATHS_LIBRARY = `@infinite-debugger/rmk-utils/paths`;
+
+export type TagNameToEntityLabelsMap = Record<
+  string,
+  {
+    'Entities Label': string;
+    'Entity Label': string;
+
+    'entities label': string;
+    'entity label': string;
+
+    PascalCaseEntities: string;
+    PascalCaseEntity: string;
+
+    camelCaseEntities: string;
+    camelCaseEntity: string;
+
+    UPPER_CASE_ENTITIES: string;
+    UPPER_CASE_ENTITY: string;
+
+    'kebab-case-entities': string;
+    'kebab-case-entity': string;
+  }
+>;
