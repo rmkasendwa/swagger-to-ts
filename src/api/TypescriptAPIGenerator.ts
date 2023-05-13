@@ -1,6 +1,7 @@
 import '@infinite-debugger/rmk-js-extensions/String';
 
 import { ensureDirSync, writeFileSync } from 'fs-extra';
+import { cloneDeep } from 'lodash';
 import prettier from 'prettier';
 
 import { OpenAPISpecification } from '../models';
@@ -17,13 +18,17 @@ export interface GenerateTypescriptAPIConfig {
   swaggerDocs: OpenAPISpecification;
   outputRootPath: string;
   outputInternalState?: boolean;
+  requestOperationNameSource?: 'requestSummary' | 'requestOperationId';
 }
 
 export const generateTypescriptAPI = async ({
   swaggerDocs,
   outputRootPath,
   outputInternalState = false,
+  requestOperationNameSource: requestOperationName = 'requestSummary',
 }: GenerateTypescriptAPIConfig) => {
+  swaggerDocs = cloneDeep(swaggerDocs);
+
   //#region Find all requests and group them by tag
   const requestGroupings = Object.keys(swaggerDocs.paths).reduce(
     (accumulator, path) => {
@@ -36,6 +41,16 @@ export const generateTypescriptAPI = async ({
           accumulator[tag].push({
             ...request,
             method: method as RequestMethod,
+            requestPath: path,
+            operationName: (() => {
+              if (
+                requestOperationName === 'requestSummary' &&
+                request.summary
+              ) {
+                return request.summary.toCamelCase();
+              }
+              return request.operationId;
+            })(),
           });
         });
       });
@@ -45,6 +60,29 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
+  //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
+
+  //#endregion
+  Object.values(requestGroupings).reduce((accumulator, requests) => {
+    requests.forEach(({ requestBody, operationName }) => {
+      if (requestBody) {
+        const { content } = requestBody;
+        if (
+          'application/json' in content &&
+          'type' in content['application/json'].schema
+        ) {
+          const schemaName = `${operationName.toPascalCase()}RequestPayload`;
+          swaggerDocs.components.schemas[schemaName] =
+            content['application/json'].schema;
+
+          (requestBody.content as any)['application/json'].schema = {
+            $ref: `#/components/schemas/${schemaName}`,
+          };
+        }
+      }
+    });
+    return accumulator;
+  }, {} as Record<string, string[]>);
   //#region Find all Schemas referenced in the requests
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
     (accumulator, requests) => {
