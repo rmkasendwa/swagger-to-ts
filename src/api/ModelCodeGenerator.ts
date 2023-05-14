@@ -6,6 +6,7 @@ import {
   ENVIRONMENT_DEFINED_MODELS,
   GeneratedSchemaCodeConfiguration,
   RequestGroupings,
+  TSED_SCHEMA_LIBRARY_PATH,
   TsedModelProperty,
   ZodValidationSchemaProperty,
 } from '../models/TypescriptAPIGenerator';
@@ -209,6 +210,14 @@ export const generateModelMappings = ({
                   importName: `${referencedSchemaName}ValidationSchema`,
                   importFilePath: `./${referencedSchemaEntityName}`,
                 });
+
+                if (generateTsedControllers) {
+                  addModuleImport({
+                    imports,
+                    importName: referencedSchemaName,
+                    importFilePath: `./${referencedSchemaEntityName}`,
+                  });
+                }
               }
             });
 
@@ -404,8 +413,18 @@ export const generateModelCode = ({
             schema.required && schema.required.includes(propertyName)
           );
           const baseTsedPropertyDecorators = [`@Property()`];
+          addModuleImport({
+            imports,
+            importName: 'Property',
+            importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+          });
           if (required) {
             baseTsedPropertyDecorators.push(`@Required()`);
+            addModuleImport({
+              imports,
+              importName: 'Required',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
           }
           const baseTsedProperty: Pick<
             TsedModelProperty,
@@ -424,6 +443,11 @@ export const generateModelCode = ({
                   '#/components/schemas/',
                   ''
                 );
+                addModuleImport({
+                  imports,
+                  importName: 'ArrayOf',
+                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                });
                 return {
                   ...baseTsedProperty,
                   propertyType: `${schemaName}[]`,
@@ -442,12 +466,23 @@ export const generateModelCode = ({
               const decorators = [...baseTsedPropertyDecorators];
               if (property.min != null) {
                 decorators.push(`@Min(${property.min})`);
+                addModuleImport({
+                  imports,
+                  importName: 'Min',
+                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                });
               }
               if (property.max != null) {
                 decorators.push(`@Max(${property.min})`);
+                addModuleImport({
+                  imports,
+                  importName: 'Max',
+                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                });
               }
               return {
                 ...baseTsedProperty,
+                decorators,
                 propertyType: `number`,
               };
             }
@@ -455,6 +490,12 @@ export const generateModelCode = ({
               if (property.enum) {
                 const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
                 const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+
+                addModuleImport({
+                  imports,
+                  importName: 'Enum',
+                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                });
 
                 return {
                   ...baseTsedProperty,
@@ -468,12 +509,23 @@ export const generateModelCode = ({
                 const decorators = [...baseTsedPropertyDecorators];
                 if (property.minLength != null) {
                   decorators.push(`@MinLength(${property.minLength})`);
+                  addModuleImport({
+                    imports,
+                    importName: 'MinLength',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
                 }
                 if (property.maxLength != null) {
                   decorators.push(`@MaxLength(${property.maxLength})`);
+                  addModuleImport({
+                    imports,
+                    importName: 'MaxLength',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
                 }
                 return {
                   ...baseTsedProperty,
+                  decorators,
                   propertyType: `string`,
                 };
               }
@@ -508,7 +560,7 @@ export const generateModelCode = ({
     .map((key) => {
       return tsedModelConfiguration[key].typeDefinitionSnippet;
     })
-    .join(';\n');
+    .join(';\n\n');
 
   const tsedModelCode = `
     export class ${schemaName} {
