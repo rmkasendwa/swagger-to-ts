@@ -320,17 +320,6 @@ export const generateModelCode = ({
         if ('type' in property) {
           let code = (() => {
             switch (property.type) {
-              case 'array': {
-                if (property.items && '$ref' in property.items) {
-                  const schemaName = property.items.$ref.replace(
-                    '#/components/schemas/',
-                    ''
-                  );
-                  referencedSchemas.push(schemaName);
-                  return `z.array(${schemaName}ValidationSchema)`;
-                }
-                return `z.array(z.any())`;
-              }
               case 'number': {
                 let validationCode = `z.number()`;
                 if (property.min != null) {
@@ -370,6 +359,56 @@ export const generateModelCode = ({
               }
               case 'boolean': {
                 return `z.boolean()`;
+              }
+              case 'object': {
+                if (property.properties) {
+                  const validationSchemaPropertiesCode = Object.keys(
+                    property.properties
+                  ).map((key) => {
+                    const value = property.properties![key];
+                    if (Array.isArray(value)) {
+                      const arrayItemSchemaCode = (() => {
+                        if (value[0].type === 'string') {
+                          return `z.string()`;
+                        }
+                        return `z.any()`;
+                      })();
+                      return `${key}: z.array(${arrayItemSchemaCode})`;
+                    }
+                    if (value.$ref) {
+                      const referencedSchemaName = value.$ref.replace(
+                        '#/components/schemas/',
+                        ''
+                      );
+                      referencedSchemas.push(referencedSchemaName);
+                      const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                      if (referencedSchemaName === schemaName) {
+                        // return `${key}: z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+                        return `${key}: z.any()`;
+                      }
+                      return `${key}: ${validationSchemaName}`;
+                    }
+                    return `${key}: z.any()`;
+                  });
+                  return `z.object({${validationSchemaPropertiesCode}})`;
+                }
+                break;
+              }
+              case 'array': {
+                if (property.items && '$ref' in property.items) {
+                  const referencedSchemaName = property.items.$ref.replace(
+                    '#/components/schemas/',
+                    ''
+                  );
+                  referencedSchemas.push(referencedSchemaName);
+                  const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                  if (referencedSchemaName === schemaName) {
+                    // return `z.array(z.lazy(() => ${validationSchemaName}))`; // TODO: Lazy reference validation schema
+                    return `z.array(z.any())`;
+                  }
+                  return `z.array(${validationSchemaName})`;
+                }
+                return `z.array(z.any())`;
               }
             }
           })();

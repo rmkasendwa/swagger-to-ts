@@ -55,7 +55,7 @@ export const generateTypescriptAPI = async ({
       process.exit(1);
     }
   })();
-  console.log(' -> OpenAPI specification validated. 👍');
+  console.log(' -> 👍 OpenAPI specification validated.');
   console.log('Generating API...');
 
   //#region Find all requests and group them by tag
@@ -483,4 +483,6 @@ export const generateTypescriptAPI = async ({
     )
   );
   //#endregion
+
+  console.log(`✅ Generated API code at ${outputRootPath}`);
 };

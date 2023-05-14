@@ -14,17 +14,45 @@ export const findSchemaReferencedSchemas = ({
   const schemaReferencedSchemas: string[] = [];
   const findSchemaReferencedSchemasRecursive = (schemaName: string) => {
     const schema = openAPISpecification.components.schemas[schemaName];
-    if (schema && schema.type === 'object' && schema.properties) {
+    if (
+      schema &&
+      schema.type === 'object' &&
+      schema.properties &&
+      !schemaReferencedSchemas.includes(schemaName)
+    ) {
       Object.values(schema.properties).forEach((property) => {
         if ('type' in property) {
           switch (property.type) {
             case 'array':
-              if (property.items && '$ref' in property.items) {
-                const schemaName = property.items.$ref.split('/').pop()!;
-                if (!schemaReferencedSchemas.includes(schemaName)) {
-                  schemaReferencedSchemas.unshift(schemaName);
+              {
+                if (property.items && '$ref' in property.items) {
+                  const schemaName = property.items.$ref.replace(
+                    '#/components/schemas/',
+                    ''
+                  );
+                  if (!schemaReferencedSchemas.includes(schemaName)) {
+                    schemaReferencedSchemas.unshift(schemaName);
+                  }
+                  findSchemaReferencedSchemasRecursive(schemaName);
                 }
-                findSchemaReferencedSchemasRecursive(schemaName);
+              }
+              break;
+            case 'object':
+              {
+                if (property.properties) {
+                  Object.values(property.properties).forEach((property) => {
+                    if ('$ref' in property) {
+                      const schemaName = property.$ref.replace(
+                        '#/components/schemas/',
+                        ''
+                      );
+                      if (!schemaReferencedSchemas.includes(schemaName)) {
+                        schemaReferencedSchemas.unshift(schemaName);
+                      }
+                      findSchemaReferencedSchemasRecursive(schemaName);
+                    }
+                  });
+                }
               }
               break;
           }
