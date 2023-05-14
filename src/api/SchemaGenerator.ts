@@ -22,7 +22,7 @@ export const findSchemaReferencedSchemas = ({
               if (property.items && '$ref' in property.items) {
                 const schemaName = property.items.$ref.split('/').pop()!;
                 if (!schemaReferencedSchemas.includes(schemaName)) {
-                  schemaReferencedSchemas.push(schemaName);
+                  schemaReferencedSchemas.unshift(schemaName);
                 }
                 findSchemaReferencedSchemasRecursive(schemaName);
               }

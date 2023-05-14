@@ -48,11 +48,11 @@ export const generateModelMappings = ({
                 const schemaReference = content['application/json'].schema.$ref;
                 const schemaName = schemaReference.split('/').pop()!;
                 [
-                  schemaName,
                   ...findSchemaReferencedSchemas({
                     schemaName,
                     swaggerDocs,
                   }),
+                  schemaName,
                 ].forEach((schemaName) => {
                   if (!accumulator[schemaName]) {
                     accumulator[schemaName] = [];
@@ -84,11 +84,11 @@ export const generateModelMappings = ({
           if (headerParametersModelReference) {
             const schemaName = headerParametersModelReference;
             [
-              schemaName,
               ...findSchemaReferencedSchemas({
                 schemaName,
                 swaggerDocs,
               }),
+              schemaName,
             ].forEach((schemaName) => {
               if (!accumulator[schemaName]) {
                 accumulator[schemaName] = [];
@@ -104,11 +104,11 @@ export const generateModelMappings = ({
           if (queryParametersModelReference) {
             const schemaName = queryParametersModelReference;
             [
-              schemaName,
               ...findSchemaReferencedSchemas({
                 schemaName,
                 swaggerDocs,
               }),
+              schemaName,
             ].forEach((schemaName) => {
               if (!accumulator[schemaName]) {
                 accumulator[schemaName] = [];
@@ -174,7 +174,6 @@ export const generateModelMappings = ({
           .filter((schemaName) => {
             return !ENVIRONMENT_DEFINED_MODELS.includes(schemaName as any);
           })
-          .sort()
           .forEach((schemaName) => {
             if (!accumulator[entityName]) {
               accumulator[entityName] = {

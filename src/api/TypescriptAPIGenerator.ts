@@ -4,7 +4,7 @@ import { ensureDirSync, writeFileSync } from 'fs-extra';
 import { cloneDeep } from 'lodash';
 import prettier from 'prettier';
 
-import { ModuleImports, OpenAPISpecification } from '../models';
+import { OpenAPISpecification } from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
 import {
@@ -19,7 +19,7 @@ import {
 } from './APIFunctionsCodeGenerator';
 import { generateModelMappings } from './ModelCodeGenerator';
 import { generateSchemaFromRequestParameters } from './SchemaGenerator';
-import { addModuleImport } from './Utils';
+import { addModuleImport, getImportsCode } from './Utils';
 
 export const API_ADAPTER_PATH = `./Adapter`;
 
@@ -325,28 +325,6 @@ export const generateTypescriptAPI = async ({
     const entityModelsOutputFilePath = `${modelsOutputFilePath}/${modelFileName}`;
 
     const entityModelsOutputCode = Object.values(models[tag].models)
-      .sort(
-        (
-          { referencedSchemas: aReferencedSchemas, name: aName },
-          { referencedSchemas: bReferencedSchemas, name: bName }
-        ) => {
-          if (aReferencedSchemas && !bReferencedSchemas) {
-            return 1;
-          }
-          if (!aReferencedSchemas && bReferencedSchemas) {
-            return -1;
-          }
-          if (aReferencedSchemas && bReferencedSchemas) {
-            if (aReferencedSchemas.includes(bName)) {
-              return 1;
-            }
-            if (bReferencedSchemas.includes(aName)) {
-              return -1;
-            }
-          }
-          return 0;
-        }
-      )
       .map((model) => model.zodValidationSchemaCode)
       .join('\n\n');
 
@@ -477,17 +455,4 @@ export const generateTypescriptAPI = async ({
     )
   );
   //#endregion
-};
-
-export interface GetImportsCodeOptions {
-  imports?: ModuleImports;
-}
-export const getImportsCode = ({ imports }: GetImportsCodeOptions) => {
-  if (imports) {
-    return Object.keys(imports!).map((importFilePath) => {
-      const importNames = imports![importFilePath];
-      return `import { ${importNames.join(', ')} } from '${importFilePath}';`;
-    });
-  }
-  return [];
 };

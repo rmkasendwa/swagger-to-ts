@@ -20,3 +20,18 @@ export const addModuleImport = ({
   }
 };
 //#endregion
+
+//#region get imports code
+export interface GetImportsCodeOptions {
+  imports?: ModuleImports;
+}
+export const getImportsCode = ({ imports }: GetImportsCodeOptions) => {
+  if (imports) {
+    return Object.keys(imports!).map((importFilePath) => {
+      const importNames = imports![importFilePath];
+      return `import { ${importNames.join(', ')} } from '${importFilePath}';`;
+    });
+  }
+  return [];
+};
+//#endregion
