@@ -57,22 +57,33 @@ export type BooleanSchemaProperty = z.infer<
 >;
 //#endregion
 
+//#region RefSchemaProperty
+export const RefSchemaPropertyValidationSchema = z.object({
+  $ref: z.string().describe('The schema property ref.'),
+});
+
+export type RefSchemaProperty = z.infer<
+  typeof RefSchemaPropertyValidationSchema
+>;
+//#endregion
+
 //#region PrimitiveSchemaProperty
-export const PrimitiveSchemaPropertyValidationSchema = z.union([
+export const ArraySchemaPropertyMemberValidationSchema = z.union([
   StringSchemaPropertyValidationSchema,
   NumberSchemaPropertyValidationSchema,
   BooleanSchemaPropertyValidationSchema,
+  RefSchemaPropertyValidationSchema,
 ]);
 
-export type PrimitiveSchemaProperty = z.infer<
-  typeof PrimitiveSchemaPropertyValidationSchema
+export type ArraySchemaPropertyMember = z.infer<
+  typeof ArraySchemaPropertyMemberValidationSchema
 >;
 //#endregion
 
 //#region ArraySchemaProperty
 export const ArraySchemaPropertyValidationSchema = z.object({
   type: z.literal('array').describe('The schema property type.'),
-  items: PrimitiveSchemaPropertyValidationSchema.optional().describe(
+  items: ArraySchemaPropertyMemberValidationSchema.optional().describe(
     'The schema property items.'
   ),
   description: z
@@ -85,16 +96,6 @@ export const ArraySchemaPropertyValidationSchema = z.object({
 
 export type ArraySchemaProperty = z.infer<
   typeof ArraySchemaPropertyValidationSchema
->;
-//#endregion
-
-//#region RefSchemaProperty
-export const RefSchemaPropertyValidationSchema = z.object({
-  $ref: z.string().describe('The schema property ref.'),
-});
-
-export type RefSchemaProperty = z.infer<
-  typeof RefSchemaPropertyValidationSchema
 >;
 //#endregion
 

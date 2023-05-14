@@ -60,6 +60,7 @@ export const generateTypescriptAPI = async ({
         if (requestBody) {
           const { content } = requestBody;
           if (
+            content &&
             'application/json' in content &&
             'type' in content['application/json'].schema
           ) {
@@ -113,7 +114,7 @@ export const generateTypescriptAPI = async ({
             })(),
             requestBodySchemaName: (() => {
               if (
-                request.requestBody &&
+                request.requestBody?.content &&
                 'application/json' in request.requestBody.content &&
                 '$ref' in request.requestBody.content['application/json'].schema
               ) {

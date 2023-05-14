@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { ContentValidationSchema } from './Content';
 import { ResponsesValidationSchema } from './Response';
-import { SchemaValidationSchema } from './Schema';
+import { SchemaPropertyValidationSchema } from './Schema';
 
 //#region Request methods
 export const requestMethods = [
@@ -24,7 +24,9 @@ export const BaseRequestParameterValidationSchema = z.object({
     .string()
     .optional()
     .describe('The base request parameter description.'),
-  schema: SchemaValidationSchema.describe('The base request parameter schema.'),
+  schema: SchemaPropertyValidationSchema.describe(
+    'The base request parameter schema.'
+  ),
 });
 
 export type BaseRequestParameter = z.infer<
