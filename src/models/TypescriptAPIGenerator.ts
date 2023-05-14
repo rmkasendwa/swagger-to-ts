@@ -32,15 +32,70 @@ export interface ZodValidationSchemaProperty {
   code: string;
 }
 
+export interface TsedModelProperty {
+  propertyName: string;
+  propertyType: string;
+  decorators: string[];
+  accessModifier: 'public' | 'private' | 'protected';
+  required?: boolean;
+  typeDefinitionSnippet: string;
+}
+
 export interface GeneratedSchemaCodeConfiguration {
+  /**
+   * The name of the schema that will be created.
+   */
   name: string;
+
+  /**
+   * The name of the zod validation schema that will be created.
+   */
   zodValidationSchemaName: string;
+
+  /**
+   * The configuration of the zod validation schema that will be created.
+   */
   zodValidationSchemaConfiguration: Record<string, ZodValidationSchemaProperty>;
+
+  /**
+   * The code that will be used to create the zod validation schema.
+   */
   zodValidationSchemaCode: string;
+
+  /**
+   * The code that will be used to infer the type of the schema.
+   */
   inferedTypeCode: string;
+
+  /**
+   * The imports that will be used in the generated code.
+   */
   imports?: ModuleImports;
+
+  /**
+   * The schemas that are referenced by this schema.
+   */
   referencedSchemas?: string[];
+
+  /**
+   * The custom variables that will be used in the generated code.
+   */
   generatedVariables?: Record<string, string>;
+
+  /**
+   * The name of the tsed model that will be created.
+   */
+  tsedModelName?: string;
+
+  /**
+   * The configuration of the tsed model that will be created.
+   */
+  tsedModelConfiguration?: Record<string, TsedModelProperty>;
+
+  /**
+   * The code that will be used to create the tsed model.
+   */
+  tsedModelCode?: string;
 }
 
 export type RequestGroupings = Record<

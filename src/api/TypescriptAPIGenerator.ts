@@ -28,13 +28,15 @@ export interface GenerateTypescriptAPIConfig {
   outputRootPath: string;
   outputInternalState?: boolean;
   requestOperationNameSource?: 'requestSummary' | 'requestOperationId';
+  generateTsedControllers?: boolean;
 }
 
 export const generateTypescriptAPI = async ({
   swaggerDocs,
   outputRootPath,
   outputInternalState = false,
-  requestOperationNameSource: requestOperationName = 'requestSummary',
+  generateTsedControllers = false,
+  requestOperationNameSource = 'requestSummary',
 }: GenerateTypescriptAPIConfig) => {
   swaggerDocs = cloneDeep(swaggerDocs);
   //#region Find all requests and group them by tag
@@ -46,7 +48,10 @@ export const generateTypescriptAPI = async ({
         //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
         const { requestBody } = request;
         const operationName = (() => {
-          if (requestOperationName === 'requestSummary' && request.summary) {
+          if (
+            requestOperationNameSource === 'requestSummary' &&
+            request.summary
+          ) {
             return request.summary.toCamelCase();
           }
           return request.operationId;
@@ -88,7 +93,7 @@ export const generateTypescriptAPI = async ({
             endpointPathName:
               (() => {
                 if (
-                  requestOperationName === 'requestSummary' &&
+                  requestOperationNameSource === 'requestSummary' &&
                   request.summary
                 ) {
                   return request.summary.replace(/\s/g, '_').toUpperCase();
@@ -97,7 +102,7 @@ export const generateTypescriptAPI = async ({
               })() + `_ENDPOINT_PATH`,
             operationDescription: (() => {
               if (
-                requestOperationName === 'requestSummary' &&
+                requestOperationNameSource === 'requestSummary' &&
                 request.summary
               ) {
                 const [verb, ...restSummary] = request.summary.split(' ');
@@ -266,6 +271,7 @@ export const generateTypescriptAPI = async ({
   } = generateModelMappings({
     requestGroupings,
     swaggerDocs,
+    generateTsedControllers,
   });
   //#endregion
 

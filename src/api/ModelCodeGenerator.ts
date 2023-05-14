@@ -6,6 +6,7 @@ import {
   ENVIRONMENT_DEFINED_MODELS,
   GeneratedSchemaCodeConfiguration,
   RequestGroupings,
+  TsedModelProperty,
   ZodValidationSchemaProperty,
 } from '../models/TypescriptAPIGenerator';
 import { findSchemaReferencedSchemas } from './SchemaGenerator';
@@ -15,10 +16,12 @@ import { addModuleImport } from './Utils';
 export interface GenerateModelMappingsOptions {
   swaggerDocs: OpenAPISpecification;
   requestGroupings: RequestGroupings;
+  generateTsedControllers?: boolean;
 }
 export const generateModelMappings = ({
   requestGroupings,
   swaggerDocs,
+  generateTsedControllers,
 }: GenerateModelMappingsOptions) => {
   //#region Find all Schemas referenced in the requests
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
@@ -188,9 +191,13 @@ export const generateModelMappings = ({
               inferedTypeCode,
               zodValidationSchemaName,
               imports,
+              tsedModelCode,
+              tsedModelConfiguration,
+              tsedModelName,
             } = generateModelCode({
               schemaName,
               swaggerDocs,
+              generateTsedControllers,
             });
 
             referencedSchemas.forEach((referencedSchemaName) => {
@@ -213,6 +220,9 @@ export const generateModelMappings = ({
               inferedTypeCode,
               generatedVariables,
               imports,
+              tsedModelCode,
+              tsedModelConfiguration,
+              tsedModelName,
               ...(() => {
                 if (referencedSchemas.length > 0) {
                   return {
@@ -275,10 +285,12 @@ export const generateModelMappings = ({
 export interface GenerateModelCodeOptions {
   swaggerDocs: OpenAPISpecification;
   schemaName: string;
+  generateTsedControllers?: boolean;
 }
 export const generateModelCode = ({
   schemaName,
   swaggerDocs,
+  generateTsedControllers,
 }: GenerateModelCodeOptions) => {
   const schema = swaggerDocs.components.schemas[schemaName];
   const referencedSchemas: string[] = [];
@@ -291,6 +303,7 @@ export const generateModelCode = ({
 
   const schemaProperties = schema.properties || {};
 
+  //#region Zod validation schema
   const zodValidationSchemaConfiguration = Object.keys(schemaProperties).reduce(
     (accumulator, propertyName) => {
       const code = (() => {
@@ -306,10 +319,8 @@ export const generateModelCode = ({
                   );
                   referencedSchemas.push(schemaName);
                   return `z.array(${schemaName}ValidationSchema)`;
-                } else {
-                  return `z.array(z.any())`;
                 }
-                break;
+                return `z.array(z.any())`;
               }
               case 'number': {
                 let validationCode = `z.number()`;
@@ -378,21 +389,154 @@ export const generateModelCode = ({
     })
     .join(',\n');
 
-  const code = [
+  const zodValidationSchemaCode = `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`;
+  //#endregion
+
+  //#region Tsed controller
+  const tsedModelConfiguration = Object.keys(schemaProperties).reduce(
+    (accumulator, propertyName) => {
+      const tsedProperty = (():
+        | Omit<TsedModelProperty, 'typeDefinitionSnippet'>
+        | undefined => {
+        const property = schemaProperties[propertyName];
+        if (propertyName.match(/^\w+$/g) && 'type' in property) {
+          const required = Boolean(
+            schema.required && schema.required.includes(propertyName)
+          );
+          const baseTsedPropertyDecorators = [`@Property()`];
+          if (required) {
+            baseTsedPropertyDecorators.push(`@Required()`);
+          }
+          const baseTsedProperty: Pick<
+            TsedModelProperty,
+            'propertyName' | 'accessModifier' | 'required' | 'decorators'
+          > = {
+            propertyName,
+            accessModifier: 'public',
+            decorators: baseTsedPropertyDecorators,
+            required,
+          };
+
+          switch (property.type) {
+            case 'array': {
+              if (property.items && '$ref' in property.items) {
+                const schemaName = property.items.$ref.replace(
+                  '#/components/schemas/',
+                  ''
+                );
+                return {
+                  ...baseTsedProperty,
+                  propertyType: `${schemaName}[]`,
+                  decorators: [
+                    ...baseTsedPropertyDecorators,
+                    `@ArrayOf(${schemaName})`,
+                  ],
+                };
+              }
+              return {
+                ...baseTsedProperty,
+                propertyType: `${schemaName}[]`,
+              };
+            }
+            case 'number': {
+              const decorators = [...baseTsedPropertyDecorators];
+              if (property.min != null) {
+                decorators.push(`@Min(${property.min})`);
+              }
+              if (property.max != null) {
+                decorators.push(`@Max(${property.min})`);
+              }
+              return {
+                ...baseTsedProperty,
+                propertyType: `number`,
+              };
+            }
+            case 'string': {
+              if (property.enum) {
+                const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
+                const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+
+                return {
+                  ...baseTsedProperty,
+                  decorators: [
+                    ...baseTsedPropertyDecorators,
+                    `@Enum(...${enumValuesName})`,
+                  ],
+                  propertyType: enumTypeName,
+                };
+              } else {
+                const decorators = [...baseTsedPropertyDecorators];
+                if (property.minLength != null) {
+                  decorators.push(`@MinLength(${property.minLength})`);
+                }
+                if (property.maxLength != null) {
+                  decorators.push(`@MaxLength(${property.maxLength})`);
+                }
+                return {
+                  ...baseTsedProperty,
+                  propertyType: `string`,
+                };
+              }
+            }
+            case 'boolean': {
+              return {
+                ...baseTsedProperty,
+                propertyType: `boolean`,
+              };
+            }
+          }
+        }
+      })();
+      if (tsedProperty) {
+        const propertyValueSeparator = tsedProperty.required ? '!:' : '?:';
+        accumulator[propertyName] = {
+          ...tsedProperty,
+          typeDefinitionSnippet: `
+            ${tsedProperty.decorators.join('\n')}
+            ${tsedProperty.accessModifier} ${
+            tsedProperty.propertyName
+          }${propertyValueSeparator} ${tsedProperty.propertyType}
+          `.trimIndent(),
+        };
+      }
+      return accumulator;
+    },
+    {} as Record<string, TsedModelProperty>
+  );
+
+  const tsedModelPropertiesCode = Object.keys(tsedModelConfiguration)
+    .map((key) => {
+      return tsedModelConfiguration[key].typeDefinitionSnippet;
+    })
+    .join(';\n');
+
+  const tsedModelCode = `
+    export class ${schemaName} {
+      ${tsedModelPropertiesCode}
+    }
+  `.trimIndent();
+  //#endregion
+
+  const schemaCode = [
     ...(() => {
       if (!isEmpty(generatedVariables)) {
         return Object.values(generatedVariables);
       }
       return [];
     })(),
-    `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`,
-    inferedTypeCode,
+    zodValidationSchemaCode,
+    ...(() => {
+      if (generateTsedControllers) {
+        return [tsedModelCode];
+      }
+      return [inferedTypeCode];
+    })(),
   ].join('\n\n');
 
   return {
     zodValidationSchemaCode: `
       //#region ${schemaName}
-      ${code}
+      ${schemaCode}
       //#endregion
     `.trimIndent(),
     zodValidationSchemaConfiguration,
@@ -404,6 +548,15 @@ export const generateModelCode = ({
       if (!isEmpty(generatedVariables)) {
         return {
           generatedVariables,
+        };
+      }
+    })(),
+    ...(() => {
+      if (generateTsedControllers) {
+        return {
+          tsedModelConfiguration,
+          tsedModelCode,
+          tsedModelName: schemaName,
         };
       }
     })(),
