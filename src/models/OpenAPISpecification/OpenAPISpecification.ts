@@ -4,15 +4,13 @@ import { RequestValidationSchema } from './Request';
 import { SchemaValidationSchema } from './Schema';
 
 //#region OpenAPISpecificationInfo
-export const OpenAPISpecificationInfoValidationSchema = z.object({
+export const InfoValidationSchema = z.object({
   version: z.string().describe('The open api version.'),
   title: z.string().describe('The open api title.'),
   description: z.string().optional().describe('The open api description.'),
 });
 
-export type OpenAPISpecificationInfo = z.infer<
-  typeof OpenAPISpecificationInfoValidationSchema
->;
+export type Info = z.infer<typeof InfoValidationSchema>;
 //#endregion
 
 //#region SecurityScheme
@@ -47,9 +45,14 @@ export type Components = z.infer<typeof ComponentsValidationSchema>;
 //#endregion
 
 //#region SecurityScheme
-export const SecurityValidationSchema = z.object({
-  APIKeyAuth: z.array(z.any()).describe('The API key authentication.'),
-});
+export const SecurityValidationSchema = z.union([
+  z.object({
+    APIKeyAuth: z.array(z.any()).describe('The API key authentication.'),
+  }),
+  z.object({
+    BearerAuth: z.array(z.any()).describe('The API key authentication.'),
+  }),
+]);
 
 export type Security = z.infer<typeof SecurityValidationSchema>;
 //#endregion
@@ -64,12 +67,11 @@ export type Tag = z.infer<typeof TagValidationSchema>;
 
 export const OpenAPISpecificationValidationSchema = z.object({
   openapi: z.string().describe('The open api version.'),
-  info: OpenAPISpecificationInfoValidationSchema.describe(
-    'The open api information.'
-  ),
+  info: InfoValidationSchema.describe('The open api information.'),
   components: ComponentsValidationSchema.describe('The open api components.'),
   security: z
     .array(SecurityValidationSchema)
+    .optional()
     .describe('The server security configuration.'),
   paths: z
     .record(z.record(RequestValidationSchema))

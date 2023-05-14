@@ -52,11 +52,6 @@ export const BooleanSchemaPropertyValidationSchema = z.object({
   default: z.boolean().optional().describe('The schema property default.'),
 });
 
-export type BooleanSchemaProperty = z.infer<
-  typeof BooleanSchemaPropertyValidationSchema
->;
-//#endregion
-
 //#region RefSchemaProperty
 export const RefSchemaPropertyValidationSchema = z.object({
   $ref: z.string().describe('The schema property ref.'),
@@ -64,6 +59,35 @@ export const RefSchemaPropertyValidationSchema = z.object({
 
 export type RefSchemaProperty = z.infer<
   typeof RefSchemaPropertyValidationSchema
+>;
+//#endregion
+
+//#region ObjectSchemaProperty
+export const ObjectSchemaPropertyValidationSchema = z.object({
+  type: z.literal('object').describe('The schema property type.'),
+  properties: z
+    .record(
+      z.union([
+        z.array(
+          z.object({
+            type: z.literal('string').describe('The schema property type.'),
+          })
+        ),
+        RefSchemaPropertyValidationSchema,
+      ])
+    )
+    .optional()
+    .describe('The schema property properties.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The schema property description.'),
+  example: z.any().optional().describe('The schema property example.'),
+  default: z.any().optional().describe('The schema property default.'),
+});
+
+export type ObjectSchemaProperty = z.infer<
+  typeof ObjectSchemaPropertyValidationSchema
 >;
 //#endregion
 
@@ -104,6 +128,7 @@ export const SchemaPropertyValidationSchema = z.union([
   StringSchemaPropertyValidationSchema,
   NumberSchemaPropertyValidationSchema,
   BooleanSchemaPropertyValidationSchema,
+  ObjectSchemaPropertyValidationSchema,
   ArraySchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
 ]);

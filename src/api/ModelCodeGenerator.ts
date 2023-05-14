@@ -15,13 +15,13 @@ import { addModuleImport } from './Utils';
 
 //#region Generate model mappings
 export interface GenerateModelMappingsOptions {
-  swaggerDocs: OpenAPISpecification;
+  openAPISpecification: OpenAPISpecification;
   requestGroupings: RequestGroupings;
   generateTsedControllers?: boolean;
 }
 export const generateModelMappings = ({
   requestGroupings,
-  swaggerDocs,
+  openAPISpecification,
   generateTsedControllers,
 }: GenerateModelMappingsOptions) => {
   //#region Find all Schemas referenced in the requests
@@ -54,7 +54,7 @@ export const generateModelMappings = ({
                 [
                   ...findSchemaReferencedSchemas({
                     schemaName,
-                    swaggerDocs,
+                    openAPISpecification,
                   }),
                   schemaName,
                 ].forEach((schemaName) => {
@@ -90,7 +90,7 @@ export const generateModelMappings = ({
             [
               ...findSchemaReferencedSchemas({
                 schemaName,
-                swaggerDocs,
+                openAPISpecification,
               }),
               schemaName,
             ].forEach((schemaName) => {
@@ -110,7 +110,7 @@ export const generateModelMappings = ({
             [
               ...findSchemaReferencedSchemas({
                 schemaName,
-                swaggerDocs,
+                openAPISpecification,
               }),
               schemaName,
             ].forEach((schemaName) => {
@@ -197,7 +197,7 @@ export const generateModelMappings = ({
               tsedModelName,
             } = generateModelCode({
               schemaName,
-              swaggerDocs,
+              openAPISpecification,
               generateTsedControllers,
             });
 
@@ -292,16 +292,16 @@ export const generateModelMappings = ({
 
 //#region Generate model code
 export interface GenerateModelCodeOptions {
-  swaggerDocs: OpenAPISpecification;
+  openAPISpecification: OpenAPISpecification;
   schemaName: string;
   generateTsedControllers?: boolean;
 }
 export const generateModelCode = ({
   schemaName,
-  swaggerDocs,
+  openAPISpecification,
   generateTsedControllers,
 }: GenerateModelCodeOptions) => {
-  const schema = swaggerDocs.components.schemas[schemaName];
+  const schema = openAPISpecification.components.schemas[schemaName];
   const referencedSchemas: string[] = [];
   const generatedVariables: Record<string, string> = {};
   const zodValidationSchemaName = `${schemaName}ValidationSchema`;

@@ -21,10 +21,10 @@ const pkg = (() => {
 const args = process.argv;
 
 if (args.includes('-G') || args.includes('--generate')) {
-  const swaggerDocsFilePath = `${currentWorkingDirectory}/swagger.json`;
+  const openAPISpecificationFilePath = `${currentWorkingDirectory}/swagger.json`;
 
-  if (existsSync(swaggerDocsFilePath)) {
-    const swaggerDocs = require(swaggerDocsFilePath);
+  if (existsSync(openAPISpecificationFilePath)) {
+    const openAPISpecification = require(openAPISpecificationFilePath);
 
     const outputRootPath = (() => {
       if (args.includes('-o')) {
@@ -37,7 +37,7 @@ if (args.includes('-G') || args.includes('--generate')) {
     })();
 
     generateTypescriptAPI({
-      swaggerDocs,
+      openAPISpecification,
       outputRootPath,
     });
   } else {

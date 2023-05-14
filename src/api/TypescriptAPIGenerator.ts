@@ -1,10 +1,12 @@
 import '@infinite-debugger/rmk-js-extensions/String';
 
 import { ensureDirSync, writeFileSync } from 'fs-extra';
-import { cloneDeep } from 'lodash';
 import prettier from 'prettier';
 
-import { OpenAPISpecification } from '../models';
+import {
+  OpenAPISpecification,
+  OpenAPISpecificationValidationSchema,
+} from '../models';
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
 import {
@@ -24,7 +26,7 @@ import { addModuleImport, getImportsCode } from './Utils';
 export const API_ADAPTER_PATH = `./Adapter`;
 
 export interface GenerateTypescriptAPIConfig {
-  swaggerDocs: OpenAPISpecification;
+  openAPISpecification: OpenAPISpecification;
   outputRootPath: string;
   outputInternalState?: boolean;
   requestOperationNameSource?: 'requestSummary' | 'requestOperationId';
@@ -32,18 +34,36 @@ export interface GenerateTypescriptAPIConfig {
 }
 
 export const generateTypescriptAPI = async ({
-  swaggerDocs,
+  openAPISpecification: inputOpenAPISpecification,
   outputRootPath,
   outputInternalState = false,
   generateTsedControllers = false,
   requestOperationNameSource = 'requestSummary',
 }: GenerateTypescriptAPIConfig) => {
-  swaggerDocs = cloneDeep(swaggerDocs);
+  console.log('Validating OpenAPI specification...');
+  const openAPISpecification = (() => {
+    try {
+      return OpenAPISpecificationValidationSchema.parse(
+        inputOpenAPISpecification
+      );
+    } catch (err) {
+      const errorFilePath = `${process.cwd()}/openapi-spec-validation.error.json`;
+      console.error(
+        `OpenAPI specification validation failed. See ${errorFilePath} for details.`
+      );
+      writeFileSync(errorFilePath, JSON.stringify(err, null, 2));
+      process.exit(1);
+    }
+  })();
+  console.log(' -> OpenAPI specification validated. 👍');
+  console.log('Generating API...');
+
   //#region Find all requests and group them by tag
-  const requestGroupings = Object.keys(swaggerDocs.paths).reduce(
+  const requestGroupings = Object.keys(openAPISpecification.paths).reduce(
     (accumulator, path) => {
-      Object.keys(swaggerDocs.paths[path]).forEach((method) => {
-        const request = swaggerDocs.paths[path][method as RequestMethod];
+      Object.keys(openAPISpecification.paths[path]).forEach((method) => {
+        const request =
+          openAPISpecification.paths[path][method as RequestMethod];
 
         //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
         const { requestBody } = request;
@@ -62,10 +82,11 @@ export const generateTypescriptAPI = async ({
           if (
             content &&
             'application/json' in content &&
-            'type' in content['application/json'].schema
+            'type' in content['application/json'].schema &&
+            content['application/json'].schema.type === 'object'
           ) {
             const schemaName = `${pascalCaseOperationName}RequestPayload`;
-            swaggerDocs.components.schemas[schemaName] =
+            openAPISpecification.components.schemas[schemaName] =
               content['application/json'].schema;
 
             (requestBody.content as any)['application/json'].schema = {
@@ -183,7 +204,7 @@ export const generateTypescriptAPI = async ({
                 );
                 if (headerParameters.length > 0) {
                   const headerParametersModelReference = `${pascalCaseOperationName}HeaderParams`;
-                  swaggerDocs.components.schemas[
+                  openAPISpecification.components.schemas[
                     headerParametersModelReference
                   ] = generateSchemaFromRequestParameters({
                     requestParameters: headerParameters,
@@ -205,7 +226,7 @@ export const generateTypescriptAPI = async ({
                 );
                 if (queryParameters.length > 0) {
                   const queryParametersModelReference = `${pascalCaseOperationName}QueryParams`;
-                  swaggerDocs.components.schemas[
+                  openAPISpecification.components.schemas[
                     queryParametersModelReference
                   ] = generateSchemaFromRequestParameters({
                     requestParameters: queryParameters,
@@ -271,7 +292,7 @@ export const generateTypescriptAPI = async ({
     modelsToValidationSchemaMappings,
   } = generateModelMappings({
     requestGroupings,
-    swaggerDocs,
+    openAPISpecification,
     generateTsedControllers,
   });
   //#endregion

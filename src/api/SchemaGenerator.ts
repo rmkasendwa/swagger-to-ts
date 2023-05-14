@@ -4,16 +4,16 @@ import { Schema, SchemaProperty } from '../models/OpenAPISpecification/Schema';
 
 //#region Find all schemas referenced by a schema
 export interface FindSchemaReferencedSchemasOptions {
-  swaggerDocs: OpenAPISpecification;
+  openAPISpecification: OpenAPISpecification;
   schemaName: string;
 }
 export const findSchemaReferencedSchemas = ({
   schemaName,
-  swaggerDocs,
+  openAPISpecification,
 }: FindSchemaReferencedSchemasOptions) => {
   const schemaReferencedSchemas: string[] = [];
   const findSchemaReferencedSchemasRecursive = (schemaName: string) => {
-    const schema = swaggerDocs.components.schemas[schemaName];
+    const schema = openAPISpecification.components.schemas[schemaName];
     if (schema && schema.type === 'object' && schema.properties) {
       Object.values(schema.properties).forEach((property) => {
         if ('type' in property) {

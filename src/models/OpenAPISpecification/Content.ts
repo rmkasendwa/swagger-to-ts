@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  ArraySchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
   SchemaValidationSchema,
 } from './Schema';
@@ -11,6 +12,7 @@ export const JSONContentValidationSchema = z.object({
     schema: z.union([
       RefSchemaPropertyValidationSchema,
       SchemaValidationSchema,
+      ArraySchemaPropertyValidationSchema,
     ]),
   }),
 });
