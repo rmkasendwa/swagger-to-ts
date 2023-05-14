@@ -1,31 +1,54 @@
-import { Schema } from './Schema';
+import { z } from 'zod';
 
-export type JSONContent = {
-  'application/json': {
-    schema:
-      | {
-          $ref: string;
-        }
-      | Schema;
-  };
-};
+import {
+  RefSchemaPropertyValidationSchema,
+  SchemaValidationSchema,
+} from './Schema';
 
-export type PNGContent = {
-  'image/png': {
-    schema:
-      | {
-          $ref: string;
-        }
-      | Schema;
-  };
-};
+//#region JSONContent
+export const JSONContentValidationSchema = z.object({
+  'application/json': z.object({
+    schema: z.union([
+      RefSchemaPropertyValidationSchema,
+      SchemaValidationSchema,
+    ]),
+  }),
+});
 
-export type GenericContent = {
-  '*/*': {
-    schema: {
-      type: string;
-    };
-  };
-};
+export type JSONContent = z.infer<typeof JSONContentValidationSchema>;
+//#endregion
 
-export type Content = JSONContent | PNGContent | GenericContent;
+//#region PNGContent
+export const PNGContentValidationSchema = z.object({
+  'image/png': z.object({
+    schema: z.union([
+      RefSchemaPropertyValidationSchema,
+      SchemaValidationSchema,
+    ]),
+  }),
+});
+
+export type PNGContent = z.infer<typeof PNGContentValidationSchema>;
+//#endregion
+
+//#region GenericContent
+export const GenericContentValidationSchema = z.object({
+  '*/*': z.object({
+    schema: z.object({
+      type: z.string(),
+    }),
+  }),
+});
+
+export type GenericContent = z.infer<typeof GenericContentValidationSchema>;
+//#endregion
+
+//#region Content
+export const ContentValidationSchema = z.union([
+  JSONContentValidationSchema,
+  PNGContentValidationSchema,
+  GenericContentValidationSchema,
+]);
+
+export type Content = z.infer<typeof ContentValidationSchema>;
+//#endregion

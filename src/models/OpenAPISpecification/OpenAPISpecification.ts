@@ -1,61 +1,82 @@
-import { Request, RequestMethod } from './Request';
-import { Schema } from './Schema';
+import { z } from 'zod';
 
-export interface Components {
-  securitySchemes: Record<string, SecurityScheme>;
-  schemas: Record<string, Schema>;
-}
+import { RequestValidationSchema } from './Request';
+import { SchemaValidationSchema } from './Schema';
 
-export interface OpenAPISpecificationInfo {
-  version: string;
-  title: string;
-  description?: string;
-}
+//#region OpenAPISpecificationInfo
+export const OpenAPISpecificationInfoValidationSchema = z.object({
+  version: z.string().describe('The open api version.'),
+  title: z.string().describe('The open api title.'),
+  description: z.string().optional().describe('The open api description.'),
+});
 
-export interface ApikeyAuth {
-  type: string;
-  in: string;
-  name: string;
-}
+export type OpenAPISpecificationInfo = z.infer<
+  typeof OpenAPISpecificationInfoValidationSchema
+>;
+//#endregion
 
-export type SecurityScheme = ApikeyAuth;
+//#region SecurityScheme
+export const ApikeyAuthValidationSchema = z.object({
+  type: z.string().describe('The security scheme type.'),
+  in: z.string().describe('The security scheme location.'),
+  name: z.string().describe('The security scheme name.'),
+});
 
-export interface Security {
-  APIKeyAuth: any[];
-}
+export const BearerAuthValidationSchema = z.object({
+  type: z.string().describe('The security scheme type.'),
+  scheme: z.literal('bearer').describe('The security scheme scheme.'),
+  bearerFormat: z.string().describe('The security scheme bearer format.'),
+});
 
-export interface Tag {
-  name: string;
-}
+export const SecuritySchemeValidationSchema = z
+  .union([ApikeyAuthValidationSchema, BearerAuthValidationSchema])
+  .describe('The open api security scheme.');
 
-export interface OpenAPISpecification {
-  /**
-   * The open api version.
-   */
-  openapi: string;
+export type SecurityScheme = z.infer<typeof SecuritySchemeValidationSchema>;
+//#endregion
 
-  /**
-   * The open api information.
-   */
-  info: OpenAPISpecificationInfo;
+//#region Components
+export const ComponentsValidationSchema = z.object({
+  securitySchemes: z
+    .record(SecuritySchemeValidationSchema)
+    .describe('The open api security schemes.'),
+  schemas: z.record(SchemaValidationSchema).describe('The open api schemas.'),
+});
 
-  /**
-   * The open api components.
-   */
-  components: Components;
+export type Components = z.infer<typeof ComponentsValidationSchema>;
+//#endregion
 
-  /**
-   * The server security configuration.
-   */
-  security: Security[];
+//#region SecurityScheme
+export const SecurityValidationSchema = z.object({
+  APIKeyAuth: z.array(z.any()).describe('The API key authentication.'),
+});
 
-  /**
-   * The server request paths.
-   */
-  paths: Record<string, Record<RequestMethod, Request>>;
+export type Security = z.infer<typeof SecurityValidationSchema>;
+//#endregion
 
-  /**
-   * The server endpoint groups.
-   */
-  tags: Tag[];
-}
+//#region Tag
+export const TagValidationSchema = z.object({
+  name: z.string().describe('The tag name.'),
+});
+
+export type Tag = z.infer<typeof TagValidationSchema>;
+//#endregion
+
+export const OpenAPISpecificationValidationSchema = z.object({
+  openapi: z.string().describe('The open api version.'),
+  info: OpenAPISpecificationInfoValidationSchema.describe(
+    'The open api information.'
+  ),
+  components: ComponentsValidationSchema.describe('The open api components.'),
+  security: z
+    .array(SecurityValidationSchema)
+    .describe('The server security configuration.'),
+  paths: z
+    .record(z.record(RequestValidationSchema))
+    .describe('The server request paths.'),
+  tags: z.array(TagValidationSchema).describe('The server endpoint groups.'),
+});
+
+export type OpenAPISpecification = z.infer<
+  typeof OpenAPISpecificationValidationSchema
+>;

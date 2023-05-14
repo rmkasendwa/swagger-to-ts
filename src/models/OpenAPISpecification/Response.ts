@@ -1,8 +1,16 @@
-import { Content } from './Content';
+import { z } from 'zod';
 
-export type Response = {
-  content?: Content;
-  description?: string;
-};
+import { ContentValidationSchema } from './Content';
 
-export type Responses = Record<string, Response>;
+//#region Response
+export const ResponseValidationSchema = z.object({
+  content: ContentValidationSchema.nullish().describe('The response content.'),
+  description: z.string().optional().describe('The response description.'),
+});
+export type Response = z.infer<typeof ResponseValidationSchema>;
+//#endregion
+
+//#region Responses
+export const ResponsesValidationSchema = z.record(ResponseValidationSchema);
+export type Responses = z.infer<typeof ResponsesValidationSchema>;
+//#endregion
