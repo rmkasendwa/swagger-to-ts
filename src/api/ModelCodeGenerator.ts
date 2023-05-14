@@ -537,6 +537,26 @@ export const generateModelCode = ({
               };
             }
             case 'string': {
+              if (property.format) {
+                switch (property.format) {
+                  case 'date-time':
+                    baseTsedPropertyDecorators.push(`@DateTime()`);
+                    addModuleImport({
+                      imports,
+                      importName: 'DateTime',
+                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                    });
+                    break;
+                  case 'date':
+                    baseTsedPropertyDecorators.push(`@DateFormat()`);
+                    addModuleImport({
+                      imports,
+                      importName: 'DateFormat',
+                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                    });
+                    break;
+                }
+              }
               if (property.enum) {
                 const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
                 const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
