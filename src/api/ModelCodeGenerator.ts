@@ -200,7 +200,7 @@ export const generateModelMappings = ({
               if (referencedSchemaEntityName != entityName) {
                 addModuleImport({
                   imports,
-                  importName: referencedSchemaName,
+                  importName: `${referencedSchemaName}ValidationSchema`,
                   importFilePath: `./${referencedSchemaEntityName}`,
                 });
               }
@@ -301,7 +301,10 @@ export const generateModelCode = ({
             switch (property.type) {
               case 'array': {
                 if (property.items && '$ref' in property.items) {
-                  const schemaName = property.items.$ref.split('/').pop()!;
+                  const schemaName = property.items.$ref.replace(
+                    '#/components/schemas/',
+                    ''
+                  );
                   referencedSchemas.push(schemaName);
                   return `z.array(${schemaName}ValidationSchema)`;
                 } else {
