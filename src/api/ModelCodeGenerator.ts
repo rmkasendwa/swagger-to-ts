@@ -403,14 +403,20 @@ export const generateModelCode = ({
 
   //#region Tsed controller
   const tsedModelConfiguration = Object.keys(schemaProperties).reduce(
-    (accumulator, propertyName) => {
+    (accumulator, basePropertyName) => {
+      const propertyName = (() => {
+        if (basePropertyName.match(/\W/g)) {
+          return basePropertyName.toCamelCase();
+        }
+        return basePropertyName;
+      })();
       const tsedProperty = (():
         | Omit<TsedModelProperty, 'typeDefinitionSnippet'>
         | undefined => {
-        const property = schemaProperties[propertyName];
-        if (propertyName.match(/^\w+$/g) && 'type' in property) {
+        const property = schemaProperties[basePropertyName];
+        if ('type' in property) {
           const required = Boolean(
-            schema.required && schema.required.includes(propertyName)
+            schema.required && schema.required.includes(basePropertyName)
           );
           const baseTsedPropertyDecorators = [`@Property()`];
           addModuleImport({
@@ -418,6 +424,14 @@ export const generateModelCode = ({
             importName: 'Property',
             importFilePath: TSED_SCHEMA_LIBRARY_PATH,
           });
+          if (basePropertyName.match(/\W/g)) {
+            baseTsedPropertyDecorators.push(`@Name('${basePropertyName}')`);
+            addModuleImport({
+              imports,
+              importName: 'Name',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
+          }
           if (required) {
             baseTsedPropertyDecorators.push(`@Required()`);
             addModuleImport({
