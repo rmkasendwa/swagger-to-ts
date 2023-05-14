@@ -424,6 +424,7 @@ export const generateModelCode = ({
             importName: 'Property',
             importFilePath: TSED_SCHEMA_LIBRARY_PATH,
           });
+
           if (basePropertyName.match(/\W/g)) {
             baseTsedPropertyDecorators.push(`@Name('${basePropertyName}')`);
             addModuleImport({
@@ -432,6 +433,40 @@ export const generateModelCode = ({
               importFilePath: TSED_SCHEMA_LIBRARY_PATH,
             });
           }
+
+          if (property.example) {
+            baseTsedPropertyDecorators.push(
+              `@Example(${JSON.stringify(property.example)})`
+            );
+            addModuleImport({
+              imports,
+              importName: 'Example',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
+          }
+
+          if (property.default) {
+            baseTsedPropertyDecorators.push(
+              `@Default(${JSON.stringify(property.default)})`
+            );
+            addModuleImport({
+              imports,
+              importName: 'Default',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
+          }
+
+          if (property.description) {
+            baseTsedPropertyDecorators.push(
+              `@Description(${JSON.stringify(property.description)})`
+            );
+            addModuleImport({
+              imports,
+              importName: 'Description',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
+          }
+
           if (required) {
             baseTsedPropertyDecorators.push(`@Required()`);
             addModuleImport({
@@ -440,6 +475,7 @@ export const generateModelCode = ({
               importFilePath: TSED_SCHEMA_LIBRARY_PATH,
             });
           }
+
           const baseTsedProperty: Pick<
             TsedModelProperty,
             'propertyName' | 'accessModifier' | 'required' | 'decorators'

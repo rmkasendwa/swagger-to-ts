@@ -21,6 +21,7 @@ export type NumberSchemaProperty = {
 export type BooleanSchemaProperty = {
   type: 'boolean';
   description?: string;
+  example?: boolean;
   default?: string;
 };
 
