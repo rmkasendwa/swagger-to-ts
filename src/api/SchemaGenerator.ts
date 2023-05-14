@@ -37,6 +37,7 @@ export const findSchemaReferencedSchemas = ({
 };
 //#endregion
 
+//#region Generate schema from request parameters
 export interface GenerateSchemaFromRequestParametersOptions {
   requestParameters: RequestParameter[];
 }
@@ -61,8 +62,11 @@ export const generateSchemaFromRequestParameters = ({
         }
         return true;
       })
-      .reduce((accumulator, { name, schema }) => {
-        accumulator[name] = schema;
+      .reduce((accumulator, { name, schema, description }) => {
+        accumulator[name] = {
+          ...schema,
+          description,
+        };
         return accumulator;
       }, {} as Record<string, SchemaProperty>),
     required: requestParameters
@@ -74,3 +78,4 @@ export const generateSchemaFromRequestParameters = ({
       }),
   } as Schema;
 };
+//#endregion

@@ -22,7 +22,7 @@ export type BooleanSchemaProperty = {
   type: 'boolean';
   description?: string;
   example?: boolean;
-  default?: string;
+  default?: boolean;
 };
 
 export type ArraySchemaProperty = {

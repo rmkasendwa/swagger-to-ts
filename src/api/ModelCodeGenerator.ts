@@ -318,7 +318,7 @@ export const generateModelCode = ({
       const code = (() => {
         const property = schemaProperties[propertyName];
         if ('type' in property) {
-          const code = (() => {
+          let code = (() => {
             switch (property.type) {
               case 'array': {
                 if (property.items && '$ref' in property.items) {
@@ -373,11 +373,13 @@ export const generateModelCode = ({
               }
             }
           })();
-          if (
-            code &&
-            (!schema.required || !schema.required.includes(propertyName))
-          ) {
-            return `${code}.nullish()`;
+          if (code) {
+            if (!schema.required || !schema.required.includes(propertyName)) {
+              code += `.nullish()`;
+            }
+            if (property.description) {
+              code += `.describe(\`${property.description}\`)`;
+            }
           }
           return code;
         }
