@@ -10,6 +10,12 @@ export const BINARY_RESPONSE_TYPE_MODEL_NAME = 'ArrayBuffer';
 
 export const ENVIRONMENT_DEFINED_MODELS = ['ArrayBuffer'] as const;
 
+export interface SuccessResponseSchema {
+  name: string;
+  description?: string;
+  httpStatusCode: number;
+}
+
 export interface TypescriptAPIGeneratorRequest extends Request {
   /**
    * The HTTP method of the request.
@@ -85,7 +91,7 @@ export interface TypescriptAPIGeneratorRequest extends Request {
   /**
    * The name of the model that is used to define the response of the request.
    */
-  successResponseSchemaName?: string;
+  successResponseSchemas?: SuccessResponseSchema[];
 }
 
 export interface ZodValidationSchemaProperty {

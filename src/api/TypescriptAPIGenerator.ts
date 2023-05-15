@@ -13,6 +13,7 @@ import { prettierConfig } from '../models/Prettier';
 import {
   BINARY_RESPONSE_TYPE_MODEL_NAME,
   RequestGroupings,
+  SuccessResponseSchema,
   TagNameToEntityLabelsMap,
 } from '../models/TypescriptAPIGenerator';
 import {
@@ -198,31 +199,43 @@ export const generateTypescriptAPI = async ({
                 }
               }
             })(),
-            successResponseSchemaName: (() => {
-              const successResponse = Object.keys(request.responses).find(
+            successResponseSchemas: (() => {
+              const successResponses = Object.keys(request.responses).filter(
                 (responseCode) => responseCode.startsWith('2')
               );
-              if (
-                successResponse &&
-                request.responses[successResponse].content
-              ) {
-                if (
-                  'application/json' in
-                  request.responses[successResponse].content!
-                ) {
-                  const successResponseSchemaName = (
-                    request.responses[successResponse] as any
-                  ).content['application/json'].schema.$ref.replace(
-                    '#/components/schemas/',
-                    ''
-                  );
-                  return successResponseSchemaName;
-                }
-                if (
-                  'image/png' in request.responses[successResponse].content!
-                ) {
-                  return BINARY_RESPONSE_TYPE_MODEL_NAME;
-                }
+              if (successResponses && successResponses.length > 0) {
+                return successResponses
+                  .filter((successResponse) => {
+                    return request.responses[successResponse].content;
+                  })
+                  .map((successResponse) => {
+                    if (
+                      'application/json' in
+                      request.responses[successResponse].content!
+                    ) {
+                      const successResponseSchemaName = (
+                        request.responses[successResponse] as any
+                      ).content['application/json'].schema.$ref.replace(
+                        '#/components/schemas/',
+                        ''
+                      );
+                      return {
+                        name: successResponseSchemaName,
+                        httpStatusCode: +successResponse,
+                        description:
+                          request.responses[successResponse].description,
+                      } as SuccessResponseSchema;
+                    }
+                    if (
+                      'image/png' in request.responses[successResponse].content!
+                    ) {
+                      return {
+                        name: BINARY_RESPONSE_TYPE_MODEL_NAME,
+                        httpStatusCode: +successResponse,
+                      } as SuccessResponseSchema;
+                    }
+                  })
+                  .filter((schema) => schema) as SuccessResponseSchema[];
               }
             })(),
             ...(() => {
@@ -467,12 +480,8 @@ export const generateTypescriptAPI = async ({
     const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
     const apiFileName = `${PascalCaseEntities}.ts`;
     const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
-    const {
-      outputCode,
-      requestPathsOutputCode,
-      imports,
-      dataKeyVariableName,
-    } = apiFunctionsCodeConfiguration[tag];
+    const { outputCode, requestPathsOutputCode, imports, dataKeyVariableName } =
+      apiFunctionsCodeConfiguration[tag];
 
     writeFileSync(
       entityAPIOutputFilePath,

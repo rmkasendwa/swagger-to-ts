@@ -122,7 +122,7 @@ export const getAPIFunctionsCodeConfiguration = ({
             requestBodySchemaName,
             requestBodyType,
             requestBodyTypeDependentSchemaName,
-            successResponseSchemaName,
+            successResponseSchemas,
           }) => {
             const {
               jsDocCommentSnippet,
@@ -309,30 +309,37 @@ export const getAPIFunctionsCodeConfiguration = ({
 
               const returnValueString = (() => {
                 if (
-                  successResponseSchemaName &&
-                  modelsToValidationSchemaMappings[successResponseSchemaName]
+                  successResponseSchemas &&
+                  successResponseSchemas.length > 0
                 ) {
-                  const successResponseValidationSchemaName =
+                  const [{ name: successResponseSchemaName }] =
+                    successResponseSchemas;
+                  if (
                     modelsToValidationSchemaMappings[successResponseSchemaName]
-                      .zodValidationSchemaName;
-                  const validationSchemaSource = `
-                      ../models/${
-                        tagToEntityLabelMappings[
-                          schemaToEntityMappings[successResponseSchemaName]
-                        ].PascalCaseEntities
-                      }
-                    `.trimIndent();
+                  ) {
+                    const successResponseValidationSchemaName =
+                      modelsToValidationSchemaMappings[
+                        successResponseSchemaName
+                      ].zodValidationSchemaName;
+                    const validationSchemaSource = `
+                        ../models/${
+                          tagToEntityLabelMappings[
+                            schemaToEntityMappings[successResponseSchemaName]
+                          ].PascalCaseEntities
+                        }
+                      `.trimIndent();
 
-                  addModuleImport({
-                    imports,
-                    importName: successResponseValidationSchemaName,
-                    importFilePath: validationSchemaSource,
-                  });
+                    addModuleImport({
+                      imports,
+                      importName: successResponseValidationSchemaName,
+                      importFilePath: validationSchemaSource,
+                    });
 
-                  jsDocCommentLines.push(
-                    `@returns ${successResponseSchemaName}`
-                  ); // TODO: Replace this with the response description.
-                  return `${successResponseValidationSchemaName}.parse(data)`;
+                    jsDocCommentLines.push(
+                      `@returns ${successResponseSchemaName}`
+                    ); // TODO: Replace this with the response description.
+                    return `${successResponseValidationSchemaName}.parse(data)`;
+                  }
                 }
                 return 'data';
               })();
@@ -410,14 +417,22 @@ export const getAPIFunctionsCodeConfiguration = ({
             });
 
             const isEnvironmentDefinedModel = Boolean(
-              successResponseSchemaName &&
-                ENVIRONMENT_DEFINED_MODELS.includes(
-                  successResponseSchemaName as any
+              successResponseSchemas &&
+                successResponseSchemas.every(
+                  ({ name: successResponseSchemaName }) => {
+                    return ENVIRONMENT_DEFINED_MODELS.includes(
+                      successResponseSchemaName as any
+                    );
+                  }
                 )
             );
 
-            if (isEnvironmentDefinedModel) {
-              httpActionName += `<${successResponseSchemaName}>`;
+            if (isEnvironmentDefinedModel && successResponseSchemas) {
+              httpActionName += `<${successResponseSchemas
+                .map(({ name }) => {
+                  return name;
+                })
+                .join('|')}>`;
             }
             //#endregion
 
