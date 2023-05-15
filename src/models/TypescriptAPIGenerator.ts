@@ -3,6 +3,7 @@ import {
   RequestMethod,
   RequestParameter,
 } from './OpenAPISpecification/Request';
+import { SchemaProperty } from './OpenAPISpecification/Schema';
 import { ModuleImports } from './Utils';
 
 export const BINARY_RESPONSE_TYPE_MODEL_NAME = 'ArrayBuffer';
@@ -39,6 +40,7 @@ export interface TsedModelProperty {
   accessModifier: 'public' | 'private' | 'protected';
   required?: boolean;
   typeDefinitionSnippet: string;
+  openAPISpecification: SchemaProperty;
 }
 
 export interface GeneratedSchemaCodeConfiguration {

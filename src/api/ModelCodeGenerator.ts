@@ -551,8 +551,13 @@ export const generateModelCode = ({
 
               const baseTsedProperty: Pick<
                 TsedModelProperty,
-                'propertyName' | 'accessModifier' | 'required' | 'decorators'
+                | 'propertyName'
+                | 'accessModifier'
+                | 'required'
+                | 'decorators'
+                | 'openAPISpecification'
               > = {
+                openAPISpecification: property,
                 propertyName,
                 accessModifier: 'public',
                 decorators: baseTsedPropertyDecorators,
@@ -819,12 +824,56 @@ export const generateModelCode = ({
       if (modelIsRecursive && tsedModelConfiguration) {
         const interfacePropertiesCode = Object.keys(tsedModelConfiguration)
           .map((key) => {
-            const { propertyName, propertyType, required } =
-              tsedModelConfiguration[key];
+            const {
+              propertyName,
+              propertyType,
+              required,
+              openAPISpecification,
+            } = tsedModelConfiguration[key];
             const propertyValueSeparator = required ? ': ' : '?: ';
-            return `${propertyName}${propertyValueSeparator} ${propertyType}`;
+            const propertyValueSnippet = `${propertyName}${propertyValueSeparator} ${propertyType}`;
+            const jsDocCommentLines: string[] = [];
+            if (
+              'description' in openAPISpecification &&
+              openAPISpecification.description
+            ) {
+              jsDocCommentLines.push(openAPISpecification.description);
+            }
+            if (
+              'example' in openAPISpecification &&
+              openAPISpecification.example
+            ) {
+              jsDocCommentLines.push(
+                `@example ${JSON.stringify(openAPISpecification.example)}`
+              );
+            }
+            if (
+              'default' in openAPISpecification &&
+              openAPISpecification.default
+            ) {
+              jsDocCommentLines.push(
+                `@default ${JSON.stringify(openAPISpecification.default)}`
+              );
+            }
+
+            if (jsDocCommentLines.length > 0) {
+              const linesString = jsDocCommentLines
+                .map((line) => {
+                  return ` * ${line}`;
+                })
+                .join('\n *\n');
+              const jsDocCommentCode = `
+                  /**
+                   ${linesString}
+                  */
+                `.trimIndent();
+
+              return `${jsDocCommentCode}\n${propertyValueSnippet}`;
+            }
+
+            return propertyValueSnippet;
           })
-          .join(';\n');
+          .join(';\n\n');
 
         const interfaceCode = `
           export interface ${schemaName} {
