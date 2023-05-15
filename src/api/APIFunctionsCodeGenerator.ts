@@ -78,6 +78,9 @@ export const getAPIFunctionsCodeConfiguration = ({
 }: GenerateAPIFunctionsCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce(
     (accumulator, tag) => {
+      const dataKeyVariableName = `${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
+      const imports = cloneDeep(requestGroupings[tag].imports);
+
       //#region Generate entity api endpoint paths
       const endpointPathsOutputCode = requestGroupings[tag].requests
         .map(({ endpointPath, endpointPathName, pathParameters }) => {
@@ -88,15 +91,18 @@ export const getAPIFunctionsCodeConfiguration = ({
                 return accumulator;
               }, [] as string[])
               .join(';\n');
-            return `export const ${endpointPathName}: TemplatePath<{${parametersCode}}> = '${endpointPath}';`;
+            const pathParamType = `TemplatePath`;
+            addModuleImport({
+              imports,
+              importName: pathParamType,
+              importFilePath: PATHS_LIBRARY_PATH,
+            });
+            return `export const ${endpointPathName}: ${pathParamType}<{${parametersCode}}> = '${endpointPath}';`;
           }
           return `export const ${endpointPathName} = '${endpointPath}';`;
         })
         .join('\n');
       //#endregion
-
-      const dataKeyVariableName = `${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
-      const imports = cloneDeep(requestGroupings[tag].imports);
 
       //#region Generate entity api request functions
       const outputCode = requestGroupings[tag].requests

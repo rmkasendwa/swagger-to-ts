@@ -169,6 +169,8 @@ export type RequestGroupings = Record<
 
 export const TSED_SCHEMA_LIBRARY_PATH = `@tsed/schema`;
 
+export const TSED_COMMON_LIBRARY_PATH = `@tsed/common`;
+
 export const PATHS_LIBRARY_PATH = `@infinite-debugger/rmk-utils/paths`;
 
 export const API_ADAPTER_PATH = `./Adapter`;

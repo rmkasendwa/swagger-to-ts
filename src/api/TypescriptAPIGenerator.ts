@@ -12,7 +12,6 @@ import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
 import {
   BINARY_RESPONSE_TYPE_MODEL_NAME,
-  PATHS_LIBRARY_PATH,
   RequestGroupings,
   TagNameToEntityLabelsMap,
 } from '../models/TypescriptAPIGenerator';
@@ -26,11 +25,7 @@ import {
 } from './ModelCodeGenerator';
 import { generateSchemaFromRequestParameters } from './SchemaGenerator';
 import { getTSEDControllersCodeConfiguration } from './TSEDControllersCodeGenerator';
-import {
-  addModuleImport,
-  getGeneratedFileWarningComment,
-  getImportsCode,
-} from './Utils';
+import { getGeneratedFileWarningComment, getImportsCode } from './Utils';
 
 export interface GenerateTypescriptAPIConfig
   extends Pick<GenerateModelMappingsOptions, 'inferTypeFromValidationSchema'> {
@@ -120,7 +115,7 @@ export const generateTypescriptAPI = async ({
             };
           }
 
-          const { imports, requests } = accumulator[tag];
+          const { requests } = accumulator[tag];
 
           requests.push({
             ...request,
@@ -236,12 +231,6 @@ export const generateTypescriptAPI = async ({
                   (parameter) => parameter.in === 'path'
                 );
                 if (pathParameters.length > 0) {
-                  const pathParamType = `TemplatePath`;
-                  addModuleImport({
-                    imports,
-                    importName: pathParamType,
-                    importFilePath: PATHS_LIBRARY_PATH,
-                  });
                   return {
                     pathParameters,
                   };
