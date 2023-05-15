@@ -360,40 +360,38 @@ export const generateModelCode = ({
               case 'boolean': {
                 return `z.boolean()`;
               }
-              case 'object': {
-                if (property.properties) {
-                  const validationSchemaPropertiesCode = Object.keys(
-                    property.properties
-                  ).map((key) => {
-                    const value = property.properties![key];
-                    if (Array.isArray(value)) {
-                      const arrayItemSchemaCode = (() => {
-                        if (value[0].type === 'string') {
-                          return `z.string()`;
-                        }
-                        return `z.any()`;
-                      })();
-                      return `${key}: z.array(${arrayItemSchemaCode})`;
-                    }
-                    if (value.$ref) {
-                      const referencedSchemaName = value.$ref.replace(
-                        '#/components/schemas/',
-                        ''
-                      );
-                      referencedSchemas.push(referencedSchemaName);
-                      const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-                      if (referencedSchemaName === schemaName) {
-                        // return `${key}: z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
-                        return `${key}: z.any()`;
+              case 'object':
+                {
+                  if (property.properties) {
+                    const propertiesTypeCode = (() => {
+                      const firstProperty = Object.values(
+                        property.properties
+                      )[0];
+                      if (
+                        Array.isArray(firstProperty) &&
+                        firstProperty[0].type === 'string'
+                      ) {
+                        return `z.array(z.string())`;
                       }
-                      return `${key}: ${validationSchemaName}`;
-                    }
-                    return `${key}: z.any()`;
-                  });
-                  return `z.object({${validationSchemaPropertiesCode}})`;
+                      if ('$ref' in firstProperty) {
+                        const referencedSchemaName = firstProperty.$ref.replace(
+                          '#/components/schemas/',
+                          ''
+                        );
+                        referencedSchemas.push(referencedSchemaName);
+                        const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                        if (referencedSchemaName === schemaName) {
+                          // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+                          return `z.any()`;
+                        }
+                        return validationSchemaName;
+                      }
+                      return `z.any()`;
+                    })();
+                    return `z.record(${propertiesTypeCode})`;
+                  }
                 }
                 break;
-              }
               case 'array': {
                 if (property.items && '$ref' in property.items) {
                   const referencedSchemaName = property.items.$ref.replace(
@@ -528,31 +526,6 @@ export const generateModelCode = ({
           };
 
           switch (property.type) {
-            case 'array': {
-              if (property.items && '$ref' in property.items) {
-                const schemaName = property.items.$ref.replace(
-                  '#/components/schemas/',
-                  ''
-                );
-                addModuleImport({
-                  imports,
-                  importName: 'ArrayOf',
-                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                });
-                return {
-                  ...baseTsedProperty,
-                  propertyType: `${schemaName}[]`,
-                  decorators: [
-                    ...baseTsedPropertyDecorators,
-                    `@ArrayOf(${schemaName})`,
-                  ],
-                };
-              }
-              return {
-                ...baseTsedProperty,
-                propertyType: `${schemaName}[]`,
-              };
-            }
             case 'number': {
               const decorators = [...baseTsedPropertyDecorators];
               if (property.min != null) {
@@ -645,6 +618,67 @@ export const generateModelCode = ({
               return {
                 ...baseTsedProperty,
                 propertyType: `boolean`,
+              };
+            }
+            case 'object':
+              {
+                if (property.properties) {
+                  addModuleImport({
+                    imports,
+                    importName: 'RecordOf',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
+                  const propertiesTypeCode = (() => {
+                    const firstProperty = Object.values(property.properties)[0];
+                    if (
+                      Array.isArray(firstProperty) &&
+                      firstProperty[0].type === 'string'
+                    ) {
+                      return `string[]`;
+                    }
+                    if ('$ref' in firstProperty) {
+                      const schemaName = firstProperty.$ref.replace(
+                        '#/components/schemas/',
+                        ''
+                      );
+                      return schemaName;
+                    }
+                    return `any`;
+                  })();
+                  return {
+                    ...baseTsedProperty,
+                    propertyType: `Record<string, ${propertiesTypeCode}>`,
+                    decorators: [
+                      ...baseTsedPropertyDecorators,
+                      `@RecordOf([String])`,
+                    ],
+                  };
+                }
+              }
+              break;
+            case 'array': {
+              if (property.items && '$ref' in property.items) {
+                const schemaName = property.items.$ref.replace(
+                  '#/components/schemas/',
+                  ''
+                );
+                addModuleImport({
+                  imports,
+                  importName: 'ArrayOf',
+                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                });
+                return {
+                  ...baseTsedProperty,
+                  propertyType: `${schemaName}[]`,
+                  decorators: [
+                    ...baseTsedPropertyDecorators,
+                    `@ArrayOf(${schemaName})`,
+                  ],
+                };
+              }
+              return {
+                ...baseTsedProperty,
+                propertyType: `${schemaName}[]`,
               };
             }
           }
