@@ -48,10 +48,13 @@ generateTypescriptAPI({
 
 swagger-to-ts provides several options to customize the generated TypeScript code:
 
-- `template`: Specify a custom template file or directory to override the default code generation. See [Custom Templates](#custom-templates) for more details.
-- `skipTypeChecking`: Skip type-checking generated code during compilation. This option can be useful if you want to generate the code without actually compiling it.
-- `useOptionsInterfaces`: Generate interfaces for operation options. This can be useful when using a library like axios to make API calls.
-- `namingConvention`: Specify a custom naming convention for generated types and interfaces. The default value is `'pascal-case'`. Other options include `'camel-case'`, `'kebab-case'`, and `'snake-case'`.
+- `openAPISpecification`: The OpenAPI specification to generate the Typescript API from.
+- `outputRootPath`: The root path to output the generated Typescript API to.
+- `outputInternalState`: Whether to output the internal state of the Typescript API generator.
+- `requestOperationNameSource`: The source to use for the operation name of each request. The default value is `'requestSummary'`. The other option is `'requestOperationId'`.
+- `generateTsedControllers`: Whether to generate TSED controllers.
+- `tsedAuthenticateDecoratorImportPath`: The import path to use for the Ts.ED `Authenticate` decorator.
+- `inferTypeFromValidationSchema`: Whether to infer the type from the validation schema.
 
 Here's an example that demonstrates how to use these options:
 

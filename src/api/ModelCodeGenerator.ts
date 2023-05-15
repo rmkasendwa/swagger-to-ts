@@ -295,9 +295,24 @@ export const generateModelMappings = ({
 
 //#region Generate model code
 export interface GenerateModelCodeOptions {
+  /**
+   * The open api specification to use when looking up schemas
+   */
   openAPISpecification: OpenAPISpecification;
+
+  /**
+   * The name of the schema to generate code for
+   */
   schemaName: string;
+
+  /**
+   * Whether to generate code for tsed controllers
+   */
   generateTsedControllers?: boolean;
+
+  /**
+   * Whether to infer the type from the validation schema
+   */
   inferTypeFromValidationSchema?: boolean;
 }
 export const generateModelCode = ({

@@ -30,11 +30,34 @@ import { getGeneratedFileWarningComment, getImportsCode } from './Utils';
 
 export interface GenerateTypescriptAPIConfig
   extends Pick<GenerateModelMappingsOptions, 'inferTypeFromValidationSchema'> {
+  /**
+   * The OpenAPI specification to generate the Typescript API from.
+   */
   openAPISpecification: OpenAPISpecification;
+
+  /**
+   * The root path to output the generated Typescript API to.
+   */
   outputRootPath: string;
+
+  /**
+   * Whether to output the internal state of the Typescript API generator.
+   */
   outputInternalState?: boolean;
+
+  /**
+   * The source to use for the operation name of each request.
+   */
   requestOperationNameSource?: 'requestSummary' | 'requestOperationId';
+
+  /**
+   * Whether to generate TSED controllers.
+   */
   generateTsedControllers?: boolean;
+
+  /**
+   * The import path to use for the Ts.ED `Authenticate` decorator.
+   */
   tsedAuthenticateDecoratorImportPath?: string;
 }
 
