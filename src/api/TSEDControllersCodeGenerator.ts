@@ -51,6 +51,7 @@ export const getTSEDControllersCodeConfiguration = ({
             const {
               controllerMethodDecorators,
               controllerMethodParametersCode,
+              apiFunctionCallArgumentsCode,
             } = (() => {
               const controllerMethodRequestMethodName = method.toPascalCase();
               const controllerMethodDecorators: string[] = [
@@ -84,7 +85,7 @@ export const getTSEDControllersCodeConfiguration = ({
                 );
               }
 
-              //#region API function parameters code
+              //#region Controller Method parameters code
               const controllerMethodParametersCode = [
                 //#region Path parameters
                 ...(() => {
@@ -250,6 +251,59 @@ export const getTSEDControllersCodeConfiguration = ({
               ].join(', ');
               //#endregion
 
+              //#region API function call arguments code
+              const apiFunctionCallArgumentsCode = [
+                //#region Path parameters
+                ...(() => {
+                  if (pathParameters) {
+                    return pathParameters.map(({ name }) => {
+                      return name;
+                    });
+                  }
+                  return [];
+                })(),
+                //#endregion
+
+                //#region Request body parameters
+                ...(() => {
+                  if (
+                    requestBody &&
+                    (requestBodySchemaName || requestBodyType)
+                  ) {
+                    return ['requestPayload'];
+                  }
+                  return [];
+                })(),
+                //#endregion
+
+                //#region Header parameters
+                ...(() => {
+                  if (
+                    headerParametersModelReference &&
+                    headerParameters &&
+                    headerParameters.length > 0
+                  ) {
+                    return ['headers'];
+                  }
+                  return [];
+                })(),
+                //#endregion
+
+                //#region Query parameters
+                ...(() => {
+                  if (
+                    queryParametersModelReference &&
+                    queryParameters &&
+                    queryParameters.length > 0
+                  ) {
+                    return [`queryParams`];
+                  }
+                  return [];
+                })(),
+                //#endregion
+              ].join(', ');
+              //#endregion
+
               return {
                 controllerMethodDecorators: (() => {
                   if (controllerMethodDecorators.length > 0) {
@@ -258,6 +312,7 @@ export const getTSEDControllersCodeConfiguration = ({
                   return '';
                 })(),
                 controllerMethodParametersCode,
+                apiFunctionCallArgumentsCode,
               };
             })();
             //#endregion
@@ -271,7 +326,7 @@ export const getTSEDControllersCodeConfiguration = ({
             return `
               ${controllerMethodDecorators}
               async ${operationName}(${controllerMethodParametersCode}) {
-                return ${operationName}();
+                return ${operationName}(${apiFunctionCallArgumentsCode});
               }
             `.trimIndent();
           }
