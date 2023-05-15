@@ -35,6 +35,7 @@ export interface GenerateTypescriptAPIConfig
   outputInternalState?: boolean;
   requestOperationNameSource?: 'requestSummary' | 'requestOperationId';
   generateTsedControllers?: boolean;
+  tsedAuthenticateDecoratorImportPath?: string;
 }
 
 export const generateTypescriptAPI = async ({
@@ -44,6 +45,7 @@ export const generateTypescriptAPI = async ({
   generateTsedControllers = false,
   requestOperationNameSource = 'requestSummary',
   inferTypeFromValidationSchema,
+  tsedAuthenticateDecoratorImportPath,
 }: GenerateTypescriptAPIConfig) => {
   console.log('\n🔍 Validate Open API specification.');
   const debugOutputFolderName = `__${pkg.name.toSnakeCase()}_debug_output__/${new Date()
@@ -376,9 +378,9 @@ export const generateTypescriptAPI = async ({
   //#region Generate TSED controllers code configuration
   const tsedControllersCodeConfiguration = getTSEDControllersCodeConfiguration({
     requestGroupings,
-    modelsToValidationSchemaMappings,
     schemaToEntityMappings,
     tagToEntityLabelMappings,
+    authenticateDecoratorImportPath: tsedAuthenticateDecoratorImportPath,
   });
   //#endregion
 

@@ -1,7 +1,6 @@
 import { cloneDeep } from 'lodash';
 
 import {
-  GeneratedSchemaCodeConfiguration,
   ModuleImports,
   RequestGroupings,
   TSED_COMMON_LIBRARY_PATH,
@@ -17,15 +16,13 @@ export interface GenerateTSEDControllersCodeConfigurationOptions {
   requestGroupings: RequestGroupings;
   tagToEntityLabelMappings: TagNameToEntityLabelsMap;
   schemaToEntityMappings: Record<string, string>;
-  modelsToValidationSchemaMappings: Record<
-    string,
-    GeneratedSchemaCodeConfiguration
-  >;
+  authenticateDecoratorImportPath?: string;
 }
 export const getTSEDControllersCodeConfiguration = ({
   requestGroupings,
   tagToEntityLabelMappings,
   schemaToEntityMappings,
+  authenticateDecoratorImportPath,
 }: GenerateTSEDControllersCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce(
     (accumulator, tag) => {
@@ -395,11 +392,26 @@ export const getTSEDControllersCodeConfiguration = ({
         importFilePath: TSED_SCHEMA_LIBRARY_PATH,
       });
 
+      const classDecorators = [
+        `@Controller('/${tagToEntityLabelMappings[tag]['kebab-case-entities']}')`,
+        `@Docs('api-v1')`,
+        `@Name('${tagToEntityLabelMappings[tag]['Entities Label']}')`,
+      ];
+
+      if (authenticateDecoratorImportPath) {
+        classDecorators.push(`@Authenticate()`);
+        addModuleImport({
+          imports,
+          importName: 'Authenticate',
+          importFilePath: authenticateDecoratorImportPath,
+        });
+      }
+
       const outputCode = `
-        @Controller('/${tagToEntityLabelMappings[tag]['kebab-case-entities']}')
-        @Docs('api-v1')
-        @Name('${tagToEntityLabelMappings[tag]['Entities Label']}')
-        export class ${tagToEntityLabelMappings[tag].PascalCaseEntity}Controller {
+        ${classDecorators.join('\n')}
+        export class ${
+          tagToEntityLabelMappings[tag].PascalCaseEntity
+        }Controller {
           ${controllerMethodsCode}
         }
       `.trimIndent();
