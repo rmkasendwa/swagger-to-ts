@@ -29,28 +29,10 @@ export const getTSEDControllersCodeConfiguration = ({
 }: GenerateTSEDControllersCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce(
     (accumulator, tag) => {
-      //#region Generate entity api endpoint paths
-      const endpointPathsOutputCode = requestGroupings[tag].requests
-        .map(({ endpointPath, endpointPathName, pathParameters }) => {
-          if (pathParameters && pathParameters.length > 0) {
-            const parametersCode = pathParameters
-              .reduce((accumulator, { name }) => {
-                accumulator.push(`${name}: string`);
-                return accumulator;
-              }, [] as string[])
-              .join(';\n');
-            return `export const ${endpointPathName}: TemplatePath<{${parametersCode}}> = '${endpointPath}';`;
-          }
-          return `export const ${endpointPathName} = '${endpointPath}';`;
-        })
-        .join('\n');
-      //#endregion
-
-      const dataKeyVariableName = `${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
       const imports = cloneDeep(requestGroupings[tag].imports);
 
       //#region Generate entity api request functions
-      const outputCode = requestGroupings[tag].requests
+      const controllerMethodsCode = requestGroupings[tag].requests
         .map(
           ({
             method,
@@ -381,12 +363,6 @@ export const getTSEDControllersCodeConfiguration = ({
                 return [];
               })(),
               ...(() => {
-                if (method.match(/get/gi)) {
-                  return [`cacheId: ${dataKeyVariableName}`];
-                }
-                return [];
-              })(),
-              ...(() => {
                 if (isEnvironmentDefinedModel) {
                   return [`responseType: 'blob'`];
                 }
@@ -397,23 +373,27 @@ export const getTSEDControllersCodeConfiguration = ({
 
             return `
               ${jsDocCommentSnippet}
-              export const ${operationName} = async (${apiFunctionParametersCode}) => {
+              async ${operationName}(${apiFunctionParametersCode}) {
                 const { data } = await ${httpActionName}(${interpolatedEndpointPathString}, {
                   ${requestOptionsCode}
                 });
                 return ${returnValueString};
-              };
+              }
             `.trimIndent();
           }
         )
         .join('\n\n');
       //#endregion
 
+      const outputCode = `
+        export class ${tagToEntityLabelMappings[tag].PascalCaseEntity}Controller {
+          ${controllerMethodsCode}
+        }
+      `.trimIndent();
+
       accumulator[tag] = {
-        endpointPathsOutputCode,
         outputCode,
         imports,
-        dataKeyVariableName,
       };
 
       return accumulator;
@@ -421,10 +401,8 @@ export const getTSEDControllersCodeConfiguration = ({
     {} as Record<
       string,
       {
-        endpointPathsOutputCode: string;
         outputCode: string;
         imports: ModuleImports;
-        dataKeyVariableName: string;
       }
     >
   );
