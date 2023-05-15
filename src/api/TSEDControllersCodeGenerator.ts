@@ -5,7 +5,9 @@ import {
   ModuleImports,
   RequestGroupings,
   TSED_COMMON_LIBRARY_PATH,
+  TSED_DEPENDENCY_INJECTION_LIBRARY_PATH,
   TSED_SCHEMA_LIBRARY_PATH,
+  TSED_SWAGGER_LIBRARY_PATH,
   TagNameToEntityLabelsMap,
 } from '../models';
 import { addModuleImport } from './Utils';
@@ -346,7 +348,26 @@ export const getTSEDControllersCodeConfiguration = ({
         .join('\n\n');
       //#endregion
 
+      addModuleImport({
+        imports,
+        importName: 'Controller',
+        importFilePath: TSED_DEPENDENCY_INJECTION_LIBRARY_PATH,
+      });
+      addModuleImport({
+        imports,
+        importName: 'Docs',
+        importFilePath: TSED_SWAGGER_LIBRARY_PATH,
+      });
+      addModuleImport({
+        imports,
+        importName: 'Name',
+        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+      });
+
       const outputCode = `
+        @Controller('/${tagToEntityLabelMappings[tag]['kebab-case-entities']}')
+        @Docs('api-v1')
+        @Name('${tagToEntityLabelMappings[tag]['Entities Label']}')
         export class ${tagToEntityLabelMappings[tag].PascalCaseEntity}Controller {
           ${controllerMethodsCode}
         }

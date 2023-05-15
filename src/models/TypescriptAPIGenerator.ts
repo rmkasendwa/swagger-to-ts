@@ -168,8 +168,9 @@ export type RequestGroupings = Record<
 >;
 
 export const TSED_SCHEMA_LIBRARY_PATH = `@tsed/schema`;
-
 export const TSED_COMMON_LIBRARY_PATH = `@tsed/common`;
+export const TSED_DEPENDENCY_INJECTION_LIBRARY_PATH = `@tsed/di`;
+export const TSED_SWAGGER_LIBRARY_PATH = `@tsed/swagger`;
 
 export const PATHS_LIBRARY_PATH = `@infinite-debugger/rmk-utils/paths`;
 
