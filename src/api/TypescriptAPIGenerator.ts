@@ -26,8 +26,6 @@ import {
 import { generateSchemaFromRequestParameters } from './SchemaGenerator';
 import { addModuleImport, getImportsCode } from './Utils';
 
-export const API_ADAPTER_PATH = `./Adapter`;
-
 export interface GenerateTypescriptAPIConfig
   extends Pick<GenerateModelMappingsOptions, 'inferTypeFromValidationSchema'> {
   openAPISpecification: OpenAPISpecification;
@@ -63,7 +61,10 @@ export const generateTypescriptAPI = async ({
   console.log(' -> 👍 OpenAPI specification validated.');
   console.log('Generating API...');
 
+  const clientName = openAPISpecification.info.title.toTitleCase();
+
   //#region Find all requests and group them by tag
+  console.log(` -> Grouping API requests by tag...`);
   const requestGroupings = Object.keys(openAPISpecification.paths).reduce(
     (accumulator, path) => {
       Object.keys(openAPISpecification.paths[path]).forEach((method) => {
@@ -254,6 +255,7 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Generate tag to entity mappings
+  console.log(` -> Generating tag to entity mappings...`);
   const tagToEntityLabelMappings = [
     ...Object.keys(requestGroupings),
     'Utils',
@@ -289,6 +291,7 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Generate model mappings.
+  console.log(` -> Generating model mappings...`);
   const {
     entitySchemaGroups,
     schemaToEntityMappings,
@@ -304,6 +307,7 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Generate API functions code configuration
+  console.log(` -> Generating API functions code configuration...`);
   const apiFunctionsCodeConfiguration = getAPIFunctionsCodeConfiguration({
     requestGroupings,
     modelsToValidationSchemaMappings,
@@ -314,6 +318,7 @@ export const generateTypescriptAPI = async ({
 
   //#region Write debug output files
   if (outputInternalState) {
+    console.log(` -> Writing debug output files...`);
     ensureDirSync(outputRootPath);
     writeFileSync(
       `${outputRootPath}/request-groupings.output.json`,
@@ -350,7 +355,8 @@ export const generateTypescriptAPI = async ({
   }
   //#endregion
 
-  //#region Write model output files
+  //#region Write API model files
+  console.log(` -> Writing API model files...`);
   const modelsOutputFilePath = `${outputRootPath}/models`;
   ensureDirSync(modelsOutputFilePath);
   Object.keys(models).forEach((tag) => {
@@ -396,7 +402,8 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
-  //#region Write api output files
+  //#region Write API files
+  console.log(` -> Writing API files...`);
   const apiOutputFilePath = `${outputRootPath}/api`;
   ensureDirSync(apiOutputFilePath);
   Object.keys(apiFunctionsCodeConfiguration).forEach((tag) => {
@@ -472,7 +479,8 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
-  //#region Write index output file
+  //#region Write index file
+  console.log(` -> Writing index file...`);
   const indexOutputFilePath = `${outputRootPath}/index.ts`;
   writeFileSync(
     indexOutputFilePath,
@@ -490,5 +498,8 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
-  console.log(`✅ Generated API code at ${outputRootPath}`);
+  console.log(`Process Completed Successfully`);
+  console.log(
+    ` -> ✅ Generated ${clientName} typescript client code at ${outputRootPath}`
+  );
 };
