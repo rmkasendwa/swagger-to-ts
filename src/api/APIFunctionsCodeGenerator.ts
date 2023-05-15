@@ -114,6 +114,7 @@ export const getAPIFunctionsCodeConfiguration = ({
             queryParametersModelReference,
             requestBody,
             requestBodySchemaName,
+            requestBodyType,
             successResponseSchemaName,
           }) => {
             const {
@@ -164,28 +165,37 @@ export const getAPIFunctionsCodeConfiguration = ({
 
                 //#region Request body parameters
                 ...(() => {
-                  if (requestBody && requestBodySchemaName) {
+                  if (
+                    requestBody &&
+                    (requestBodySchemaName || requestBodyType)
+                  ) {
                     jsDocCommentLines.push(
                       `@param requestPayload ${
                         requestBody.description || ''
                       }`.trim()
                     );
 
-                    const schemaSource = `
-                        ../models/${
-                          tagToEntityLabelMappings[
-                            schemaToEntityMappings[requestBodySchemaName]
-                          ].PascalCaseEntities
-                        }
-                      `.trimIndent();
+                    if (requestBodySchemaName) {
+                      const schemaSource = `
+                          ../models/${
+                            tagToEntityLabelMappings[
+                              schemaToEntityMappings[requestBodySchemaName]
+                            ].PascalCaseEntities
+                          }
+                        `.trimIndent();
 
-                    addModuleImport({
-                      imports,
-                      importName: requestBodySchemaName,
-                      importFilePath: schemaSource,
-                    });
+                      addModuleImport({
+                        imports,
+                        importName: requestBodySchemaName,
+                        importFilePath: schemaSource,
+                      });
 
-                    return [`requestPayload: ${requestBodySchemaName}`];
+                      return [`requestPayload: ${requestBodySchemaName}`];
+                    }
+
+                    if (requestBodyType) {
+                      return [`requestPayload: ${requestBodyType}`];
+                    }
                   }
                   return [];
                 })(),

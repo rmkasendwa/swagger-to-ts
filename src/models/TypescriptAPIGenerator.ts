@@ -26,6 +26,7 @@ export interface TypescriptAPIGeneratorRequest extends Request {
   queryParametersModelReference?: string;
 
   requestBodySchemaName?: string;
+  requestBodyType?: string;
   successResponseSchemaName?: string;
 }
 
