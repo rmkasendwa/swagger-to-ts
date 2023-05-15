@@ -120,10 +120,10 @@ export const generateTypescriptAPI = async ({
           requests.push({
             ...request,
             method: method as RequestMethod,
-            endpointPath: path,
+            requestPath: path,
             operationName,
             pascalCaseOperationName,
-            endpointPathName:
+            requestPathName:
               (() => {
                 if (
                   requestOperationNameSource === 'requestSummary' &&
@@ -469,7 +469,7 @@ export const generateTypescriptAPI = async ({
     const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
     const {
       outputCode,
-      endpointPathsOutputCode,
+      requestPathsOutputCode,
       imports,
       dataKeyVariableName,
     } = apiFunctionsCodeConfiguration[tag];
@@ -484,7 +484,7 @@ export const generateTypescriptAPI = async ({
           }),
           `
             //#region Endpoint Paths
-            ${endpointPathsOutputCode}
+            ${requestPathsOutputCode}
             //#endregion
           `.trimIndent(),
           `

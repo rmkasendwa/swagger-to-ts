@@ -36,7 +36,7 @@ export const getTSEDControllersCodeConfiguration = ({
             method,
             operationName,
             description,
-            endpointPath,
+            requestPath,
             pathParameters,
             headerParameters,
             headerParametersModelReference,
@@ -54,8 +54,21 @@ export const getTSEDControllersCodeConfiguration = ({
               apiFunctionCallArgumentsCode,
             } = (() => {
               const controllerMethodRequestMethodName = method.toPascalCase();
+              const controllerRequestPath = requestPath
+                .replace(/(\/api\b|\/v\d+\b)/g, '')
+                .replace(
+                  new RegExp(
+                    `\\/${tagToEntityLabelMappings[tag]['kebab-case-entities']}\\b`,
+                    'g'
+                  ),
+                  ''
+                )
+                .replace(/\{(\w+?)\}/g, ':$1');
+
               const controllerMethodDecorators: string[] = [
-                `@${controllerMethodRequestMethodName}('${endpointPath}')`,
+                controllerRequestPath.length > 0
+                  ? `@${controllerMethodRequestMethodName}('${controllerRequestPath}')`
+                  : `@${controllerMethodRequestMethodName}()`,
               ];
 
               addModuleImport({
@@ -315,7 +328,6 @@ export const getTSEDControllersCodeConfiguration = ({
                 apiFunctionCallArgumentsCode,
               };
             })();
-            //#endregion
 
             addModuleImport({
               imports,

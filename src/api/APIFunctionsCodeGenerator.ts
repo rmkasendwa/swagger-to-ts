@@ -82,8 +82,8 @@ export const getAPIFunctionsCodeConfiguration = ({
       const imports = cloneDeep(requestGroupings[tag].imports);
 
       //#region Generate entity api endpoint paths
-      const endpointPathsOutputCode = requestGroupings[tag].requests
-        .map(({ endpointPath, endpointPathName, pathParameters }) => {
+      const requestPathsOutputCode = requestGroupings[tag].requests
+        .map(({ requestPath, requestPathName, pathParameters }) => {
           if (pathParameters && pathParameters.length > 0) {
             const parametersCode = pathParameters
               .reduce((accumulator, { name }) => {
@@ -97,9 +97,9 @@ export const getAPIFunctionsCodeConfiguration = ({
               importName: pathParamType,
               importFilePath: PATHS_LIBRARY_PATH,
             });
-            return `export const ${endpointPathName}: ${pathParamType}<{${parametersCode}}> = '${endpointPath}';`;
+            return `export const ${requestPathName}: ${pathParamType}<{${parametersCode}}> = '${requestPath}';`;
           }
-          return `export const ${endpointPathName} = '${endpointPath}';`;
+          return `export const ${requestPathName} = '${requestPath}';`;
         })
         .join('\n');
       //#endregion
@@ -110,7 +110,7 @@ export const getAPIFunctionsCodeConfiguration = ({
           ({
             method,
             operationName,
-            endpointPathName,
+            requestPathName,
             operationDescription,
             description,
             pathParameters,
@@ -369,12 +369,12 @@ export const getAPIFunctionsCodeConfiguration = ({
                     importFilePath: PATHS_LIBRARY_PATH,
                   });
                   return `
-                    ${interpolationFunctionName}(${endpointPathName}, {
+                    ${interpolationFunctionName}(${requestPathName}, {
                       ${pathParameters.map(({ name }) => name).join(',\n')}
                     })
                   `;
                 }
-                return endpointPathName;
+                return requestPathName;
               })();
 
               if (queryParameters && queryParameters.length > 0) {
@@ -465,7 +465,7 @@ export const getAPIFunctionsCodeConfiguration = ({
       //#endregion
 
       accumulator[tag] = {
-        endpointPathsOutputCode,
+        requestPathsOutputCode,
         outputCode,
         imports,
         dataKeyVariableName,
@@ -476,7 +476,7 @@ export const getAPIFunctionsCodeConfiguration = ({
     {} as Record<
       string,
       {
-        endpointPathsOutputCode: string;
+        requestPathsOutputCode: string;
         outputCode: string;
         imports: ModuleImports;
         dataKeyVariableName: string;

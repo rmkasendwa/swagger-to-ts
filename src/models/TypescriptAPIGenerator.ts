@@ -35,12 +35,12 @@ export interface TypescriptAPIGeneratorRequest extends Request {
   /**
    * The endpoint path of the request.
    */
-  endpointPath: string;
+  requestPath: string;
 
   /**
    * The name of the variable that is used to store the endpoint path.
    */
-  endpointPathName: string;
+  requestPathName: string;
 
   /**
    * The path parameters in the endpoint path.
