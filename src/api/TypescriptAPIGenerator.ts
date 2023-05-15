@@ -43,23 +43,24 @@ export const generateTypescriptAPI = async ({
   requestOperationNameSource = 'requestSummary',
   inferTypeFromValidationSchema,
 }: GenerateTypescriptAPIConfig) => {
-  console.log('Validating OpenAPI specification...');
+  console.log('🔍 Validate Open API specification.');
   const openAPISpecification = (() => {
     try {
+      console.log(' -> 🔍 Validating Open API specification...');
       return OpenAPISpecificationValidationSchema.parse(
         inputOpenAPISpecification
       );
     } catch (err) {
       const errorFilePath = `${process.cwd()}/openapi-spec-validation.error.json`;
       console.error(
-        `OpenAPI specification validation failed. See ${errorFilePath} for details.`
+        `😞 Oops! Something went wrong while validating your Open API specification. See ${errorFilePath} for details.`
       );
       writeFileSync(errorFilePath, JSON.stringify(err, null, 2));
       process.exit(1);
     }
   })();
-  console.log(' -> 👍 OpenAPI specification validated.');
-  console.log('Generating API...');
+  console.log(' -> 👍 Open API specification is valid.');
+  console.log('🚀 Generate Typescript API.');
 
   const clientName = openAPISpecification.info.title.toTitleCase();
 
@@ -480,6 +481,7 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Write index file
+  console.log(`Finish`);
   console.log(` -> Writing index file...`);
   const indexOutputFilePath = `${outputRootPath}/index.ts`;
   writeFileSync(
@@ -498,8 +500,7 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
-  console.log(`Process Completed Successfully`);
   console.log(
-    ` -> ✅ Generated ${clientName} typescript client code at ${outputRootPath}`
+    ` -> ✅ Success. ${clientName} typescript client code has been generated in the following directory ${outputRootPath}`
   );
 };
