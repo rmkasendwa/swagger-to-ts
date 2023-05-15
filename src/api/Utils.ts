@@ -53,3 +53,37 @@ export const getGeneratedFileWarningComment = () => {
   `.trimIndent();
 };
 //#endregion
+
+//#region Get help text
+export const getHelpText = () => {
+  return `
+    ${pkg.name}
+
+    Description:
+    ${pkg.name} is a powerful tool that allows you to effortlessly generate TypeScript code from Swagger documents or Open API specifications. This tool streamlines the process of creating strongly typed models, API clients, and request/response objects in TypeScript, saving you valuable development time.
+
+    Usage:
+    swagger-to-ts [options]
+
+    Options:
+    -o, --output <directory>: Specifies the output directory for the generated TypeScript code. If not provided, the code will be generated in the current directory.
+    -f, --file <file>: Specifies the Swagger document or Open API specification file to use for generating the TypeScript code. If not provided, the application will look for a file named swagger.json in the current directory.
+    -h, --help: Displays the help text and usage instructions for the command line application.
+    -v, --version: Displays the version information of the Swagger-to-TS command line application.
+
+    Example:
+    To generate TypeScript code from a Swagger document named swagger.json and save it in a directory named generated, you can use the following command:
+    swagger-to-ts -o generated swagger.json
+
+    Additional Information:
+    - ${pkg.name} uses the Swagger/OAS specification to generate TypeScript code.
+    - The generated TypeScript code includes interfaces for models, request/response objects, and API client classes.
+    - The application attempts to infer appropriate TypeScript types based on the Swagger document's schema definitions.
+    - If you encounter any issues or need further assistance, please refer to the ${pkg.name} documentation for troubleshooting and examples.
+
+    Remember to have the necessary dependencies installed and accessible in your environment before running the ${pkg.name} command line application.
+
+    For more information, please visit the ${pkg.name} GitHub repository or the official Swagger documentation.
+  `.trimIndent();
+};
+//#endregion
