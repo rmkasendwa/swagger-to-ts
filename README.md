@@ -59,7 +59,7 @@ swagger-to-ts provides several options to customize the generated TypeScript cod
 Here's an example that demonstrates how to use these options:
 
 ```typescript
-import { generateTypes, NamingConvention } from '@infinite-debugger/swagger-to-ts';
+import { generateTypescriptAPI } from '@infinite-debugger/swagger-to-ts';
 
 generateTypescriptAPI({
   openAPISpecification,
@@ -71,14 +71,6 @@ generateTypescriptAPI({
   requestOperationNameSource: 'requestSummary',
 });
 ```
-
-### Custom Templates
-
-swagger-to-ts allows you to customize the generated code by providing your own template files or directory. You can override individual template files or the entire directory.
-
-To override the default templates, create a new directory and copy the desired template files into it. Modify the copied files according to your requirements. Then, specify the path to your custom template directory in the options.
-
-The default template files can be found in the `templates` directory of the swagger-to-ts package.
 
 ### CLI
 
