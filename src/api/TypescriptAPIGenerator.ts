@@ -46,6 +46,9 @@ export const generateTypescriptAPI = async ({
   inferTypeFromValidationSchema,
 }: GenerateTypescriptAPIConfig) => {
   console.log('\n🔍 Validate Open API specification.');
+  const debugOutputFolderName = `__${pkg.name.toSnakeCase()}_debug_output__/${new Date()
+    .toISOString()
+    .replace(/:/g, '_')}`;
   const openAPISpecification = (() => {
     try {
       console.log(' -> 🔍 Validating Open API specification...');
@@ -53,7 +56,7 @@ export const generateTypescriptAPI = async ({
         inputOpenAPISpecification
       );
     } catch (err) {
-      const errorFilePath = `${process.cwd()}/openapi-spec-validation.error.json`;
+      const errorFilePath = `${debugOutputFolderName}/openapi_spec_validation.error.json`;
       console.error(
         `😞 Oops! Something went wrong while validating your Open API specification. See ${errorFilePath} for details.`
       );
@@ -382,9 +385,6 @@ export const generateTypescriptAPI = async ({
   //#region Write debug output files
   if (outputInternalState) {
     console.log(` -> Writing debug output files...`);
-    const debugOutputFolderName = `__${pkg.name.toSnakeCase()}_debug_output__/${new Date()
-      .toISOString()
-      .replace(/:/g, '_')}`;
     const debugOutputRootPath = `${outputRootPath}/${debugOutputFolderName}`;
 
     ensureDirSync(debugOutputRootPath);

@@ -48,6 +48,7 @@ export const getTSEDControllersCodeConfiguration = ({
             requestBodySchemaName,
             requestBodyType,
             requestBodyTypeDependentSchemaName,
+            successResponseSchemas,
             summary,
           }) => {
             const {
@@ -265,6 +266,36 @@ export const getTSEDControllersCodeConfiguration = ({
                 //#endregion
               ].join(', ');
               //#endregion
+
+              if (successResponseSchemas && successResponseSchemas.length > 0) {
+                successResponseSchemas.forEach(
+                  ({ name, httpStatusCode, description }) => {
+                    addModuleImport({
+                      imports,
+                      importName: 'Returns',
+                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                    });
+                    addModuleImport({
+                      imports,
+                      importName: name,
+                      importFilePath: `../models/${
+                        tagToEntityLabelMappings[schemaToEntityMappings[name]]
+                          .PascalCaseEntities
+                      }`,
+                    });
+
+                    controllerMethodDecorators.push(
+                      `@Returns(${httpStatusCode}, ${name})` +
+                        (() => {
+                          if (description) {
+                            return `.Description('${description}')`;
+                          }
+                          return '';
+                        })()
+                    );
+                  }
+                );
+              }
 
               //#region API function call arguments code
               const apiFunctionCallArgumentsCode = [
