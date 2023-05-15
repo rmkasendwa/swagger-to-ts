@@ -159,7 +159,7 @@ export const generateTypescriptAPI = async ({
                 return requestBodySchemaName;
               }
             })(),
-            requestBodyType: (() => {
+            ...(() => {
               if (request.requestBody?.content) {
                 const { content } = request.requestBody;
                 if (
@@ -174,7 +174,11 @@ export const generateTypescriptAPI = async ({
                         '#/components/schemas/',
                         ''
                       );
-                      return `${requestBodySchemaName}[]`;
+                      return {
+                        requestBodyType: `${requestBodySchemaName}[]`,
+                        requestBodyTypeDependentSchemaName:
+                          requestBodySchemaName,
+                      };
                     }
                     if (
                       schema.items.type &&
@@ -186,10 +190,14 @@ export const generateTypescriptAPI = async ({
                         ] as (typeof schema.items.type)[]
                       ).includes(schema.items.type)
                     ) {
-                      return `${schema.items.type}[]`;
+                      return {
+                        requestBodyType: `${schema.items.type}[]`,
+                      };
                     }
                   }
-                  return 'any[]';
+                  return {
+                    requestBodyType: 'any[]',
+                  };
                 }
               }
             })(),

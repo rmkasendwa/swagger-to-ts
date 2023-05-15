@@ -11,22 +11,80 @@ export const BINARY_RESPONSE_TYPE_MODEL_NAME = 'ArrayBuffer';
 export const ENVIRONMENT_DEFINED_MODELS = ['ArrayBuffer'] as const;
 
 export interface TypescriptAPIGeneratorRequest extends Request {
+  /**
+   * The HTTP method of the request.
+   */
   method: RequestMethod;
+
+  /**
+   * The name of the operation.
+   * This is the name of the operation as defined in the OpenAPI specification.
+   */
   operationName: string;
+
+  /**
+   * The name of the operation in PascalCase.
+   */
   pascalCaseOperationName: string;
+
+  /**
+   * The description of the request.
+   */
   operationDescription?: string;
+
+  /**
+   * The endpoint path of the request.
+   */
   endpointPath: string;
+
+  /**
+   * The name of the variable that is used to store the endpoint path.
+   */
   endpointPathName: string;
+
+  /**
+   * The path parameters in the endpoint path.
+   */
   pathParameters?: RequestParameter[];
 
+  /**
+   * The parameters in the headers of the request.
+   */
   headerParameters?: RequestParameter[];
+
+  /**
+   * The reference the model that is used to define the header parameters.
+   */
   headerParametersModelReference?: string;
 
+  /**
+   * The query parameters in the endpoint path.
+   */
   queryParameters?: RequestParameter[];
+
+  /**
+   * The reference the model that is used to define the query parameters.
+   */
   queryParametersModelReference?: string;
 
+  /**
+   * The name of the model that is used to define the body of the request.
+   */
   requestBodySchemaName?: string;
+
+  /**
+   * The type of the body of the request. This is provided if requestBodySchemaName is not provided.
+   */
   requestBodyType?: string;
+
+  /**
+   * The name of the model that the requestBody type is dependent on.
+   */
+  requestBodyTypeDependentSchemaName?: string;
+
+  /**
+   * The name of the model that is used to define the response of the request.
+   */
   successResponseSchemaName?: string;
 }
 

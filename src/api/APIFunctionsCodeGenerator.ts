@@ -115,6 +115,7 @@ export const getAPIFunctionsCodeConfiguration = ({
             requestBody,
             requestBodySchemaName,
             requestBodyType,
+            requestBodyTypeDependentSchemaName,
             successResponseSchemaName,
           }) => {
             const {
@@ -194,6 +195,23 @@ export const getAPIFunctionsCodeConfiguration = ({
                     }
 
                     if (requestBodyType) {
+                      if (requestBodyTypeDependentSchemaName) {
+                        const schemaSource = `
+                      ../models/${
+                        tagToEntityLabelMappings[
+                          schemaToEntityMappings[
+                            requestBodyTypeDependentSchemaName
+                          ]
+                        ].PascalCaseEntities
+                      }
+                    `.trimIndent();
+
+                        addModuleImport({
+                          imports,
+                          importName: requestBodyTypeDependentSchemaName,
+                          importFilePath: schemaSource,
+                        });
+                      }
                       return [`requestPayload: ${requestBodyType}`];
                     }
                   }
