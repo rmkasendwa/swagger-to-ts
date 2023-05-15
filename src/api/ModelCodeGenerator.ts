@@ -395,19 +395,33 @@ export const generateModelCode = ({
                 }
                 break;
               case 'array': {
-                if (property.items && '$ref' in property.items) {
-                  const referencedSchemaName = property.items.$ref.replace(
-                    '#/components/schemas/',
-                    ''
-                  );
-                  referencedSchemas.push(referencedSchemaName);
-                  const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-                  if (referencedSchemaName === schemaName) {
-                    modelIsRecursive = true;
-                    // return `z.array(z.lazy(() => ${validationSchemaName}))`; // TODO: Lazy reference validation schema
-                    return `z.array(z.any())`;
+                if (property.items) {
+                  if ('$ref' in property.items) {
+                    const referencedSchemaName = property.items.$ref.replace(
+                      '#/components/schemas/',
+                      ''
+                    );
+                    referencedSchemas.push(referencedSchemaName);
+                    const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                    if (referencedSchemaName === schemaName) {
+                      modelIsRecursive = true;
+                      // return `z.array(z.lazy(() => ${validationSchemaName}))`; // TODO: Lazy reference validation schema
+                      return `z.array(z.any())`;
+                    }
+                    return `z.array(${validationSchemaName})`;
                   }
-                  return `z.array(${validationSchemaName})`;
+                  if (
+                    'type' in property.items &&
+                    (
+                      [
+                        'boolean',
+                        'number',
+                        'string',
+                      ] as (typeof property.items.type)[]
+                    ).includes(property.items.type)
+                  ) {
+                    return `z.array(z.${property.items.type}())`;
+                  }
                 }
                 return `z.array(z.any())`;
               }
@@ -695,26 +709,54 @@ export const generateModelCode = ({
                   }
                   break;
                 case 'array': {
-                  if (property.items && '$ref' in property.items) {
-                    const schemaName = property.items.$ref.replace(
-                      '#/components/schemas/',
-                      ''
-                    );
-                    if (generateTsedControllers) {
-                      addModuleImport({
-                        imports,
-                        importName: 'ArrayOf',
-                        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                      });
+                  if (property.items) {
+                    if ('$ref' in property.items) {
+                      const schemaName = property.items.$ref.replace(
+                        '#/components/schemas/',
+                        ''
+                      );
+                      if (generateTsedControllers) {
+                        addModuleImport({
+                          imports,
+                          importName: 'ArrayOf',
+                          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                        });
+                      }
+                      return {
+                        ...baseTsedProperty,
+                        propertyType: `${schemaName}[]`,
+                        decorators: [
+                          ...baseTsedPropertyDecorators,
+                          `@ArrayOf(${schemaName})`,
+                        ],
+                      };
                     }
-                    return {
-                      ...baseTsedProperty,
-                      propertyType: `${schemaName}[]`,
-                      decorators: [
-                        ...baseTsedPropertyDecorators,
-                        `@ArrayOf(${schemaName})`,
-                      ],
-                    };
+                    if (
+                      'type' in property.items &&
+                      (
+                        [
+                          'boolean',
+                          'number',
+                          'string',
+                        ] as (typeof property.items.type)[]
+                      ).includes(property.items.type)
+                    ) {
+                      if (generateTsedControllers) {
+                        addModuleImport({
+                          imports,
+                          importName: 'ArrayOf',
+                          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                        });
+                      }
+                      return {
+                        ...baseTsedProperty,
+                        propertyType: `${property.items.type}[]`,
+                        decorators: [
+                          ...baseTsedPropertyDecorators,
+                          `@ArrayOf(${property.items.type.toPascalCase()})`,
+                        ],
+                      };
+                    }
                   }
                   return {
                     ...baseTsedProperty,
