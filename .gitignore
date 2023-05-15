@@ -13,4 +13,5 @@ __sandbox
 error.json
 *.output.json
 *.error.json
+*.debug.*
 dist
