@@ -14,7 +14,8 @@ import { findSchemaReferencedSchemas } from './SchemaGenerator';
 import { addModuleImport } from './Utils';
 
 //#region Generate model mappings
-export interface GenerateModelMappingsOptions {
+export interface GenerateModelMappingsOptions
+  extends Pick<GenerateModelCodeOptions, 'inferTypeFromValidationSchema'> {
   openAPISpecification: OpenAPISpecification;
   requestGroupings: RequestGroupings;
   generateTsedControllers?: boolean;
@@ -23,6 +24,7 @@ export const generateModelMappings = ({
   requestGroupings,
   openAPISpecification,
   generateTsedControllers,
+  inferTypeFromValidationSchema,
 }: GenerateModelMappingsOptions) => {
   //#region Find all Schemas referenced in the requests
   const schemaEntityReferences = Object.values(requestGroupings).reduce(
@@ -199,6 +201,7 @@ export const generateModelMappings = ({
               schemaName,
               openAPISpecification,
               generateTsedControllers,
+              inferTypeFromValidationSchema,
             });
 
             referencedSchemas.forEach((referencedSchemaName) => {
@@ -295,11 +298,13 @@ export interface GenerateModelCodeOptions {
   openAPISpecification: OpenAPISpecification;
   schemaName: string;
   generateTsedControllers?: boolean;
+  inferTypeFromValidationSchema?: boolean;
 }
 export const generateModelCode = ({
   schemaName,
   openAPISpecification,
   generateTsedControllers,
+  inferTypeFromValidationSchema = true,
 }: GenerateModelCodeOptions) => {
   const schema = openAPISpecification.components.schemas[schemaName];
   const referencedSchemas: string[] = [];
@@ -462,7 +467,11 @@ export const generateModelCode = ({
     tsedModelConfiguration?: Record<string, TsedModelProperty>;
     tsedModelCode?: string;
   } => {
-    if (generateTsedControllers || modelIsRecursive) {
+    if (
+      generateTsedControllers ||
+      !inferTypeFromValidationSchema ||
+      modelIsRecursive
+    ) {
       const tsedModelConfiguration = Object.keys(schemaProperties).reduce(
         (accumulator, basePropertyName) => {
           const propertyName = (() => {
@@ -821,7 +830,10 @@ export const generateModelCode = ({
       if (generateTsedControllers && tsedModelCode) {
         return [tsedModelCode];
       }
-      if (modelIsRecursive && tsedModelConfiguration) {
+      if (
+        (!inferTypeFromValidationSchema || modelIsRecursive) &&
+        tsedModelConfiguration
+      ) {
         const interfacePropertiesCode = Object.keys(tsedModelConfiguration)
           .map((key) => {
             const {
@@ -858,6 +870,10 @@ export const generateModelCode = ({
 
             if (jsDocCommentLines.length > 0) {
               const linesString = jsDocCommentLines
+                .reduce((acumulator, line) => {
+                  acumulator.push(...line.split('\n'));
+                  return acumulator;
+                }, [] as string[])
                 .map((line) => {
                   return ` * ${line}`;
                 })

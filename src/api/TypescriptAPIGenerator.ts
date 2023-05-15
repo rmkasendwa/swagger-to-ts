@@ -19,13 +19,17 @@ import {
   getAPIAdapterCode,
   getAPIFunctionsCodeConfiguration,
 } from './APIFunctionsCodeGenerator';
-import { generateModelMappings } from './ModelCodeGenerator';
+import {
+  GenerateModelMappingsOptions,
+  generateModelMappings,
+} from './ModelCodeGenerator';
 import { generateSchemaFromRequestParameters } from './SchemaGenerator';
 import { addModuleImport, getImportsCode } from './Utils';
 
 export const API_ADAPTER_PATH = `./Adapter`;
 
-export interface GenerateTypescriptAPIConfig {
+export interface GenerateTypescriptAPIConfig
+  extends Pick<GenerateModelMappingsOptions, 'inferTypeFromValidationSchema'> {
   openAPISpecification: OpenAPISpecification;
   outputRootPath: string;
   outputInternalState?: boolean;
@@ -39,6 +43,7 @@ export const generateTypescriptAPI = async ({
   outputInternalState = false,
   generateTsedControllers = false,
   requestOperationNameSource = 'requestSummary',
+  inferTypeFromValidationSchema,
 }: GenerateTypescriptAPIConfig) => {
   console.log('Validating OpenAPI specification...');
   const openAPISpecification = (() => {
@@ -294,6 +299,7 @@ export const generateTypescriptAPI = async ({
     requestGroupings,
     openAPISpecification,
     generateTsedControllers,
+    inferTypeFromValidationSchema,
   });
   //#endregion
 
