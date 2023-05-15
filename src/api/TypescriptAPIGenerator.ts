@@ -387,35 +387,35 @@ export const generateTypescriptAPI = async ({
 
     ensureDirSync(debugOutputRootPath);
     writeFileSync(
-      `${debugOutputRootPath}/request-groupings.debug.json`,
+      `${debugOutputRootPath}/api_request_groupped_by_tag.debug.json`,
       JSON.stringify(requestGroupings, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/tag-entity-label-mappings.debug.json`,
+      `${debugOutputRootPath}/tag_to_entity_mappings.debug.json`,
       JSON.stringify(tagToEntityLabelMappings, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/schema-references.debug.json`,
+      `${debugOutputRootPath}/schema_references.debug.json`,
       JSON.stringify(schemaEntityReferences, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/schema-to-entity-mappings.debug.json`,
+      `${debugOutputRootPath}/schema_to_entity_mappings.debug.json`,
       JSON.stringify(schemaToEntityMappings, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/schema-groupings.debug.json`,
+      `${debugOutputRootPath}/schemas_grouped_by_tag.debug.json`,
       JSON.stringify(entitySchemaGroups, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/validation-schemas.debug.json`,
+      `${debugOutputRootPath}/validation_schemas.debug.json`,
       JSON.stringify(models, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/models-to-validation-schema-mappings.debug.json`,
+      `${debugOutputRootPath}/models_to_validation_schema_mappings.debug.json`,
       JSON.stringify(modelsToValidationSchemaMappings, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/api-functions-code-configuration.debug.json`,
+      `${debugOutputRootPath}/api_functions_code_configuration.debug.json`,
       JSON.stringify(apiFunctionsCodeConfiguration, null, 2)
     );
   }
