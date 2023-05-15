@@ -47,26 +47,26 @@ export const generateTypescriptAPI = async ({
   inferTypeFromValidationSchema,
   tsedAuthenticateDecoratorImportPath,
 }: GenerateTypescriptAPIConfig) => {
-  console.log('\n🔍 Validate Open API specification.');
+  console.log('\n🔍 Validate OpenAPI specification.');
   const debugOutputFolderName = `__${pkg.name.toSnakeCase()}_debug_output__/${new Date()
     .toISOString()
     .replace(/:/g, '_')}`;
   const openAPISpecification = (() => {
     try {
-      console.log(' -> 🔍 Validating Open API specification...');
+      console.log(' -> 🔍 Validating OpenAPI specification...');
       return OpenAPISpecificationValidationSchema.parse(
         inputOpenAPISpecification
       );
     } catch (err) {
       const errorFilePath = `${debugOutputFolderName}/openapi_spec_validation.error.json`;
       console.error(
-        `😞 Oops! Something went wrong while validating your Open API specification. See ${errorFilePath} for details.`
+        `😞 Oops! Something went wrong while validating your OpenAPI specification. See ${errorFilePath} for details.`
       );
       writeFileSync(errorFilePath, JSON.stringify(err, null, 2));
       process.exit(1);
     }
   })();
-  console.log(' -> 👍 Open API specification is valid.');
+  console.log(' -> 👍 OpenAPI specification is valid.');
   console.log('\n🚀 Generate Typescript API.');
 
   //#region Initialization
