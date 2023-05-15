@@ -371,13 +371,16 @@ export const getTSEDControllersCodeConfiguration = ({
               '...rest',
             ].join(',\n');
 
+            addModuleImport({
+              imports,
+              importName: operationName,
+              importFilePath: '../api',
+            });
+
             return `
               ${jsDocCommentSnippet}
               async ${operationName}(${apiFunctionParametersCode}) {
-                const { data } = await ${httpActionName}(${interpolatedEndpointPathString}, {
-                  ${requestOptionsCode}
-                });
-                return ${returnValueString};
+                return ${operationName}();
               }
             `.trimIndent();
           }
