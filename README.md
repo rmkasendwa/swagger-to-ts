@@ -17,13 +17,13 @@ swagger-to-ts is a powerful library that allows you to generate TypeScript code 
 
 You can install swagger-to-ts using npm:
 
-```shell
+```sh
 npm install @infinite-debugger/swagger-to-ts
 ```
 
 Or if you prefer yarn:
 
-```shell
+```sh
 yarn add @infinite-debugger/swagger-to-ts
 ```
 
@@ -76,13 +76,13 @@ generateTypescriptAPI({
 
 swagger-to-ts also provides a command-line interface (CLI) to generate TypeScript code. You can install the CLI globally using npm:
 
-```shell
+```sh
 npm install -g @infinite-debugger/swagger-to-ts
 ```
 
 Certainly! The swagger-to-ts command-line interface (CLI) allows you to generate TypeScript code directly from your terminal. Here's how you can use it:
 
-```shell
+```sh
 swagger-to-ts [options] -f <specPath> -o <outputPath>
 ```
 
@@ -101,7 +101,7 @@ The swagger-to-ts CLI supports the following options:
 
 Here are a few examples demonstrating the usage of the swagger-to-ts CLI:
 
-```shell
+```sh
 swagger-to-ts -f /path/to/swagger.json -o /path/to/output
 ```
 

@@ -8,6 +8,8 @@ const outputDirectory = `${currentWorkingDirectory}/dist`;
 const packageFile = require(`${currentWorkingDirectory}/package.json`);
 const project = {
   ...omit(packageFile, 'devDependencies', 'jest', 'scripts'),
+  main: 'index.js',
+  module: 'esm/index.js',
   types: './index.d.ts',
 };
 
@@ -40,13 +42,13 @@ try {
     buildNumber,
   });
 } catch (exception) {
-  console.error(exception);
+  console.error(String(exception));
 }
 fs.writeFileSync(
   `${outputDirectory}/package.json`,
   JSON.stringify(project, null, 2)
 );
-['README.md'].forEach((fileName) => {
+['README.md', 'LICENSE'].forEach((fileName) => {
   fs.copySync(
     `${currentWorkingDirectory}/${fileName}`,
     `${outputDirectory}/${fileName}`

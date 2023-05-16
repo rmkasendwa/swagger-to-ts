@@ -43,5 +43,6 @@
     "typeRoots": ["node_modules/@types", "src/types"],
     "types": ["node"]
   },
+  "exclude": ["node_modules", "src/__sandbox/**/*"],
   "include": ["src/**/*.ts"]
 }

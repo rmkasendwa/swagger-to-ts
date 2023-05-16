@@ -1,7 +1,7 @@
 {
   "name": "@infinite-debugger/swagger-to-ts",
-  "version": "0.1.0-alpha.32",
-  "description": "Generates typescript api client from open api/swagger api documentation.",
+  "version": "0.1.0-alpha.0",
+  "description": "swagger-to-ts is a powerful library that allows you to generate TypeScript code from Swagger documentation or OpenAPI specifications. It simplifies the process of integrating API definitions into your TypeScript projects, saving you time and effort.",
   "keywords": [
     "swagger",
     "swagger-docs",
@@ -29,7 +29,7 @@
     "eslint": "eslint --fix",
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,html,htm,json,css,scss,md}\"",
     "prepare": "husky install",
-    "publish:dev": "npm run build && cd ./dist && npm publish --registry http://localhost:4873 && npm i -g --registry http://localhost:4873 swagger-to-ts@latest",
+    "publish": "npm run build && npm publish ./dist/ --access=public",
     "start": "tsnd --ignore-watch node_modules --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
     "test": "jest"
   },
