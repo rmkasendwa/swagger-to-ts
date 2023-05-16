@@ -313,7 +313,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                   successResponseSchemas &&
                   successResponseSchemas.length > 0
                 ) {
-                  const [{ name: successResponseSchemaName }] =
+                  const [{ name: successResponseSchemaName, description }] =
                     successResponseSchemas;
                   if (
                     modelsToValidationSchemaMappings[successResponseSchemaName]
@@ -336,9 +336,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                       importFilePath: validationSchemaSource,
                     });
 
-                    jsDocCommentLines.push(
-                      `@returns ${successResponseSchemaName}`
-                    ); // TODO: Replace this with the response description.
+                    jsDocCommentLines.push(`@returns ${description}`);
                     return `${successResponseValidationSchemaName}.parse(data)`;
                   }
                 }

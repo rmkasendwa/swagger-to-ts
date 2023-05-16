@@ -1,4 +1,4 @@
-# swagger-to-ts
+# Swagger to Typescript
 
 swagger-to-ts is a powerful library that allows you to generate TypeScript code from Swagger documentation or OpenAPI specifications. It simplifies the process of integrating API definitions into your TypeScript projects, saving you time and effort.
 
@@ -80,7 +80,7 @@ swagger-to-ts also provides a command-line interface (CLI) to generate TypeScrip
 npm install -g @infinite-debugger/swagger-to-ts
 ```
 
-Certainly! The swagger-to-ts command-line interface (CLI) allows you to generate TypeScript code directly from your terminal. Here's how you can use it:
+The swagger-to-ts command-line interface (CLI) allows you to generate TypeScript code directly from your terminal. Here's how you can use it:
 
 ```sh
 swagger-to-ts [options] -f <specPath> -o <outputPath>
