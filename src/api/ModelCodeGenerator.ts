@@ -259,6 +259,44 @@ export const generateModelMappings = ({
               });
             }
           });
+
+        //#region Sort models by dependency on eath other
+        accumulator[entityName].models = (() => {
+          const models = accumulator[entityName].models;
+          const modelKeys = Object.keys(models);
+
+          const modelsReferencingModelsInSameFile = modelKeys.filter(
+            (modelKey) => {
+              const model = models[modelKey];
+              return model.referencedSchemas?.some((referencedSchema) => {
+                return modelKeys.includes(referencedSchema);
+              });
+            }
+          );
+
+          return modelKeys
+            .sort((aKey, bKey) => {
+              if (
+                modelsReferencingModelsInSameFile.includes(aKey) &&
+                !modelsReferencingModelsInSameFile.includes(bKey)
+              ) {
+                return 1;
+              }
+              if (
+                !modelsReferencingModelsInSameFile.includes(aKey) &&
+                modelsReferencingModelsInSameFile.includes(bKey)
+              ) {
+                return -1;
+              }
+              return 0;
+            })
+            .reduce((accumulator, modelKey) => {
+              accumulator[modelKey] = models[modelKey];
+              return accumulator;
+            }, {} as Record<string, GeneratedSchemaCodeConfiguration>);
+        })();
+        //#endregion
+
         return accumulator;
       },
       {} as Record<
@@ -523,6 +561,30 @@ export const generateModelCode = ({
                 }
               }
 
+              if (required) {
+                baseTsedPropertyDecorators.push(`@Required()`);
+                if (generateTsedControllers) {
+                  addModuleImport({
+                    imports,
+                    importName: 'Required',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
+                }
+              }
+
+              if (property.description) {
+                baseTsedPropertyDecorators.push(
+                  `@Description(${JSON.stringify(property.description)})`
+                );
+                if (generateTsedControllers) {
+                  addModuleImport({
+                    imports,
+                    importName: 'Description',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
+                }
+              }
+
               if (property.example) {
                 baseTsedPropertyDecorators.push(
                   `@Example(${JSON.stringify(property.example)})`
@@ -544,30 +606,6 @@ export const generateModelCode = ({
                   addModuleImport({
                     imports,
                     importName: 'Default',
-                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                  });
-                }
-              }
-
-              if (property.description) {
-                baseTsedPropertyDecorators.push(
-                  `@Description(${JSON.stringify(property.description)})`
-                );
-                if (generateTsedControllers) {
-                  addModuleImport({
-                    imports,
-                    importName: 'Description',
-                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                  });
-                }
-              }
-
-              if (required) {
-                baseTsedPropertyDecorators.push(`@Required()`);
-                if (generateTsedControllers) {
-                  addModuleImport({
-                    imports,
-                    importName: 'Required',
                     importFilePath: TSED_SCHEMA_LIBRARY_PATH,
                   });
                 }
