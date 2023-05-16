@@ -70,6 +70,10 @@ export const getHelpText = () => {
     -f, --file <file>: Specifies the Swagger document or OpenAPI specification file to use for generating the TypeScript code. If not provided, the application will look for a file named swagger.json in the current directory.
     -h, --help: Displays the help text and usage instructions for the command line application.
     -v, --version: Displays the version information of the swagger-to-ts command line application.
+    -wIS, --write-internal-state: Outputs the internal state of the application to the output directory. This is useful for debugging purposes.
+    -rONS, --request-operation-name-source: Specifies the source for the request operation name. Valid values are 'path' and 'operationId'. If not provided, the default value is 'path'.
+    -gTC, --generate-tsed-controllers: Generates controllers for the Ts.ED framework. If not provided, the default value is 'false'.
+    -tADIP, --tsed-authenticate-decorator-import-path: Specifies the import path for the Ts.ED @Authenticate decorator. If not provided, the default value is '@tsed/common'.
 
     Example:
     To generate TypeScript code from a Swagger document named swagger.json and save it in a directory named generated, you can use the following command:

@@ -4,7 +4,11 @@ import { join, normalize } from 'path';
 
 import { existsSync } from 'fs-extra';
 
-import { generateTypescriptAPI } from './api';
+import {
+  GenerateTypescriptAPIOptions,
+  RequestOperationNameSourceValidationSchema,
+  generateTypescriptAPI,
+} from './api';
 import { getHelpText } from './api/Utils';
 
 const currentWorkingDirectory = process.cwd();
@@ -63,9 +67,82 @@ if (args.includes('-v') || args.includes('--version')) {
       return currentWorkingDirectory;
     })();
 
+    const options: Partial<GenerateTypescriptAPIOptions> = {
+      ...(() => {
+        if (args.includes('-wIS') || args.includes('--write-internal-state')) {
+          return {
+            writeInternalState: true,
+          };
+        }
+      })(),
+      ...(() => {
+        if (
+          args.includes('-rONS') ||
+          args.includes('--request-operation-name-source')
+        ) {
+          try {
+            const inputRequestOperationNameSource = (() => {
+              if (args.includes('-rONS')) {
+                return args[args.indexOf('-rONS') + 1];
+              }
+              if (args.includes('--request-operation-name-source')) {
+                return args[
+                  args.indexOf('--request-operation-name-source') + 1
+                ];
+              }
+            })();
+            if (inputRequestOperationNameSource) {
+              const requestOperationNameSource =
+                RequestOperationNameSourceValidationSchema.parse(
+                  inputRequestOperationNameSource
+                );
+              return {
+                requestOperationNameSource,
+              };
+            }
+          } catch (err) {
+            err;
+          }
+        }
+      })(),
+      ...(() => {
+        if (
+          args.includes('-gTC') ||
+          args.includes('--generate-tsed-controllers')
+        ) {
+          return {
+            generateTsEDControllers: true,
+          };
+        }
+      })(),
+      ...(() => {
+        if (
+          args.includes('-tADIP') ||
+          args.includes('--tsed-authenticate-decorator-import-path')
+        ) {
+          const tsedAuthenticateDecoratorImportPath = (() => {
+            if (args.includes('-tADIP')) {
+              return args[args.indexOf('-tADIP') + 1];
+            }
+            if (args.includes('--tsed-authenticate-decorator-import-path')) {
+              return args[
+                args.indexOf('--tsed-authenticate-decorator-import-path') + 1
+              ];
+            }
+          })();
+          if (tsedAuthenticateDecoratorImportPath) {
+            return {
+              tsedAuthenticateDecoratorImportPath,
+            };
+          }
+        }
+      })(),
+    };
+
     generateTypescriptAPI({
       openAPISpecification,
       outputRootPath,
+      ...options,
     });
   } else {
     console.log(`The file ${openAPISpecificationFilePath} does not exist.`);
