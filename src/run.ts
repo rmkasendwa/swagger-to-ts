@@ -91,7 +91,10 @@ if (args.includes('-v') || args.includes('--version')) {
                 ];
               }
             })();
-            if (inputRequestOperationNameSource) {
+            if (
+              inputRequestOperationNameSource &&
+              !inputRequestOperationNameSource.match(/^-/g)
+            ) {
               const requestOperationNameSource =
                 RequestOperationNameSourceValidationSchema.parse(
                   inputRequestOperationNameSource
@@ -130,11 +133,24 @@ if (args.includes('-v') || args.includes('--version')) {
               ];
             }
           })();
-          if (tsedAuthenticateDecoratorImportPath) {
+          if (
+            tsedAuthenticateDecoratorImportPath &&
+            !tsedAuthenticateDecoratorImportPath.match(/^-/g)
+          ) {
             return {
               tsedAuthenticateDecoratorImportPath,
             };
           }
+        }
+      })(),
+      ...(() => {
+        if (
+          args.includes('-niTFVS') ||
+          args.includes('--no-infer-type-from-validation-schema')
+        ) {
+          return {
+            inferTypeFromValidationSchema: false,
+          };
         }
       })(),
     };
