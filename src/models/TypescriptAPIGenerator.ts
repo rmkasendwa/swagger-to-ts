@@ -99,12 +99,39 @@ export interface ZodValidationSchemaProperty {
 }
 
 export interface TsedModelProperty {
+  /**
+   * The name of the property.
+   */
   propertyName: string;
+
+  /**
+   * The type of the property.
+   */
   propertyType: string;
+
+  /**
+   * The list of decorators that will be used to decorate the property.
+   */
   decorators: string[];
+
+  /**
+   * The access modifier of the property.
+   */
   accessModifier: 'public' | 'private' | 'protected';
+
+  /**
+   * Whether the property is required.
+   */
   required?: boolean;
+
+  /**
+   * The full code of the property.
+   */
   typeDefinitionSnippet: string;
+
+  /**
+   * The open api specification of the property.
+   */
   openAPISpecification: SchemaProperty;
 }
 
@@ -177,10 +204,7 @@ export const TSED_SCHEMA_LIBRARY_PATH = `@tsed/schema`;
 export const TSED_COMMON_LIBRARY_PATH = `@tsed/common`;
 export const TSED_DEPENDENCY_INJECTION_LIBRARY_PATH = `@tsed/di`;
 export const TSED_SWAGGER_LIBRARY_PATH = `@tsed/swagger`;
-
 export const PATHS_LIBRARY_PATH = `@infinite-debugger/rmk-utils/paths`;
-
-export const API_ADAPTER_PATH = `./Adapter`;
 
 export type TagNameToEntityLabelsMap = Record<
   string,

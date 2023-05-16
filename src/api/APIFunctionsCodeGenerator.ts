@@ -1,7 +1,6 @@
 import { cloneDeep } from 'lodash';
 
 import {
-  API_ADAPTER_PATH,
   ENVIRONMENT_DEFINED_MODELS,
   GeneratedSchemaCodeConfiguration,
   ModuleImports,
@@ -61,6 +60,8 @@ export const getAPIAdapterCode = () => {
 //#endregion
 
 //#region API functions code generator
+const API_ADAPTER_PATH = `./Adapter`;
+
 export interface GenerateAPIFunctionsCodeConfigurationOptions {
   requestGroupings: RequestGroupings;
   tagToEntityLabelMappings: TagNameToEntityLabelsMap;
