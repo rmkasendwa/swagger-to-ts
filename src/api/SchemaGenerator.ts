@@ -57,6 +57,13 @@ export const findSchemaReferencedSchemas = ({
               break;
           }
         }
+        if (property && '$ref' in property) {
+          const schemaName = property.$ref.replace('#/components/schemas/', '');
+          if (!schemaReferencedSchemas.includes(schemaName)) {
+            schemaReferencedSchemas.unshift(schemaName);
+          }
+          findSchemaReferencedSchemasRecursive(schemaName);
+        }
       });
     }
   };
