@@ -4,7 +4,7 @@ import { ContentValidationSchema } from './Content';
 
 //#region Response
 export const ResponseValidationSchema = z.object({
-  content: ContentValidationSchema.nullish().describe('The response content.'),
+  content: ContentValidationSchema.optional().describe('The response content.'),
   description: z.string().optional().describe('The response description.'),
 });
 export type Response = z.infer<typeof ResponseValidationSchema>;

@@ -488,7 +488,7 @@ export const generateModelCode = ({
           })();
           if (code) {
             if (!schema.required || !schema.required.includes(propertyName)) {
-              code += `.nullish()`;
+              code += `.optional()`;
             }
             if (property.description) {
               code += `.describe(\`${property.description}\`)`;

@@ -52,7 +52,7 @@ export type RequestParameter = z.infer<typeof RequestParameterValidationSchema>;
 //#region RequestBody
 export const RequestBodyValidationSchema = z.object({
   required: z.boolean().describe('The request body required.'),
-  content: ContentValidationSchema.nullish().describe(
+  content: ContentValidationSchema.optional().describe(
     'The request body content.'
   ),
   description: z.string().optional().describe('The request body description.'),
