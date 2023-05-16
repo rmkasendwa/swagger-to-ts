@@ -214,7 +214,7 @@ export const generateModelMappings = ({
                   importFilePath: `./${referencedSchemaEntityName}`,
                 });
 
-                if (generateTsedControllers) {
+                if (generateTsedControllers || !inferTypeFromValidationSchema) {
                   addModuleImport({
                     imports,
                     importName: referencedSchemaName,
@@ -353,6 +353,7 @@ export interface GenerateModelCodeOptions {
    */
   inferTypeFromValidationSchema?: boolean;
 }
+
 export const generateModelCode = ({
   schemaName,
   openAPISpecification,
@@ -529,7 +530,11 @@ export const generateModelCode = ({
         (accumulator, basePropertyName) => {
           const propertyName = (() => {
             if (basePropertyName.match(/\W/g)) {
-              return basePropertyName.toCamelCase();
+              if (generateTsedControllers) {
+                return basePropertyName.toCamelCase();
+              } else {
+                return `'${basePropertyName}'`;
+              }
             }
             return basePropertyName;
           })();

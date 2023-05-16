@@ -265,13 +265,15 @@ export const getTSEDControllersCodeConfiguration = ({
               //#endregion
 
               if (successResponseSchemas && successResponseSchemas.length > 0) {
-                successResponseSchemas.forEach(
-                  ({ name, httpStatusCode, description }) => {
-                    addModuleImport({
-                      imports,
-                      importName: 'Returns',
-                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                    });
+                successResponseSchemas.forEach((successResponseSchema) => {
+                  const { httpStatusCode, description } = successResponseSchema;
+                  addModuleImport({
+                    imports,
+                    importName: 'Returns',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
+                  if ('name' in successResponseSchema) {
+                    const { name } = successResponseSchema;
                     addModuleImport({
                       imports,
                       importName: name,
@@ -291,7 +293,18 @@ export const getTSEDControllersCodeConfiguration = ({
                         })()
                     );
                   }
-                );
+                  if ('type' in successResponseSchema) {
+                    controllerMethodDecorators.push(
+                      `@Returns(${httpStatusCode}, ${successResponseSchema.type.toPascalCase()})` +
+                        (() => {
+                          if (description) {
+                            return `.Description('${description}')`;
+                          }
+                          return '';
+                        })()
+                    );
+                  }
+                });
               }
 
               //#region API function call arguments code

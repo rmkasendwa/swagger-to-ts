@@ -10,11 +10,22 @@ export const BINARY_RESPONSE_TYPE_MODEL_NAME = 'ArrayBuffer';
 
 export const ENVIRONMENT_DEFINED_MODELS = ['ArrayBuffer'] as const;
 
-export interface SuccessResponseSchema {
-  name: string;
+export interface SuccessResponseBaseSchema {
   description?: string;
   httpStatusCode: number;
 }
+
+export interface SuccessResponseModelSchema extends SuccessResponseBaseSchema {
+  name: string;
+}
+
+export interface SuccessResponseTypeSchema extends SuccessResponseBaseSchema {
+  type: string;
+}
+
+export type SuccessResponseSchema =
+  | SuccessResponseModelSchema
+  | SuccessResponseTypeSchema;
 
 export interface TypescriptAPIGeneratorRequest extends Request {
   /**

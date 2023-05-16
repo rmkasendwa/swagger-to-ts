@@ -313,11 +313,13 @@ export const getAPIFunctionsCodeConfiguration = ({
                   successResponseSchemas &&
                   successResponseSchemas.length > 0
                 ) {
-                  const [{ name: successResponseSchemaName, description }] =
-                    successResponseSchemas;
+                  const [successResponseSchema] = successResponseSchemas;
                   if (
-                    modelsToValidationSchemaMappings[successResponseSchemaName]
+                    'name' in successResponseSchema &&
+                    modelsToValidationSchemaMappings[successResponseSchema.name]
                   ) {
+                    const { name: successResponseSchemaName, description } =
+                      successResponseSchema;
                     const successResponseValidationSchemaName =
                       modelsToValidationSchemaMappings[
                         successResponseSchemaName
@@ -417,21 +419,33 @@ export const getAPIFunctionsCodeConfiguration = ({
 
             const isEnvironmentDefinedModel = Boolean(
               successResponseSchemas &&
-                successResponseSchemas.every(
-                  ({ name: successResponseSchemaName }) => {
-                    return ENVIRONMENT_DEFINED_MODELS.includes(
-                      successResponseSchemaName as any
+                successResponseSchemas.every((successResponseSchema) => {
+                  if ('name' in successResponseSchema) {
+                    return (
+                      successResponseSchema.name &&
+                      ENVIRONMENT_DEFINED_MODELS.includes(
+                        successResponseSchema.name as any
+                      )
                     );
                   }
-                )
+                  return 'type' in successResponseSchema;
+                })
             );
 
             if (isEnvironmentDefinedModel && successResponseSchemas) {
-              httpActionName += `<${successResponseSchemas
-                .map(({ name }) => {
-                  return name;
+              const responseType = `${successResponseSchemas
+                .map((successResponseSchema) => {
+                  if ('name' in successResponseSchema) {
+                    return successResponseSchema.name;
+                  }
+                  if ('type' in successResponseSchema) {
+                    return successResponseSchema.type;
+                  }
                 })
-                .join('|')}>`;
+                .join('|')}`;
+              if (responseType.length > 0) {
+                httpActionName += `<${responseType}>`;
+              }
             }
             //#endregion
 
@@ -439,7 +453,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               `label: '${operationDescription}'`,
               ...(() => {
                 if (headerParameters && headerParameters.length > 0) {
-                  return [`headers`];
+                  return [`headers: { ...headers }`];
                 }
                 return [];
               })(),

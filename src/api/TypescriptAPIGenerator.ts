@@ -281,6 +281,16 @@ export const generateTypescriptAPI = async ({
                     ) {
                       return {
                         name: BINARY_RESPONSE_TYPE_MODEL_NAME,
+                        description:
+                          request.responses[successResponse].description,
+                        httpStatusCode: +successResponse,
+                      } as SuccessResponseSchema;
+                    }
+                    if ('*/*' in request.responses[successResponse].content!) {
+                      return {
+                        type: 'string',
+                        description:
+                          request.responses[successResponse].description,
                         httpStatusCode: +successResponse,
                       } as SuccessResponseSchema;
                     }
