@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@infinite-debugger/axios-api-adapter": "^0.1.0-alpha.13",
-    "@infinite-debugger/rmk-utils": "^0.1.0-alpha.12",
+    "@infinite-debugger/rmk-utils": "^0.1.0-alpha.15",
     "@tsed/common": "^7.28.0",
     "@tsed/di": "^7.28.0",
     "@tsed/schema": "^7.9.0",
