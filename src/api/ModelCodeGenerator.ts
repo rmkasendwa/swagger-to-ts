@@ -18,13 +18,13 @@ export interface GenerateModelMappingsOptions
   extends Pick<GenerateModelCodeOptions, 'inferTypeFromValidationSchema'> {
   openAPISpecification: OpenAPISpecification;
   requestGroupings: RequestGroupings;
-  generateTsedControllers?: boolean;
+  generateTsEDControllers?: boolean;
 }
 
 export const generateModelMappings = ({
   requestGroupings,
   openAPISpecification,
-  generateTsedControllers,
+  generateTsEDControllers,
   inferTypeFromValidationSchema,
 }: GenerateModelMappingsOptions) => {
   //#region Find all Schemas referenced in the requests
@@ -201,7 +201,7 @@ export const generateModelMappings = ({
             } = generateModelCode({
               schemaName,
               openAPISpecification,
-              generateTsedControllers,
+              generateTsEDControllers,
               inferTypeFromValidationSchema,
             });
 
@@ -215,7 +215,7 @@ export const generateModelMappings = ({
                   importFilePath: `./${referencedSchemaEntityName}`,
                 });
 
-                if (generateTsedControllers || !inferTypeFromValidationSchema) {
+                if (generateTsEDControllers || !inferTypeFromValidationSchema) {
                   addModuleImport({
                     imports,
                     importName: referencedSchemaName,
@@ -347,7 +347,7 @@ export interface GenerateModelCodeOptions {
   /**
    * Whether to generate code for tsed controllers
    */
-  generateTsedControllers?: boolean;
+  generateTsEDControllers?: boolean;
 
   /**
    * Whether to infer the type from the validation schema
@@ -358,7 +358,7 @@ export interface GenerateModelCodeOptions {
 export const generateModelCode = ({
   schemaName,
   openAPISpecification,
-  generateTsedControllers,
+  generateTsEDControllers,
   inferTypeFromValidationSchema = true,
 }: GenerateModelCodeOptions) => {
   const schema = openAPISpecification.components.schemas[schemaName];
@@ -548,7 +548,7 @@ export const generateModelCode = ({
     tsedModelCode?: string;
   } => {
     if (
-      generateTsedControllers ||
+      generateTsEDControllers ||
       !inferTypeFromValidationSchema ||
       modelIsRecursive
     ) {
@@ -556,7 +556,7 @@ export const generateModelCode = ({
         (accumulator, basePropertyName) => {
           const propertyName = (() => {
             if (basePropertyName.match(/\W/g)) {
-              if (generateTsedControllers) {
+              if (generateTsEDControllers) {
                 return basePropertyName.toCamelCase();
               } else {
                 return `'${basePropertyName}'`;
@@ -572,7 +572,7 @@ export const generateModelCode = ({
               schema.required && schema.required.includes(basePropertyName)
             );
             const baseTsedPropertyDecorators = [`@Property()`];
-            if (generateTsedControllers) {
+            if (generateTsEDControllers) {
               addModuleImport({
                 imports,
                 importName: 'Property',
@@ -582,7 +582,7 @@ export const generateModelCode = ({
 
             if (basePropertyName.match(/\W/g)) {
               baseTsedPropertyDecorators.push(`@Name('${basePropertyName}')`);
-              if (generateTsedControllers) {
+              if (generateTsEDControllers) {
                 addModuleImport({
                   imports,
                   importName: 'Name',
@@ -593,7 +593,7 @@ export const generateModelCode = ({
 
             if (required) {
               baseTsedPropertyDecorators.push(`@Required()`);
-              if (generateTsedControllers) {
+              if (generateTsEDControllers) {
                 addModuleImport({
                   imports,
                   importName: 'Required',
@@ -606,7 +606,7 @@ export const generateModelCode = ({
               baseTsedPropertyDecorators.push(
                 `@Description(${JSON.stringify(property.description)})`
               );
-              if (generateTsedControllers) {
+              if (generateTsEDControllers) {
                 addModuleImport({
                   imports,
                   importName: 'Description',
@@ -635,7 +635,7 @@ export const generateModelCode = ({
                 baseTsedPropertyDecorators.push(
                   `@Example(${JSON.stringify(property.example)})`
                 );
-                if (generateTsedControllers) {
+                if (generateTsEDControllers) {
                   addModuleImport({
                     imports,
                     importName: 'Example',
@@ -648,7 +648,7 @@ export const generateModelCode = ({
                 baseTsedPropertyDecorators.push(
                   `@Default(${JSON.stringify(property.default)})`
                 );
-                if (generateTsedControllers) {
+                if (generateTsEDControllers) {
                   addModuleImport({
                     imports,
                     importName: 'Default',
@@ -662,7 +662,7 @@ export const generateModelCode = ({
                   const decorators = [...baseTsedPropertyDecorators];
                   if (property.min != null) {
                     decorators.push(`@Min(${property.min})`);
-                    if (generateTsedControllers) {
+                    if (generateTsEDControllers) {
                       addModuleImport({
                         imports,
                         importName: 'Min',
@@ -672,7 +672,7 @@ export const generateModelCode = ({
                   }
                   if (property.max != null) {
                     decorators.push(`@Max(${property.min})`);
-                    if (generateTsedControllers) {
+                    if (generateTsEDControllers) {
                       addModuleImport({
                         imports,
                         importName: 'Max',
@@ -691,7 +691,7 @@ export const generateModelCode = ({
                     switch (property.format) {
                       case 'date-time':
                         baseTsedPropertyDecorators.push(`@DateTime()`);
-                        if (generateTsedControllers) {
+                        if (generateTsEDControllers) {
                           addModuleImport({
                             imports,
                             importName: 'DateTime',
@@ -701,7 +701,7 @@ export const generateModelCode = ({
                         break;
                       case 'date':
                         baseTsedPropertyDecorators.push(`@DateFormat()`);
-                        if (generateTsedControllers) {
+                        if (generateTsEDControllers) {
                           addModuleImport({
                             imports,
                             importName: 'DateFormat',
@@ -715,7 +715,7 @@ export const generateModelCode = ({
                     const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
                     const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
 
-                    if (generateTsedControllers) {
+                    if (generateTsEDControllers) {
                       addModuleImport({
                         imports,
                         importName: 'Enum',
@@ -735,7 +735,7 @@ export const generateModelCode = ({
                     const decorators = [...baseTsedPropertyDecorators];
                     if (property.minLength != null) {
                       decorators.push(`@MinLength(${property.minLength})`);
-                      if (generateTsedControllers) {
+                      if (generateTsEDControllers) {
                         addModuleImport({
                           imports,
                           importName: 'MinLength',
@@ -745,7 +745,7 @@ export const generateModelCode = ({
                     }
                     if (property.maxLength != null) {
                       decorators.push(`@MaxLength(${property.maxLength})`);
-                      if (generateTsedControllers) {
+                      if (generateTsEDControllers) {
                         addModuleImport({
                           imports,
                           importName: 'MaxLength',
@@ -769,7 +769,7 @@ export const generateModelCode = ({
                 case 'object':
                   {
                     if (property.properties) {
-                      if (generateTsedControllers) {
+                      if (generateTsEDControllers) {
                         addModuleImport({
                           imports,
                           importName: 'RecordOf',
@@ -813,7 +813,7 @@ export const generateModelCode = ({
                         '#/components/schemas/',
                         ''
                       );
-                      if (generateTsedControllers) {
+                      if (generateTsEDControllers) {
                         addModuleImport({
                           imports,
                           importName: 'ArrayOf',
@@ -839,7 +839,7 @@ export const generateModelCode = ({
                         ] as (typeof property.items.type)[]
                       ).includes(property.items.type)
                     ) {
-                      if (generateTsedControllers) {
+                      if (generateTsEDControllers) {
                         addModuleImport({
                           imports,
                           importName: 'ArrayOf',
@@ -925,7 +925,7 @@ export const generateModelCode = ({
     })(),
     zodValidationSchemaCode,
     ...(() => {
-      if (generateTsedControllers && tsedModelCode) {
+      if (generateTsEDControllers && tsedModelCode) {
         return [tsedModelCode];
       }
       if (
@@ -1020,7 +1020,7 @@ export const generateModelCode = ({
       }
     })(),
     ...(() => {
-      if (generateTsedControllers) {
+      if (generateTsEDControllers) {
         return {
           tsedModelConfiguration,
           tsedModelCode,

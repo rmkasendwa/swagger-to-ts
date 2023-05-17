@@ -71,22 +71,22 @@ export interface GenerateTypescriptAPIOptions
   /**
    * Whether to generate TSED controllers.
    */
-  generateTsedControllers?: boolean;
+  generateTsEDControllers?: boolean;
 
   /**
    * The import path to use for the Ts.ED `Authenticate` decorator.
    */
-  tsedAuthenticateDecoratorImportPath?: string;
+  tsEDAuthenticateDecoratorImportPath?: string;
 }
 
 export const generateTypescriptAPI = async ({
   openAPISpecification: inputOpenAPISpecification,
   outputRootPath,
   outputInternalState = false,
-  generateTsedControllers = false,
+  generateTsEDControllers = false,
   requestOperationNameSource = 'requestSummary',
   inferTypeFromValidationSchema,
-  tsedAuthenticateDecoratorImportPath,
+  tsEDAuthenticateDecoratorImportPath,
 }: GenerateTypescriptAPIOptions) => {
   //#region Validate OpenAPI specification
   console.log('\n🔍 Validate OpenAPI specification.');
@@ -415,7 +415,7 @@ export const generateTypescriptAPI = async ({
   } = generateModelMappings({
     requestGroupings,
     openAPISpecification,
-    generateTsedControllers,
+    generateTsEDControllers,
     inferTypeFromValidationSchema,
   });
   //#endregion
@@ -435,7 +435,7 @@ export const generateTypescriptAPI = async ({
     requestGroupings,
     schemaToEntityMappings,
     tagToEntityLabelMappings,
-    authenticateDecoratorImportPath: tsedAuthenticateDecoratorImportPath,
+    authenticateDecoratorImportPath: tsEDAuthenticateDecoratorImportPath,
   });
   //#endregion
 
@@ -628,7 +628,7 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Write TSED controller files
-  if (generateTsedControllers) {
+  if (generateTsEDControllers) {
     console.log(` -> Writing TSED controller files...`);
     const tsedControllersOutputFilePath = `${outputRootPath}/controllers`;
     ensureDirSync(tsedControllersOutputFilePath);
@@ -691,7 +691,7 @@ export const generateTypescriptAPI = async ({
             'api',
             'models',
             ...(() => {
-              if (generateTsedControllers) {
+              if (generateTsEDControllers) {
                 return ['controllers'];
               }
               return [];

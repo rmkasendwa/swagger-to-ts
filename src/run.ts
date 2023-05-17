@@ -123,7 +123,7 @@ if (args.includes('-v') || args.includes('--version')) {
           args.includes('-tADIP') ||
           args.includes('--tsed-authenticate-decorator-import-path')
         ) {
-          const tsedAuthenticateDecoratorImportPath = (() => {
+          const tsEDAuthenticateDecoratorImportPath = (() => {
             if (args.includes('-tADIP')) {
               return args[args.indexOf('-tADIP') + 1];
             }
@@ -134,11 +134,11 @@ if (args.includes('-v') || args.includes('--version')) {
             }
           })();
           if (
-            tsedAuthenticateDecoratorImportPath &&
-            !tsedAuthenticateDecoratorImportPath.match(/^-/g)
+            tsEDAuthenticateDecoratorImportPath &&
+            !tsEDAuthenticateDecoratorImportPath.match(/^-/g)
           ) {
             return {
-              tsedAuthenticateDecoratorImportPath,
+              tsEDAuthenticateDecoratorImportPath,
             };
           }
         }
