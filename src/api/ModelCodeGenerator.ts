@@ -20,6 +20,7 @@ export interface GenerateModelMappingsOptions
   requestGroupings: RequestGroupings;
   generateTsedControllers?: boolean;
 }
+
 export const generateModelMappings = ({
   requestGroupings,
   openAPISpecification,

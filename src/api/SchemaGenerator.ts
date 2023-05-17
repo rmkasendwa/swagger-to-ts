@@ -14,12 +14,7 @@ export const findSchemaReferencedSchemas = ({
   const schemaReferencedSchemas: string[] = [];
   const findSchemaReferencedSchemasRecursive = (schemaName: string) => {
     const schema = openAPISpecification.components.schemas[schemaName];
-    if (
-      schema &&
-      schema.type === 'object' &&
-      schema.properties &&
-      !schemaReferencedSchemas.includes(schemaName)
-    ) {
+    if (schema && schema.type === 'object' && schema.properties) {
       Object.values(schema.properties).forEach((property) => {
         if ('type' in property) {
           switch (property.type) {
@@ -32,8 +27,8 @@ export const findSchemaReferencedSchemas = ({
                   );
                   if (!schemaReferencedSchemas.includes(schemaName)) {
                     schemaReferencedSchemas.unshift(schemaName);
+                    findSchemaReferencedSchemasRecursive(schemaName);
                   }
-                  findSchemaReferencedSchemasRecursive(schemaName);
                 }
               }
               break;
@@ -48,8 +43,8 @@ export const findSchemaReferencedSchemas = ({
                       );
                       if (!schemaReferencedSchemas.includes(schemaName)) {
                         schemaReferencedSchemas.unshift(schemaName);
+                        findSchemaReferencedSchemasRecursive(schemaName);
                       }
-                      findSchemaReferencedSchemasRecursive(schemaName);
                     }
                   });
                 }
@@ -57,12 +52,12 @@ export const findSchemaReferencedSchemas = ({
               break;
           }
         }
-        if (property && '$ref' in property) {
+        if ('$ref' in property) {
           const schemaName = property.$ref.replace('#/components/schemas/', '');
           if (!schemaReferencedSchemas.includes(schemaName)) {
             schemaReferencedSchemas.unshift(schemaName);
+            findSchemaReferencedSchemasRecursive(schemaName);
           }
-          findSchemaReferencedSchemasRecursive(schemaName);
         }
       });
     }
