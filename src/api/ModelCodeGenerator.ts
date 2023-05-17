@@ -497,7 +497,7 @@ export const generateModelCode = ({
           }
           return code;
         }
-        if ('ref' in property) {
+        if ('$ref' in property) {
           let code = (() => {
             const referencedSchemaName = property.$ref.replace(
               '#/components/schemas/',
