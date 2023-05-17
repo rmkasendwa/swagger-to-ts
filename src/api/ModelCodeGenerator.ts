@@ -871,10 +871,7 @@ export const generateModelCode = ({
               return {
                 ...baseTsedProperty,
                 propertyType: schemaName,
-                decorators: [
-                  ...baseTsedPropertyDecorators,
-                  `@ArrayOf(${schemaName})`,
-                ],
+                decorators: [...baseTsedPropertyDecorators],
               };
             }
           })();
