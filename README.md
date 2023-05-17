@@ -100,6 +100,8 @@ The swagger-to-ts CLI supports the following options:
 - `-rONS, --request-operation-name-source`: Specifies the source for the request operation name. Valid values are 'path' and 'operationId'. If not provided, the default value is 'path'.
 - `-gTC, --generate-tsed-controllers`: Generates controllers for the Ts.ED framework. If not provided, the default value is 'false'.
 - `-tADIP, --tsed-authenticate-decorator-import-path`: Specifies the import path for the Ts.ED @Authenticate decorator. If not provided, the default value is '@tsed/common'.
+- `-tCNP, --tsed-controller-name-prefix`: Specifies the prefix to use for the Ts.ED controller names.
+- `-tCNS, --tsed-controller-name-suffix`: Specifies the suffix to use for the Ts.ED controller names.
 - `-niTFVS, --no-infer-type-from-validation-schema`: Disables the automatic inference of TypeScript types from the validation schema. If not provided, the default value is 'false'.
 
 #### Examples

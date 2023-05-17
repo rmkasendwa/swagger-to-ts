@@ -34,7 +34,10 @@ import {
   generateModelMappings,
 } from './ModelCodeGenerator';
 import { generateSchemaFromRequestParameters } from './SchemaGenerator';
-import { getTSEDControllersCodeConfiguration } from './TSEDControllersCodeGenerator';
+import {
+  GenerateTSEDControllersCodeConfigurationOptions,
+  getTSEDControllersCodeConfiguration,
+} from './TSEDControllersCodeGenerator';
 import { getGeneratedFileWarningComment, getImportsCode } from './Utils';
 
 export const RequestOperationNameSourceValidationSchema = z.enum([
@@ -47,7 +50,11 @@ export type RequestOperationNameSource = z.infer<
 >;
 
 export interface GenerateTypescriptAPIOptions
-  extends Pick<GenerateModelMappingsOptions, 'inferTypeFromValidationSchema'> {
+  extends Pick<GenerateModelMappingsOptions, 'inferTypeFromValidationSchema'>,
+    Pick<
+      GenerateTSEDControllersCodeConfigurationOptions,
+      'tsedControllerNamePrefix' | 'tsedControllerNameSuffix'
+    > {
   /**
    * The OpenAPI specification to generate the Typescript API from.
    */
@@ -87,6 +94,8 @@ export const generateTypescriptAPI = async ({
   requestOperationNameSource = 'requestSummary',
   inferTypeFromValidationSchema,
   tsEDAuthenticateDecoratorImportPath,
+  tsedControllerNamePrefix,
+  tsedControllerNameSuffix,
 }: GenerateTypescriptAPIOptions) => {
   //#region Validate OpenAPI specification
   console.log('\n🔍 Validate OpenAPI specification.');
@@ -431,12 +440,18 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Generate TSED controllers code configuration
-  const tsedControllersCodeConfiguration = getTSEDControllersCodeConfiguration({
-    requestGroupings,
-    schemaToEntityMappings,
-    tagToEntityLabelMappings,
-    authenticateDecoratorImportPath: tsEDAuthenticateDecoratorImportPath,
-  });
+  const tsedControllersCodeConfiguration = (() => {
+    if (generateTsEDControllers) {
+      return getTSEDControllersCodeConfiguration({
+        requestGroupings,
+        schemaToEntityMappings,
+        tagToEntityLabelMappings,
+        authenticateDecoratorImportPath: tsEDAuthenticateDecoratorImportPath,
+        tsedControllerNamePrefix,
+        tsedControllerNameSuffix,
+      });
+    }
+  })();
   //#endregion
 
   //#region Clean up output folder
@@ -628,7 +643,7 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Write TSED controller files
-  if (generateTsEDControllers) {
+  if (generateTsEDControllers && tsedControllersCodeConfiguration) {
     console.log(` -> Writing TSED controller files...`);
     const tsedControllersOutputFilePath = `${outputRootPath}/controllers`;
     ensureDirSync(tsedControllersOutputFilePath);

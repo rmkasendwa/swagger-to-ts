@@ -145,6 +145,52 @@ if (args.includes('-v') || args.includes('--version')) {
       })(),
       ...(() => {
         if (
+          args.includes('-tCNP') ||
+          args.includes('--tsed-controller-name-prefix')
+        ) {
+          const tsedControllerNamePrefix = (() => {
+            if (args.includes('-tCNP')) {
+              return args[args.indexOf('-tCNP') + 1];
+            }
+            if (args.includes('--tsed-controller-name-prefix')) {
+              return args[args.indexOf('--tsed-controller-name-prefix') + 1];
+            }
+          })();
+          if (
+            tsedControllerNamePrefix &&
+            !tsedControllerNamePrefix.match(/^-/g)
+          ) {
+            return {
+              tsedControllerNamePrefix,
+            };
+          }
+        }
+      })(),
+      ...(() => {
+        if (
+          args.includes('-tCNS') ||
+          args.includes('--tsed-controller-name-suffix')
+        ) {
+          const tsedControllerNameSuffix = (() => {
+            if (args.includes('-tCNS')) {
+              return args[args.indexOf('-tCNS') + 1];
+            }
+            if (args.includes('--tsed-controller-name-suffix')) {
+              return args[args.indexOf('--tsed-controller-name-suffix') + 1];
+            }
+          })();
+          if (
+            tsedControllerNameSuffix &&
+            !tsedControllerNameSuffix.match(/^-/g)
+          ) {
+            return {
+              tsedControllerNameSuffix,
+            };
+          }
+        }
+      })(),
+      ...(() => {
+        if (
           args.includes('-niTFVS') ||
           args.includes('--no-infer-type-from-validation-schema')
         ) {

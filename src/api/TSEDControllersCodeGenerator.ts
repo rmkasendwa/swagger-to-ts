@@ -13,16 +13,43 @@ import { addModuleImport } from './Utils';
 
 //#region API functions code generator
 export interface GenerateTSEDControllersCodeConfigurationOptions {
+  /**
+   * The request groupings to generate code for.
+   */
   requestGroupings: RequestGroupings;
+
+  /**
+   * The tag to entity label mappings.
+   */
   tagToEntityLabelMappings: TagNameToEntityLabelsMap;
+
+  /**
+   * The schema to entity mappings.
+   */
   schemaToEntityMappings: Record<string, string>;
+
+  /**
+   * The path to the tsed authenticate decorator import.
+   */
   authenticateDecoratorImportPath?: string;
+
+  /**
+   * The prefix to add to the controller names.
+   */
+  tsedControllerNamePrefix?: string;
+
+  /**
+   * The suffix to add to the controller names.
+   */
+  tsedControllerNameSuffix?: string;
 }
 export const getTSEDControllersCodeConfiguration = ({
   requestGroupings,
   tagToEntityLabelMappings,
   schemaToEntityMappings,
   authenticateDecoratorImportPath,
+  tsedControllerNamePrefix,
+  tsedControllerNameSuffix,
 }: GenerateTSEDControllersCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce(
     (accumulator, tag) => {
@@ -405,10 +432,20 @@ export const getTSEDControllersCodeConfiguration = ({
         importFilePath: TSED_SCHEMA_LIBRARY_PATH,
       });
 
+      let controllerName = tagToEntityLabelMappings[tag]['Entities Label'];
+
+      if (tsedControllerNamePrefix) {
+        controllerName = tsedControllerNamePrefix + controllerName;
+      }
+
+      if (tsedControllerNameSuffix) {
+        controllerName = controllerName + tsedControllerNameSuffix;
+      }
+
       const classDecorators = [
         `@Controller('/${tagToEntityLabelMappings[tag]['kebab-case-entities']}')`,
         `@Docs('api-v1')`,
-        `@Name('${tagToEntityLabelMappings[tag]['Entities Label']}')`,
+        `@Name('${controllerName}')`,
       ];
 
       if (authenticateDecoratorImportPath) {
