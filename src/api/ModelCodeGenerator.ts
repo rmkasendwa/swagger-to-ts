@@ -858,7 +858,7 @@ export const generateModelCode = ({
                   }
                   return {
                     ...baseTsedProperty,
-                    propertyType: `${schemaName}[]`,
+                    propertyType: `any[]`,
                   };
                 }
               }
