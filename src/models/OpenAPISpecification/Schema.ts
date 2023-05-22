@@ -52,6 +52,45 @@ export const BooleanSchemaPropertyValidationSchema = z.object({
   default: z.boolean().optional().describe('The schema property default.'),
 });
 
+export type BooleanSchemaProperty = z.infer<
+  typeof BooleanSchemaPropertyValidationSchema
+>;
+//#endregion
+
+//#region NullSchemaProperty
+export const NullSchemaPropertyValidationSchema = z.object({
+  type: z.literal('null').describe('The schema property type.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The schema property description.'),
+  example: z.null().optional().describe('The schema property example.'),
+  default: z.null().optional().describe('The schema property default.'),
+});
+
+export type NullSchemaProperty = z.infer<
+  typeof NullSchemaPropertyValidationSchema
+>;
+//#endregion
+
+//#region UnionSchemaProperty
+export const PrimitiveUnionSchemaPropertyValidationSchema = z.object({
+  type: z
+    .array(z.enum(['string', 'number', 'boolean', 'null'] as const))
+    .describe('The schema property type.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The schema property description.'),
+  example: z.any().optional().describe('The schema property example.'),
+  default: z.any().optional().describe('The schema property default.'),
+});
+
+export type PrimitiveUnionSchemaProperty = z.infer<
+  typeof PrimitiveUnionSchemaPropertyValidationSchema
+>;
+//#endregion
+
 //#region RefSchemaProperty
 export const RefSchemaPropertyValidationSchema = z.object({
   $ref: z.string().describe('The schema property ref.'),
@@ -100,6 +139,7 @@ export const ArraySchemaPropertyMemberValidationSchema = z.union([
   StringSchemaPropertyValidationSchema,
   NumberSchemaPropertyValidationSchema,
   BooleanSchemaPropertyValidationSchema,
+  NullSchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
 ]);
 
@@ -132,6 +172,8 @@ export const SchemaPropertyValidationSchema = z.union([
   StringSchemaPropertyValidationSchema,
   NumberSchemaPropertyValidationSchema,
   BooleanSchemaPropertyValidationSchema,
+  NullSchemaPropertyValidationSchema,
+  PrimitiveUnionSchemaPropertyValidationSchema,
   ObjectSchemaPropertyValidationSchema,
   ArraySchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
@@ -140,18 +182,73 @@ export const SchemaPropertyValidationSchema = z.union([
 export type SchemaProperty = z.infer<typeof SchemaPropertyValidationSchema>;
 //#endregion
 
-//#region Schema
-export const SchemaValidationSchema = z.object({
+//#region UnionSchemaProperty
+const UnionSchemaPropertyValidationSchema = z.object({
+  oneOf: z
+    .array(
+      z.union([
+        StringSchemaPropertyValidationSchema,
+        NumberSchemaPropertyValidationSchema,
+        BooleanSchemaPropertyValidationSchema,
+        NullSchemaPropertyValidationSchema,
+        PrimitiveUnionSchemaPropertyValidationSchema,
+        ObjectSchemaPropertyValidationSchema,
+        ArraySchemaPropertyValidationSchema,
+        RefSchemaPropertyValidationSchema,
+      ])
+    )
+    .describe('The schema property one of.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The schema property description.'),
+});
+
+export type UnionSchemaProperty = z.infer<
+  typeof UnionSchemaPropertyValidationSchema
+>;
+//#endregion
+
+//#region Object Schema
+export const ObjectSchemaValidationSchema = z.object({
   type: z.literal('object').describe('The schema type.'),
   properties: z
-    .record(SchemaPropertyValidationSchema)
-    .optional()
-    .describe('The schema properties.'),
+    .record(
+      z
+        .union([
+          SchemaPropertyValidationSchema,
+          UnionSchemaPropertyValidationSchema,
+        ])
+        .optional()
+        .describe('The schema properties.')
+    )
+    .optional(),
   required: z
     .array(z.string())
     .optional()
     .describe('The schema required properties.'),
 });
+
+export type ObjectSchema = z.infer<typeof ObjectSchemaValidationSchema>;
+//#endregion
+
+//#region Array Schema
+export const ArraySchemaValidationSchema = z.object({
+  type: z.literal('array').describe('The schema type.'),
+  items: z.union([
+    SchemaPropertyValidationSchema,
+    UnionSchemaPropertyValidationSchema,
+  ]),
+});
+
+export type ArraySchema = z.infer<typeof ArraySchemaValidationSchema>;
+//#endregion
+
+//#region Schema
+export const SchemaValidationSchema = z.union([
+  ObjectSchemaValidationSchema,
+  ArraySchemaValidationSchema,
+]);
 
 export type Schema = z.infer<typeof SchemaValidationSchema>;
 //#endregion

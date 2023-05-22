@@ -14,49 +14,59 @@ export const findSchemaReferencedSchemas = ({
   const schemaReferencedSchemas: string[] = [];
   const findSchemaReferencedSchemasRecursive = (schemaName: string) => {
     const schema = openAPISpecification.components.schemas[schemaName];
-    if (schema && schema.type === 'object' && schema.properties) {
+    if (
+      schema &&
+      schema.type === 'object' &&
+      'properties' in schema &&
+      schema.properties
+    ) {
       Object.values(schema.properties).forEach((property) => {
-        if ('type' in property) {
-          switch (property.type) {
-            case 'array':
-              {
-                if (property.items && '$ref' in property.items) {
-                  const schemaName = property.items.$ref.replace(
-                    '#/components/schemas/',
-                    ''
-                  );
-                  if (!schemaReferencedSchemas.includes(schemaName)) {
-                    schemaReferencedSchemas.unshift(schemaName);
-                    findSchemaReferencedSchemasRecursive(schemaName);
+        if (property) {
+          if ('type' in property) {
+            switch (property.type) {
+              case 'array':
+                {
+                  if (property.items && '$ref' in property.items) {
+                    const schemaName = property.items.$ref.replace(
+                      '#/components/schemas/',
+                      ''
+                    );
+                    if (!schemaReferencedSchemas.includes(schemaName)) {
+                      schemaReferencedSchemas.unshift(schemaName);
+                      findSchemaReferencedSchemasRecursive(schemaName);
+                    }
                   }
                 }
-              }
-              break;
-            case 'object':
-              {
-                if (property.properties) {
-                  Object.values(property.properties).forEach((property) => {
-                    if ('$ref' in property) {
-                      const schemaName = property.$ref.replace(
-                        '#/components/schemas/',
-                        ''
-                      );
-                      if (!schemaReferencedSchemas.includes(schemaName)) {
-                        schemaReferencedSchemas.unshift(schemaName);
-                        findSchemaReferencedSchemasRecursive(schemaName);
+                break;
+              case 'object':
+                {
+                  if (property.properties) {
+                    Object.values(property.properties).forEach((property) => {
+                      if ('$ref' in property) {
+                        const schemaName = property.$ref.replace(
+                          '#/components/schemas/',
+                          ''
+                        );
+                        if (!schemaReferencedSchemas.includes(schemaName)) {
+                          schemaReferencedSchemas.unshift(schemaName);
+                          findSchemaReferencedSchemasRecursive(schemaName);
+                        }
                       }
-                    }
-                  });
+                    });
+                  }
                 }
-              }
-              break;
+                break;
+            }
           }
-        }
-        if ('$ref' in property) {
-          const schemaName = property.$ref.replace('#/components/schemas/', '');
-          if (!schemaReferencedSchemas.includes(schemaName)) {
-            schemaReferencedSchemas.unshift(schemaName);
-            findSchemaReferencedSchemasRecursive(schemaName);
+          if ('$ref' in property) {
+            const schemaName = property.$ref.replace(
+              '#/components/schemas/',
+              ''
+            );
+            if (!schemaReferencedSchemas.includes(schemaName)) {
+              schemaReferencedSchemas.unshift(schemaName);
+              findSchemaReferencedSchemasRecursive(schemaName);
+            }
           }
         }
       });
@@ -84,6 +94,7 @@ export const generateSchemaFromRequestParameters = ({
         if (
           'type' in schema &&
           schema.type === 'array' &&
+          'items' in schema &&
           schema.items &&
           '$ref' in schema.items &&
           !schema.items.$ref.match(/^#\//g)

@@ -79,6 +79,34 @@ export const OpenAPISpecificationValidationSchema = z.object({
   tags: z.array(TagValidationSchema).describe('The server endpoint groups.'),
 });
 
-export type OpenAPISpecification = z.infer<
-  typeof OpenAPISpecificationValidationSchema
->;
+export type OpenAPISpecification = {
+  /**
+   * The open api version.
+   */
+  openapi: string;
+
+  /**
+   * The open api information.
+   */
+  info: Info;
+
+  /**
+   * The open api components.
+   */
+  components: Components;
+
+  /**
+   * The server security configuration.
+   */
+  security?: Security[];
+
+  /**
+   * The server request paths.
+   */
+  paths: Record<string, Record<string, Request>>;
+
+  /**
+   * The server endpoint groups.
+   */
+  tags: Tag[];
+};

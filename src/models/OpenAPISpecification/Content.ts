@@ -46,11 +46,11 @@ export type GenericContent = z.infer<typeof GenericContentValidationSchema>;
 //#endregion
 
 //#region Content
-export const ContentValidationSchema = z.union([
+export const ContentValidationSchema: any = z.union([
   JSONContentValidationSchema,
   PNGContentValidationSchema,
   GenericContentValidationSchema,
 ]);
 
-export type Content = z.infer<typeof ContentValidationSchema>;
+export type Content = JSONContent | PNGContent | GenericContent;
 //#endregion

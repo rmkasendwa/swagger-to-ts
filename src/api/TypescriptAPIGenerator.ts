@@ -423,7 +423,7 @@ export const generateTypescriptAPI = async ({
     modelsToValidationSchemaMappings,
   } = generateModelMappings({
     requestGroupings,
-    openAPISpecification,
+    openAPISpecification: openAPISpecification as any,
     generateTsEDControllers,
     inferTypeFromValidationSchema,
   });

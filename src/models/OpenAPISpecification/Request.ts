@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ContentValidationSchema } from './Content';
+import { Content, ContentValidationSchema } from './Content';
 import { ResponsesValidationSchema } from './Response';
 import { SchemaPropertyValidationSchema } from './Schema';
 
@@ -46,11 +46,16 @@ export const RequestParameterValidationSchema =
       .describe('The request parameter location.'),
   });
 
-export type RequestParameter = z.infer<typeof RequestParameterValidationSchema>;
+export type RequestParameter = BaseRequestParameter & {
+  /**
+   * The request parameter location.
+   */
+  in: RequestParameterLocation;
+};
 //#endregion
 
 //#region RequestBody
-export const RequestBodyValidationSchema = z.object({
+export const RequestBodyValidationSchema: any = z.object({
   required: z.boolean().describe('The request body required.'),
   content: ContentValidationSchema.optional().describe(
     'The request body content.'
@@ -58,7 +63,11 @@ export const RequestBodyValidationSchema = z.object({
   description: z.string().optional().describe('The request body description.'),
 });
 
-export type RequestBody = z.infer<typeof RequestBodyValidationSchema>;
+export type RequestBody = {
+  required: boolean;
+  content?: Content;
+  description?: string;
+};
 //#endregion
 
 //#region Request
