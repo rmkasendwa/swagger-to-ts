@@ -8,7 +8,7 @@ export const StringSchemaPropertyValidationSchema = z.object({
     .optional()
     .describe('The schema property description.'),
   format: z
-    .enum(['date', 'date-time'])
+    .enum(['date', 'date-time', 'email', 'uri'] as const)
     .optional()
     .describe('The schema property format.'),
   enum: z.array(z.string()).optional().describe('The schema property enum.'),
@@ -25,7 +25,9 @@ export type StringSchemaProperty = z.infer<
 
 //#region NumberSchemaProperty
 export const NumberSchemaPropertyValidationSchema = z.object({
-  type: z.literal('number').describe('The schema property type.'),
+  type: z
+    .enum(['number', 'integer'] as const)
+    .describe('The schema property type.'),
   description: z
     .string()
     .optional()
@@ -73,7 +75,7 @@ export type NullSchemaProperty = z.infer<
 >;
 //#endregion
 
-//#region UnionSchemaProperty
+//#region PrimitiveUnionSchemaProperty
 export const PrimitiveUnionSchemaPropertyValidationSchema = z.object({
   type: z
     .array(z.enum(['string', 'number', 'boolean', 'null'] as const))

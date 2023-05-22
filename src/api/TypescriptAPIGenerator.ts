@@ -104,6 +104,7 @@ export const generateTypescriptAPI = async ({
     .toSnakeCase()}_debug_output__/${new Date()
     .toISOString()
     .replace(/:/g, '_')}`;
+  const debugOutputRootPath = `${outputRootPath}/${debugOutputFolderName}`;
   const openAPISpecification = (() => {
     try {
       console.log(' -> 🔍 Validating OpenAPI specification...');
@@ -111,7 +112,8 @@ export const generateTypescriptAPI = async ({
         inputOpenAPISpecification
       );
     } catch (err) {
-      const errorFilePath = `${debugOutputFolderName}/openapi_spec_validation.error.json`;
+      const errorFilePath = `${debugOutputRootPath}/openapi_spec_validation.error.json`;
+      ensureDirSync(debugOutputRootPath);
       console.error(
         `😞 Oops! Something went wrong while validating your OpenAPI specification. See ${errorFilePath} for details.`
       );
@@ -145,7 +147,10 @@ export const generateTypescriptAPI = async ({
           ) {
             return request.summary.toCamelCase();
           }
-          return request.operationId;
+          if (request.operationId) {
+            return request.operationId;
+          }
+          throw new Error('Could not determine operation name.');
         })();
         const pascalCaseOperationName = operationName.toPascalCase();
         if (requestBody) {
@@ -191,7 +196,10 @@ export const generateTypescriptAPI = async ({
                 ) {
                   return request.summary.replace(/\s/g, '_').toUpperCase();
                 }
-                return request.operationId.replace(/\s/g, '_').toUpperCase();
+                if (request.operationId) {
+                  return request.operationId.replace(/\s/g, '_').toUpperCase();
+                }
+                throw new Error('Could not determine operation name.');
               })() + `_ENDPOINT_PATH`,
             operationDescription: (() => {
               if (
@@ -270,7 +278,14 @@ export const generateTypescriptAPI = async ({
                   .map((successResponse) => {
                     if (
                       'application/json' in
-                      request.responses[successResponse].content!
+                        request.responses[successResponse].content &&
+                      request.responses[successResponse].content[
+                        'application/json'
+                      ].schema &&
+                      '$ref' in
+                        request.responses[successResponse].content[
+                          'application/json'
+                        ].schema
                     ) {
                       const successResponseSchemaName = (
                         request.responses[successResponse] as any
@@ -286,7 +301,7 @@ export const generateTypescriptAPI = async ({
                       } as SuccessResponseSchema;
                     }
                     if (
-                      'image/png' in request.responses[successResponse].content!
+                      'image/png' in request.responses[successResponse].content
                     ) {
                       return {
                         name: BINARY_RESPONSE_TYPE_MODEL_NAME,
@@ -475,8 +490,6 @@ export const generateTypescriptAPI = async ({
   //#region Write debug output files
   if (outputInternalState) {
     console.log(` -> Writing debug output files...`);
-    const debugOutputRootPath = `${outputRootPath}/${debugOutputFolderName}`;
-
     ensureDirSync(debugOutputRootPath);
     writeFileSync(
       `${debugOutputRootPath}/api_request_groupped_by_tag.debug.json`,

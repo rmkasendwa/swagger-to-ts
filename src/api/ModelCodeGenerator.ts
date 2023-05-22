@@ -50,6 +50,7 @@ export const generateModelMappings = ({
             if (content) {
               if (
                 'application/json' in content &&
+                content['application/json'].schema &&
                 '$ref' in content['application/json'].schema
               ) {
                 const schemaReference = content['application/json'].schema.$ref;
@@ -389,110 +390,123 @@ export const generateModelCode = ({
         const property = schemaProperties[propertyName]!;
         if ('type' in property) {
           let code = (() => {
-            switch (property.type) {
-              case 'number': {
-                let validationCode = `z.number()`;
-                if (property.min != null) {
-                  validationCode += `.min(${property.min})`;
-                }
-                if (property.max != null) {
-                  validationCode += `.max(${property.max})`;
-                }
-                return validationCode;
-              }
-              case 'string': {
-                if (property.enum) {
-                  const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
-                  const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
-
-                  generatedVariables[
-                    enumValuesName
-                  ] = `export const ${enumValuesName} = ${JSON.stringify(
-                    property.enum
-                  )} as const`;
-
-                  generatedVariables[
-                    enumTypeName
-                  ] = `export type ${enumTypeName} = (typeof ${enumValuesName})[number]`;
-
-                  return `z.enum(${enumValuesName})`;
-                } else {
-                  let validationCode = `z.string()`;
-                  if (property.minLength != null) {
-                    validationCode += `.min(${property.minLength})`;
+            if (Array.isArray(property.type)) {
+              const zodSchemasCode = property.type
+                .map((type) => {
+                  return `z.${type}()`;
+                })
+                .join(', ');
+              return `z.union([${zodSchemasCode}])`;
+            } else {
+              switch (property.type) {
+                case 'number':
+                case 'integer': {
+                  let validationCode = `z.number()`;
+                  if (property.min != null) {
+                    validationCode += `.min(${property.min})`;
                   }
-                  if (property.maxLength != null) {
-                    validationCode += `.max(${property.maxLength})`;
+                  if (property.max != null) {
+                    validationCode += `.max(${property.max})`;
                   }
                   return validationCode;
                 }
-              }
-              case 'boolean': {
-                return `z.boolean()`;
-              }
-              case 'object':
-                {
-                  if (property.properties) {
-                    const propertiesTypeCode = (() => {
-                      const firstProperty = Object.values(
-                        property.properties
-                      )[0];
-                      if (
-                        Array.isArray(firstProperty) &&
-                        firstProperty[0].type === 'string'
-                      ) {
-                        return `z.array(z.string())`;
-                      }
-                      if ('$ref' in firstProperty) {
-                        const referencedSchemaName = firstProperty.$ref.replace(
-                          '#/components/schemas/',
-                          ''
-                        );
-                        referencedSchemas.push(referencedSchemaName);
-                        const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-                        if (referencedSchemaName === schemaName) {
-                          modelIsRecursive = true;
-                          // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
-                          return `z.any()`;
-                        }
-                        return validationSchemaName;
-                      }
-                      return `z.any()`;
-                    })();
-                    return `z.record(${propertiesTypeCode})`;
-                  }
-                }
-                break;
-              case 'array': {
-                if (property.items) {
-                  if ('$ref' in property.items) {
-                    const referencedSchemaName = property.items.$ref.replace(
-                      '#/components/schemas/',
-                      ''
-                    );
-                    referencedSchemas.push(referencedSchemaName);
-                    const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-                    if (referencedSchemaName === schemaName) {
-                      modelIsRecursive = true;
-                      // return `z.array(z.lazy(() => ${validationSchemaName}))`; // TODO: Lazy reference validation schema
-                      return `z.array(z.any())`;
+                case 'string': {
+                  if (property.enum) {
+                    const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
+                    const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+
+                    generatedVariables[
+                      enumValuesName
+                    ] = `export const ${enumValuesName} = ${JSON.stringify(
+                      property.enum
+                    )} as const`;
+
+                    generatedVariables[
+                      enumTypeName
+                    ] = `export type ${enumTypeName} = (typeof ${enumValuesName})[number]`;
+
+                    return `z.enum(${enumValuesName})`;
+                  } else {
+                    let validationCode = `z.string()`;
+                    if (property.minLength != null) {
+                      validationCode += `.min(${property.minLength})`;
                     }
-                    return `z.array(${validationSchemaName})`;
-                  }
-                  if (
-                    'type' in property.items &&
-                    (
-                      [
-                        'boolean',
-                        'number',
-                        'string',
-                      ] as (typeof property.items.type)[]
-                    ).includes(property.items.type)
-                  ) {
-                    return `z.array(z.${property.items.type}())`;
+                    if (property.maxLength != null) {
+                      validationCode += `.max(${property.maxLength})`;
+                    }
+                    return validationCode;
                   }
                 }
-                return `z.array(z.any())`;
+                case 'boolean': {
+                  return `z.boolean()`;
+                }
+                case 'null':
+                  return `z.null()`;
+                case 'object':
+                  {
+                    if (property.properties) {
+                      const propertiesTypeCode = (() => {
+                        const firstProperty = Object.values(
+                          property.properties
+                        )[0];
+                        if (
+                          Array.isArray(firstProperty) &&
+                          firstProperty[0].type === 'string'
+                        ) {
+                          return `z.array(z.string())`;
+                        }
+                        if ('$ref' in firstProperty) {
+                          const referencedSchemaName =
+                            firstProperty.$ref.replace(
+                              '#/components/schemas/',
+                              ''
+                            );
+                          referencedSchemas.push(referencedSchemaName);
+                          const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                          if (referencedSchemaName === schemaName) {
+                            modelIsRecursive = true;
+                            // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+                            return `z.any()`;
+                          }
+                          return validationSchemaName;
+                        }
+                        return `z.any()`;
+                      })();
+                      return `z.record(${propertiesTypeCode})`;
+                    }
+                  }
+                  break;
+                case 'array': {
+                  if (property.items) {
+                    if ('$ref' in property.items) {
+                      const referencedSchemaName = property.items.$ref.replace(
+                        '#/components/schemas/',
+                        ''
+                      );
+                      referencedSchemas.push(referencedSchemaName);
+                      const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                      if (referencedSchemaName === schemaName) {
+                        modelIsRecursive = true;
+                        // return `z.array(z.lazy(() => ${validationSchemaName}))`; // TODO: Lazy reference validation schema
+                        return `z.array(z.any())`;
+                      }
+                      return `z.array(${validationSchemaName})`;
+                    }
+                    if (
+                      'type' in property.items &&
+                      (
+                        [
+                          'boolean',
+                          'number',
+                          'string',
+                        ] as (typeof property.items.type)[]
+                      ).includes(property.items.type)
+                    ) {
+                      return `z.array(z.${property.items.type}())`;
+                    }
+                  }
+                  return `z.array(z.any())`;
+                }
               }
             }
           })();
@@ -666,98 +680,37 @@ export const generateModelCode = ({
                   }
                 }
 
-                switch (property.type) {
-                  case 'number': {
-                    const decorators = [...baseTsedPropertyDecorators];
-                    if (property.min != null) {
-                      decorators.push(`@Min(${property.min})`);
-                      if (generateTsEDControllers) {
-                        addModuleImport({
-                          imports,
-                          importName: 'Min',
-                          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                        });
-                      }
-                    }
-                    if (property.max != null) {
-                      decorators.push(`@Max(${property.min})`);
-                      if (generateTsEDControllers) {
-                        addModuleImport({
-                          imports,
-                          importName: 'Max',
-                          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                        });
-                      }
-                    }
-                    return {
-                      ...baseTsedProperty,
-                      decorators,
-                      propertyType: `number`,
-                    };
-                  }
-                  case 'string': {
-                    if (property.format) {
-                      switch (property.format) {
-                        case 'date-time':
-                          baseTsedPropertyDecorators.push(`@DateTime()`);
-                          if (generateTsEDControllers) {
-                            addModuleImport({
-                              imports,
-                              importName: 'DateTime',
-                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                            });
-                          }
-                          break;
-                        case 'date':
-                          baseTsedPropertyDecorators.push(`@DateFormat()`);
-                          if (generateTsEDControllers) {
-                            addModuleImport({
-                              imports,
-                              importName: 'DateFormat',
-                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                            });
-                          }
-                          break;
-                      }
-                    }
-                    if (property.enum) {
-                      const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
-                      const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
-
-                      if (generateTsEDControllers) {
-                        addModuleImport({
-                          imports,
-                          importName: 'Enum',
-                          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                        });
-                      }
-
-                      return {
-                        ...baseTsedProperty,
-                        decorators: [
-                          ...baseTsedPropertyDecorators,
-                          `@Enum(...${enumValuesName})`,
-                        ],
-                        propertyType: enumTypeName,
-                      };
-                    } else {
+                if (Array.isArray(property.type)) {
+                  const propertyType = property.type
+                    .map((type) => {
+                      return type;
+                    })
+                    .join(' | ');
+                  return {
+                    ...baseTsedProperty,
+                    propertyType,
+                  };
+                } else {
+                  switch (property.type) {
+                    case 'number':
+                    case 'integer': {
                       const decorators = [...baseTsedPropertyDecorators];
-                      if (property.minLength != null) {
-                        decorators.push(`@MinLength(${property.minLength})`);
+                      if (property.min != null) {
+                        decorators.push(`@Min(${property.min})`);
                         if (generateTsEDControllers) {
                           addModuleImport({
                             imports,
-                            importName: 'MinLength',
+                            importName: 'Min',
                             importFilePath: TSED_SCHEMA_LIBRARY_PATH,
                           });
                         }
                       }
-                      if (property.maxLength != null) {
-                        decorators.push(`@MaxLength(${property.maxLength})`);
+                      if (property.max != null) {
+                        decorators.push(`@Max(${property.min})`);
                         if (generateTsEDControllers) {
                           addModuleImport({
                             imports,
-                            importName: 'MaxLength',
+                            importName: 'Max',
                             importFilePath: TSED_SCHEMA_LIBRARY_PATH,
                           });
                         }
@@ -765,110 +718,189 @@ export const generateModelCode = ({
                       return {
                         ...baseTsedProperty,
                         decorators,
-                        propertyType: `string`,
+                        propertyType: `number`,
                       };
                     }
-                  }
-                  case 'boolean': {
-                    return {
-                      ...baseTsedProperty,
-                      propertyType: `boolean`,
-                    };
-                  }
-                  case 'object':
-                    {
-                      if (property.properties) {
+                    case 'string': {
+                      if (property.format) {
+                        switch (property.format) {
+                          case 'date-time':
+                            baseTsedPropertyDecorators.push(`@DateTime()`);
+                            if (generateTsEDControllers) {
+                              addModuleImport({
+                                imports,
+                                importName: 'DateTime',
+                                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                              });
+                            }
+                            break;
+                          case 'date':
+                            baseTsedPropertyDecorators.push(`@DateFormat()`);
+                            if (generateTsEDControllers) {
+                              addModuleImport({
+                                imports,
+                                importName: 'DateFormat',
+                                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                              });
+                            }
+                            break;
+                        }
+                      }
+                      if (property.enum) {
+                        const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
+                        const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+
                         if (generateTsEDControllers) {
                           addModuleImport({
                             imports,
-                            importName: 'RecordOf',
+                            importName: 'Enum',
                             importFilePath: TSED_SCHEMA_LIBRARY_PATH,
                           });
                         }
-                        const propertiesTypeCode = (() => {
-                          const firstProperty = Object.values(
-                            property.properties
-                          )[0];
-                          if (
-                            Array.isArray(firstProperty) &&
-                            firstProperty[0].type === 'string'
-                          ) {
-                            return `string[]`;
-                          }
-                          if ('$ref' in firstProperty) {
-                            const schemaName = firstProperty.$ref.replace(
-                              '#/components/schemas/',
-                              ''
-                            );
-                            return schemaName;
-                          }
-                          return `any`;
-                        })();
+
                         return {
                           ...baseTsedProperty,
-                          propertyType: `Record<string, ${propertiesTypeCode}>`,
                           decorators: [
                             ...baseTsedPropertyDecorators,
-                            `@RecordOf([String])`,
+                            `@Enum(...${enumValuesName})`,
                           ],
+                          propertyType: enumTypeName,
+                        };
+                      } else {
+                        const decorators = [...baseTsedPropertyDecorators];
+                        if (property.minLength != null) {
+                          decorators.push(`@MinLength(${property.minLength})`);
+                          if (generateTsEDControllers) {
+                            addModuleImport({
+                              imports,
+                              importName: 'MinLength',
+                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                            });
+                          }
+                        }
+                        if (property.maxLength != null) {
+                          decorators.push(`@MaxLength(${property.maxLength})`);
+                          if (generateTsEDControllers) {
+                            addModuleImport({
+                              imports,
+                              importName: 'MaxLength',
+                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                            });
+                          }
+                        }
+                        return {
+                          ...baseTsedProperty,
+                          decorators,
+                          propertyType: `string`,
                         };
                       }
                     }
-                    break;
-                  case 'array': {
-                    if (property.items) {
-                      if ('$ref' in property.items) {
-                        const schemaName = property.items.$ref.replace(
-                          '#/components/schemas/',
-                          ''
-                        );
-                        if (generateTsEDControllers) {
-                          addModuleImport({
-                            imports,
-                            importName: 'ArrayOf',
-                            importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                          });
-                        }
-                        return {
-                          ...baseTsedProperty,
-                          propertyType: `${schemaName}[]`,
-                          decorators: [
-                            ...baseTsedPropertyDecorators,
-                            `@ArrayOf(${schemaName})`,
-                          ],
-                        };
-                      }
-                      if (
-                        'type' in property.items &&
-                        (
-                          [
-                            'boolean',
-                            'number',
-                            'string',
-                          ] as (typeof property.items.type)[]
-                        ).includes(property.items.type)
-                      ) {
-                        if (generateTsEDControllers) {
-                          addModuleImport({
-                            imports,
-                            importName: 'ArrayOf',
-                            importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                          });
-                        }
-                        return {
-                          ...baseTsedProperty,
-                          propertyType: `${property.items.type}[]`,
-                          decorators: [
-                            ...baseTsedPropertyDecorators,
-                            `@ArrayOf(${property.items.type.toPascalCase()})`,
-                          ],
-                        };
-                      }
+                    case 'boolean': {
+                      return {
+                        ...baseTsedProperty,
+                        propertyType: `boolean`,
+                      };
                     }
-                    return {
-                      ...baseTsedProperty,
-                      propertyType: `any[]`,
-                    };
+                    case 'null':
+                      return {
+                        ...baseTsedProperty,
+                        propertyType: `null`,
+                      };
+                    case 'object':
+                      {
+                        if (property.properties) {
+                          if (generateTsEDControllers) {
+                            addModuleImport({
+                              imports,
+                              importName: 'RecordOf',
+                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                            });
+                          }
+                          const propertiesTypeCode = (() => {
+                            const firstProperty = Object.values(
+                              property.properties
+                            )[0];
+                            if (
+                              Array.isArray(firstProperty) &&
+                              firstProperty[0].type === 'string'
+                            ) {
+                              return `string[]`;
+                            }
+                            if ('$ref' in firstProperty) {
+                              const schemaName = firstProperty.$ref.replace(
+                                '#/components/schemas/',
+                                ''
+                              );
+                              return schemaName;
+                            }
+                            return `any`;
+                          })();
+                          return {
+                            ...baseTsedProperty,
+                            propertyType: `Record<string, ${propertiesTypeCode}>`,
+                            decorators: [
+                              ...baseTsedPropertyDecorators,
+                              `@RecordOf([String])`,
+                            ],
+                          };
+                        }
+                      }
+                      break;
+                    case 'array': {
+                      if (property.items) {
+                        if ('$ref' in property.items) {
+                          const schemaName = property.items.$ref.replace(
+                            '#/components/schemas/',
+                            ''
+                          );
+                          if (generateTsEDControllers) {
+                            addModuleImport({
+                              imports,
+                              importName: 'ArrayOf',
+                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                            });
+                          }
+                          return {
+                            ...baseTsedProperty,
+                            propertyType: `${schemaName}[]`,
+                            decorators: [
+                              ...baseTsedPropertyDecorators,
+                              `@ArrayOf(${schemaName})`,
+                            ],
+                          };
+                        }
+                        if (
+                          'type' in property.items &&
+                          (
+                            [
+                              'boolean',
+                              'number',
+                              'string',
+                            ] as (typeof property.items.type)[]
+                          ).includes(property.items.type)
+                        ) {
+                          if (generateTsEDControllers) {
+                            addModuleImport({
+                              imports,
+                              importName: 'ArrayOf',
+                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                            });
+                          }
+                          return {
+                            ...baseTsedProperty,
+                            propertyType: `${property.items.type}[]`,
+                            decorators: [
+                              ...baseTsedPropertyDecorators,
+                              `@ArrayOf(${property.items.type.toPascalCase()})`,
+                            ],
+                          };
+                        }
+                      }
+                      return {
+                        ...baseTsedProperty,
+                        propertyType: `any[]`,
+                      };
+                    }
                   }
                 }
               }

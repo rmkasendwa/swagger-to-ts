@@ -18,7 +18,10 @@ export type RequestMethod = (typeof requestMethods)[number];
 
 //#region BaseRequestParameter
 export const BaseRequestParameterValidationSchema = z.object({
-  required: z.boolean().describe('The base request parameter required.'),
+  required: z
+    .boolean()
+    .optional()
+    .describe('The base request parameter required.'),
   name: z.string().describe('The base request parameter name.'),
   description: z
     .string()
@@ -56,7 +59,7 @@ export type RequestParameter = BaseRequestParameter & {
 
 //#region RequestBody
 export const RequestBodyValidationSchema: any = z.object({
-  required: z.boolean().describe('The request body required.'),
+  required: z.boolean().optional().describe('The request body required.'),
   content: ContentValidationSchema.optional().describe(
     'The request body content.'
   ),
@@ -64,7 +67,7 @@ export const RequestBodyValidationSchema: any = z.object({
 });
 
 export type RequestBody = {
-  required: boolean;
+  required?: boolean;
   content?: Content;
   description?: string;
 };
@@ -73,7 +76,7 @@ export type RequestBody = {
 //#region Request
 export const RequestValidationSchema = z.object({
   description: z.string().optional().describe('The request description.'),
-  operationId: z.string().describe('The request operation id.'),
+  operationId: z.string().optional().describe('The request operation id.'),
   parameters: z
     .array(RequestParameterValidationSchema)
     .optional()

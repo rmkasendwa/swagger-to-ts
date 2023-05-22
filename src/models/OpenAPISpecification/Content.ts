@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   ArraySchemaPropertyValidationSchema,
+  BooleanSchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
   SchemaValidationSchema,
 } from './Schema';
@@ -9,11 +10,14 @@ import {
 //#region JSONContent
 export const JSONContentValidationSchema = z.object({
   'application/json': z.object({
-    schema: z.union([
-      RefSchemaPropertyValidationSchema,
-      SchemaValidationSchema,
-      ArraySchemaPropertyValidationSchema,
-    ]),
+    schema: z
+      .union([
+        RefSchemaPropertyValidationSchema,
+        SchemaValidationSchema,
+        ArraySchemaPropertyValidationSchema,
+        BooleanSchemaPropertyValidationSchema,
+      ])
+      .optional(),
   }),
 });
 
@@ -23,10 +27,9 @@ export type JSONContent = z.infer<typeof JSONContentValidationSchema>;
 //#region PNGContent
 export const PNGContentValidationSchema = z.object({
   'image/png': z.object({
-    schema: z.union([
-      RefSchemaPropertyValidationSchema,
-      SchemaValidationSchema,
-    ]),
+    schema: z
+      .union([RefSchemaPropertyValidationSchema, SchemaValidationSchema])
+      .optional(),
   }),
 });
 

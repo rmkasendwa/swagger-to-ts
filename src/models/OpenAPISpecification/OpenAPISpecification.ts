@@ -16,14 +16,20 @@ export type Info = z.infer<typeof InfoValidationSchema>;
 //#region SecurityScheme
 export const ApikeyAuthValidationSchema = z.object({
   type: z.string().describe('The security scheme type.'),
-  in: z.string().describe('The security scheme location.'),
-  name: z.string().describe('The security scheme name.'),
+  in: z.string().optional().describe('The security scheme location.'),
+  name: z.string().optional().describe('The security scheme name.'),
 });
 
 export const BearerAuthValidationSchema = z.object({
   type: z.string().describe('The security scheme type.'),
-  scheme: z.literal('bearer').describe('The security scheme scheme.'),
-  bearerFormat: z.string().describe('The security scheme bearer format.'),
+  scheme: z
+    .literal('bearer')
+    .optional()
+    .describe('The security scheme scheme.'),
+  bearerFormat: z
+    .string()
+    .optional()
+    .describe('The security scheme bearer format.'),
 });
 
 export const SecuritySchemeValidationSchema = z
@@ -50,7 +56,10 @@ export const SecurityValidationSchema = z.union([
     APIKeyAuth: z.array(z.any()).describe('The API key authentication.'),
   }),
   z.object({
-    BearerAuth: z.array(z.any()).describe('The API key authentication.'),
+    apikeyAuth: z.array(z.any()).describe('The API key authentication.'),
+  }),
+  z.object({
+    BearerAuth: z.array(z.any()).describe('The bearer authentication.'),
   }),
 ]);
 
