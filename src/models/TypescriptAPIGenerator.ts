@@ -13,6 +13,7 @@ export const ENVIRONMENT_DEFINED_MODELS = ['ArrayBuffer'] as const;
 export interface SuccessResponseBaseSchema {
   description?: string;
   httpStatusCode: number;
+  isArray?: boolean;
 }
 
 export interface SuccessResponseModelSchema extends SuccessResponseBaseSchema {

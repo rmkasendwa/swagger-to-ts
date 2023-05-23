@@ -276,29 +276,38 @@ export const generateTypescriptAPI = async ({
                     return request.responses[successResponse].content;
                   })
                   .map((successResponse) => {
+                    const content = request.responses[successResponse].content;
                     if (
-                      'application/json' in
-                        request.responses[successResponse].content &&
-                      request.responses[successResponse].content[
-                        'application/json'
-                      ].schema &&
-                      '$ref' in
-                        request.responses[successResponse].content[
-                          'application/json'
-                        ].schema
+                      'application/json' in content &&
+                      content['application/json'].schema
                     ) {
-                      const successResponseSchemaName = (
-                        request.responses[successResponse] as any
-                      ).content['application/json'].schema.$ref.replace(
-                        '#/components/schemas/',
-                        ''
-                      );
-                      return {
-                        name: successResponseSchemaName,
-                        httpStatusCode: +successResponse,
-                        description:
-                          request.responses[successResponse].description,
-                      } as SuccessResponseSchema;
+                      if ('$ref' in content['application/json'].schema) {
+                        const successResponseSchemaName = content[
+                          'application/json'
+                        ].schema.$ref.replace('#/components/schemas/', '');
+                        return {
+                          name: successResponseSchemaName,
+                          httpStatusCode: +successResponse,
+                          description:
+                            request.responses[successResponse].description,
+                        } as SuccessResponseSchema;
+                      } else if (
+                        content['application/json'].schema.type === 'array' &&
+                        content['application/json'].schema.items &&
+                        '$ref' in content['application/json'].schema.items
+                      ) {
+                        const schemaReference =
+                          content['application/json'].schema.items.$ref;
+                        const successResponseSchemaName =
+                          schemaReference.replace('#/components/schemas/', '');
+                        return {
+                          name: successResponseSchemaName,
+                          httpStatusCode: +successResponse,
+                          description:
+                            request.responses[successResponse].description,
+                          isArray: true,
+                        } as SuccessResponseSchema;
+                      }
                     }
                     if (
                       'image/png' in request.responses[successResponse].content

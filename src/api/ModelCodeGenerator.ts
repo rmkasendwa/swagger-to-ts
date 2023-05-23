@@ -50,28 +50,61 @@ export const generateModelMappings = ({
             if (content) {
               if (
                 'application/json' in content &&
-                content['application/json'].schema &&
-                '$ref' in content['application/json'].schema
+                content['application/json'].schema
               ) {
-                const schemaReference = content['application/json'].schema.$ref;
-                const schemaName = schemaReference.split('/').pop()!;
-                [
-                  ...findSchemaReferencedSchemas({
+                if ('$ref' in content['application/json'].schema) {
+                  const schemaReference =
+                    content['application/json'].schema.$ref;
+                  const schemaName = schemaReference.replace(
+                    '#/components/schemas/',
+                    ''
+                  );
+                  [
+                    ...findSchemaReferencedSchemas({
+                      schemaName,
+                      openAPISpecification,
+                    }),
                     schemaName,
-                    openAPISpecification,
-                  }),
-                  schemaName,
-                ].forEach((schemaName) => {
-                  if (!accumulator[schemaName]) {
-                    accumulator[schemaName] = [];
-                  }
-                  tags.forEach((tag) => {
-                    if (!accumulator[schemaName].includes(tag)) {
-                      accumulator[schemaName].push(tag);
+                  ].forEach((schemaName) => {
+                    if (!accumulator[schemaName]) {
+                      accumulator[schemaName] = [];
                     }
+                    tags.forEach((tag) => {
+                      if (!accumulator[schemaName].includes(tag)) {
+                        accumulator[schemaName].push(tag);
+                      }
+                    });
                   });
-                });
+                } else if (
+                  content['application/json'].schema.type === 'array' &&
+                  content['application/json'].schema.items &&
+                  '$ref' in content['application/json'].schema.items
+                ) {
+                  const schemaReference =
+                    content['application/json'].schema.items.$ref;
+                  const schemaName = schemaReference.replace(
+                    '#/components/schemas/',
+                    ''
+                  );
+                  [
+                    ...findSchemaReferencedSchemas({
+                      schemaName,
+                      openAPISpecification,
+                    }),
+                    schemaName,
+                  ].forEach((schemaName) => {
+                    if (!accumulator[schemaName]) {
+                      accumulator[schemaName] = [];
+                    }
+                    tags.forEach((tag) => {
+                      if (!accumulator[schemaName].includes(tag)) {
+                        accumulator[schemaName].push(tag);
+                      }
+                    });
+                  });
+                }
               }
+
               if (
                 'image/png' in content &&
                 '$ref' in content['image/png'].schema

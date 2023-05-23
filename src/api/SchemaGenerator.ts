@@ -12,64 +12,84 @@ export const findSchemaReferencedSchemas = ({
   openAPISpecification,
 }: FindSchemaReferencedSchemasOptions) => {
   const schemaReferencedSchemas: string[] = [];
+  const findSchemaReferencedBySchemaProperty = (property: SchemaProperty) => {
+    if ('type' in property) {
+      switch (property.type) {
+        case 'array':
+          {
+            if (property.items && '$ref' in property.items) {
+              const schemaName = property.items.$ref.replace(
+                '#/components/schemas/',
+                ''
+              );
+              if (!schemaReferencedSchemas.includes(schemaName)) {
+                schemaReferencedSchemas.unshift(schemaName);
+                findSchemaReferencedSchemasRecursive(schemaName);
+              }
+            }
+          }
+          break;
+        case 'object':
+          {
+            if (property.properties) {
+              Object.values(property.properties).forEach((property) => {
+                if ('$ref' in property) {
+                  const schemaName = property.$ref.replace(
+                    '#/components/schemas/',
+                    ''
+                  );
+                  if (!schemaReferencedSchemas.includes(schemaName)) {
+                    schemaReferencedSchemas.unshift(schemaName);
+                    findSchemaReferencedSchemasRecursive(schemaName);
+                  }
+                }
+              });
+            }
+          }
+          break;
+      }
+    }
+    if ('$ref' in property) {
+      const schemaName = property.$ref.replace('#/components/schemas/', '');
+      if (!schemaReferencedSchemas.includes(schemaName)) {
+        schemaReferencedSchemas.unshift(schemaName);
+        findSchemaReferencedSchemasRecursive(schemaName);
+      }
+    }
+  };
+
   const findSchemaReferencedSchemasRecursive = (schemaName: string) => {
     const schema = openAPISpecification.components.schemas[schemaName];
-    if (
-      schema &&
-      schema.type === 'object' &&
-      'properties' in schema &&
-      schema.properties
-    ) {
-      Object.values(schema.properties).forEach((property) => {
-        if (property) {
-          if ('type' in property) {
-            switch (property.type) {
-              case 'array':
-                {
-                  if (property.items && '$ref' in property.items) {
-                    const schemaName = property.items.$ref.replace(
-                      '#/components/schemas/',
-                      ''
-                    );
-                    if (!schemaReferencedSchemas.includes(schemaName)) {
-                      schemaReferencedSchemas.unshift(schemaName);
-                      findSchemaReferencedSchemasRecursive(schemaName);
-                    }
-                  }
+    if (schema) {
+      if (
+        schema.type === 'object' &&
+        'properties' in schema &&
+        schema.properties
+      ) {
+        Object.values(schema.properties).forEach((property) => {
+          if (property) {
+            if ('oneOf' in property) {
+              property.oneOf.forEach((property) => {
+                if (property) {
+                  findSchemaReferencedBySchemaProperty(property);
                 }
-                break;
-              case 'object':
-                {
-                  if (property.properties) {
-                    Object.values(property.properties).forEach((property) => {
-                      if ('$ref' in property) {
-                        const schemaName = property.$ref.replace(
-                          '#/components/schemas/',
-                          ''
-                        );
-                        if (!schemaReferencedSchemas.includes(schemaName)) {
-                          schemaReferencedSchemas.unshift(schemaName);
-                          findSchemaReferencedSchemasRecursive(schemaName);
-                        }
-                      }
-                    });
-                  }
-                }
-                break;
+              });
+            } else {
+              findSchemaReferencedBySchemaProperty(property);
             }
           }
-          if ('$ref' in property) {
-            const schemaName = property.$ref.replace(
-              '#/components/schemas/',
-              ''
-            );
-            if (!schemaReferencedSchemas.includes(schemaName)) {
-              schemaReferencedSchemas.unshift(schemaName);
-              findSchemaReferencedSchemasRecursive(schemaName);
+        });
+      } else if (schema.type === 'array' && schema.items) {
+        if ('oneOf' in schema.items) {
+          schema.items.oneOf.forEach((property) => {
+            if (property) {
+              findSchemaReferencedBySchemaProperty(property);
             }
-          }
+          });
+        } else {
+          findSchemaReferencedBySchemaProperty(schema.items);
         }
-      });
+      }
     }
   };
   findSchemaReferencedSchemasRecursive(schemaName);

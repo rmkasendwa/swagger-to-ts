@@ -318,8 +318,11 @@ export const getAPIFunctionsCodeConfiguration = ({
                     'name' in successResponseSchema &&
                     modelsToValidationSchemaMappings[successResponseSchema.name]
                   ) {
-                    const { name: successResponseSchemaName, description } =
-                      successResponseSchema;
+                    const {
+                      name: successResponseSchemaName,
+                      description,
+                      isArray,
+                    } = successResponseSchema;
                     const successResponseValidationSchemaName =
                       modelsToValidationSchemaMappings[
                         successResponseSchemaName
@@ -339,6 +342,14 @@ export const getAPIFunctionsCodeConfiguration = ({
                     });
 
                     jsDocCommentLines.push(`@returns ${description}`);
+                    if (isArray) {
+                      addModuleImport({
+                        imports,
+                        importName: 'z',
+                        importFilePath: 'zod',
+                      });
+                      return `z.array(${successResponseValidationSchemaName}).parse(data)`;
+                    }
                     return `${successResponseValidationSchemaName}.parse(data)`;
                   }
                 }
