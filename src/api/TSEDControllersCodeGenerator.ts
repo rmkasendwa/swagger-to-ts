@@ -300,7 +300,7 @@ export const getTSEDControllersCodeConfiguration = ({
                     importFilePath: TSED_SCHEMA_LIBRARY_PATH,
                   });
                   if ('name' in successResponseSchema) {
-                    const { name } = successResponseSchema;
+                    const { name, isArray } = successResponseSchema;
                     addModuleImport({
                       imports,
                       importName: name,
@@ -310,15 +310,27 @@ export const getTSEDControllersCodeConfiguration = ({
                       }`,
                     });
 
-                    controllerMethodDecorators.push(
-                      `@Returns(${httpStatusCode}, ${name})` +
-                        (() => {
-                          if (description) {
-                            return `.Description('${description}')`;
-                          }
-                          return '';
-                        })()
-                    );
+                    if (isArray) {
+                      controllerMethodDecorators.push(
+                        `@Returns(${httpStatusCode}, Array).Of(${name})` +
+                          (() => {
+                            if (description) {
+                              return `.Description('${description}')`;
+                            }
+                            return '';
+                          })()
+                      );
+                    } else {
+                      controllerMethodDecorators.push(
+                        `@Returns(${httpStatusCode}, ${name})` +
+                          (() => {
+                            if (description) {
+                              return `.Description('${description}')`;
+                            }
+                            return '';
+                          })()
+                      );
+                    }
                   }
                   if ('type' in successResponseSchema) {
                     controllerMethodDecorators.push(
