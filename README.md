@@ -103,6 +103,7 @@ The swagger-to-ts CLI supports the following options:
 - `-tCNP, --tsed-controller-name-prefix`: Specifies the prefix to use for the Ts.ED controller names.
 - `-tCNS, --tsed-controller-name-suffix`: Specifies the suffix to use for the Ts.ED controller names.
 - `-niTFVS, --no-infer-type-from-validation-schema`: Disables the automatic inference of TypeScript types from the validation schema. If not provided, the default value is 'false'.
+- `-sN, --scope-name`: Specifies the name of the scope to use for the generated TypeScript code.
 
 #### Examples
 

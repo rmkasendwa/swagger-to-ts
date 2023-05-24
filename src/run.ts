@@ -199,6 +199,23 @@ if (args.includes('-v') || args.includes('--version')) {
           };
         }
       })(),
+      ...(() => {
+        if (args.includes('-sN') || args.includes('--scope-name')) {
+          const scopeName = (() => {
+            if (args.includes('-sN')) {
+              return args[args.indexOf('-sN') + 1];
+            }
+            if (args.includes('--scope-name')) {
+              return args[args.indexOf('--scope-name') + 1];
+            }
+          })();
+          if (scopeName && !scopeName.match(/^-/g)) {
+            return {
+              scopeName,
+            };
+          }
+        }
+      })(),
     };
 
     generateTypescriptAPI({

@@ -495,7 +495,12 @@ export const generateTypescriptAPI = async ({
         schemaToEntityMappings,
         tagToEntityLabelMappings,
         authenticateDecoratorImportPath: tsEDAuthenticateDecoratorImportPath,
-        tsedControllerNamePrefix,
+        tsedControllerNamePrefix: (() => {
+          if (scopeName) {
+            return `[${scopeName}] `;
+          }
+          return tsedControllerNamePrefix;
+        })(),
         tsedControllerNameSuffix,
       });
     }
