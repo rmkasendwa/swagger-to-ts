@@ -1,3 +1,7 @@
+import { join } from 'path';
+
+import { readdirSync, rmdirSync, statSync } from 'fs-extra';
+
 import { pkg } from '../config';
 import { ModuleImports } from '../models';
 
@@ -93,5 +97,30 @@ export const getHelpText = () => {
 
     For more information, please visit the ${pkg.name} GitHub repository or the official Swagger documentation.
   `.trimIndent();
+};
+//#endregion
+
+//#region Clean empty folder recursively
+export const cleanEmptyFoldersRecursively = (folder: string) => {
+  const isDir = statSync(folder).isDirectory();
+  if (!isDir) {
+    return;
+  }
+  let files = readdirSync(folder);
+  if (files.length > 0) {
+    files.forEach((file) => {
+      const fullPath = join(folder, file);
+      cleanEmptyFoldersRecursively(fullPath);
+    });
+
+    // re-evaluate files; after deleting subfolder
+    // we may have parent folder empty now
+    files = readdirSync(folder);
+  }
+
+  if (files.length == 0) {
+    rmdirSync(folder);
+    return;
+  }
 };
 //#endregion

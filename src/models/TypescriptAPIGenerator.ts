@@ -238,6 +238,7 @@ export type APIFunctionsCodeConfiguration = Record<
     outputCode: string;
     imports: ModuleImports;
     dataKeyVariableName: string;
+    exports: string[];
   }
 >;
 

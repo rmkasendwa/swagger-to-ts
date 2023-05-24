@@ -80,6 +80,7 @@ export const getAPIFunctionsCodeConfiguration = ({
   return Object.keys(requestGroupings).reduce((accumulator, tag) => {
     const dataKeyVariableName = `${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
     const imports = cloneDeep(requestGroupings[tag].imports);
+    const exports: string[] = [];
 
     //#region Generate entity api endpoint paths
     const requestPathsOutputCode = requestGroupings[tag].requests
@@ -479,6 +480,8 @@ export const getAPIFunctionsCodeConfiguration = ({
             '...rest',
           ].join(',\n');
 
+          exports.push(operationName);
+
           return `
               ${jsDocCommentSnippet}
               export const ${operationName} = async (${apiFunctionParametersCode}) => {
@@ -498,6 +501,7 @@ export const getAPIFunctionsCodeConfiguration = ({
       outputCode,
       imports,
       dataKeyVariableName,
+      exports,
     };
 
     return accumulator;
