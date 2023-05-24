@@ -20,9 +20,13 @@ import {
 import { RequestMethod } from '../models/OpenAPISpecification/Request';
 import { prettierConfig } from '../models/Prettier';
 import {
+  APIFunctionsCodeConfiguration,
   BINARY_RESPONSE_TYPE_MODEL_NAME,
+  ModelMappings,
   RequestGroupings,
+  RequestScopeGroupings,
   SuccessResponseSchema,
+  TSEDControllersCodeConfiguration,
   TagNameToEntityLabelsMap,
 } from '../models/TypescriptAPIGenerator';
 import {
@@ -425,86 +429,127 @@ export const generateTypescriptAPI = async ({
   );
   //#endregion
 
-  //#region Generate tag to entity mappings
-  console.log(` -> Generating tag to entity mappings...`);
-  const tagToEntityLabelMappings = [
-    ...Object.keys(requestGroupings),
-    'Utils',
-  ].reduce((accumulator, tag) => {
-    const labelPlural = tag;
-    const labelSingular = (() => {
-      if (tag.endsWith('s')) {
-        return tag.slice(0, -1);
+  //#region Group request tag groups by scope
+  console.log(` -> Grouping request tag groups by scope...`);
+  const requestTagGroupsByScope = Object.entries(requestGroupings).reduce(
+    (accumulator, [tag, requestGrouping]) => {
+      const match = /^\[(.+)\]\s/g.exec(tag);
+      const scopeName = match ? match[1] : 'Root';
+      if (!accumulator[scopeName]) {
+        accumulator[scopeName] = {};
       }
-      return tag;
-    })();
-    accumulator[tag] = {
-      'Entities Label': labelPlural,
-      'Entity Label': labelSingular,
-
-      'entities label': labelPlural.toLowerCase(),
-      'entity label': labelSingular.toLowerCase(),
-
-      PascalCaseEntities: labelPlural.toPascalCase(),
-      PascalCaseEntity: labelSingular.toPascalCase(),
-
-      camelCaseEntities: labelPlural.toCamelCase(),
-      camelCaseEntity: labelSingular.toCamelCase(),
-
-      UPPER_CASE_ENTITIES: labelPlural.replace(/\s/g, '_').toUpperCase(),
-      UPPER_CASE_ENTITY: labelSingular.replace(/\s/g, '_').toUpperCase(),
-
-      'kebab-case-entities': labelPlural.toKebabCase(),
-      'kebab-case-entity': labelSingular.toKebabCase(),
-    };
-    return accumulator;
-  }, {} as TagNameToEntityLabelsMap);
+      accumulator[scopeName][tag.replace(/^\[(.+)\]\s*/g, '').trim()] =
+        requestGrouping;
+      return accumulator;
+    },
+    {} as RequestScopeGroupings
+  );
   //#endregion
 
-  //#region Generate model mappings.
-  console.log(` -> Generating model mappings...`);
-  const {
-    entitySchemaGroups,
-    schemaToEntityMappings,
-    schemaEntityReferences,
-    models,
-    modelsToValidationSchemaMappings,
-  } = generateModelMappings({
-    requestGroupings,
-    openAPISpecification: openAPISpecification,
-    generateTsEDControllers,
-    inferTypeFromValidationSchema,
-  });
-  //#endregion
+  //#region Generate scoped code
+  const scopedCode = Object.entries(requestTagGroupsByScope).reduce(
+    (accumulator, [localScopeName, requestGroupings]) => {
+      //#region Generate tag to entity mappings
+      console.log(` -> Generating tag to entity mappings...`);
+      const tagToEntityLabelMappings = [
+        ...Object.keys(requestGroupings),
+        'Utils',
+      ].reduce((accumulator, tag) => {
+        const labelPlural = tag;
+        const labelSingular = (() => {
+          if (tag.endsWith('s')) {
+            return tag.slice(0, -1);
+          }
+          return tag;
+        })();
+        accumulator[tag] = {
+          'Entities Label': labelPlural,
+          'Entity Label': labelSingular,
 
-  //#region Generate API functions code configuration
-  console.log(` -> Generating API functions code configuration...`);
-  const apiFunctionsCodeConfiguration = getAPIFunctionsCodeConfiguration({
-    requestGroupings,
-    modelsToValidationSchemaMappings,
-    schemaToEntityMappings,
-    tagToEntityLabelMappings,
-  });
-  //#endregion
+          'entities label': labelPlural.toLowerCase(),
+          'entity label': labelSingular.toLowerCase(),
 
-  //#region Generate TSED controllers code configuration
-  const tsedControllersCodeConfiguration = (() => {
-    if (generateTsEDControllers) {
-      return getTSEDControllersCodeConfiguration({
+          PascalCaseEntities: labelPlural.toPascalCase(),
+          PascalCaseEntity: labelSingular.toPascalCase(),
+
+          camelCaseEntities: labelPlural.toCamelCase(),
+          camelCaseEntity: labelSingular.toCamelCase(),
+
+          UPPER_CASE_ENTITIES: labelPlural.replace(/\s/g, '_').toUpperCase(),
+          UPPER_CASE_ENTITY: labelSingular.replace(/\s/g, '_').toUpperCase(),
+
+          'kebab-case-entities': labelPlural.toKebabCase(),
+          'kebab-case-entity': labelSingular.toKebabCase(),
+        };
+        return accumulator;
+      }, {} as TagNameToEntityLabelsMap);
+      //#endregion
+
+      //#region Generate model mappings.
+      console.log(` -> Generating model mappings...`);
+      const modelMappings = generateModelMappings({
         requestGroupings,
+        openAPISpecification: openAPISpecification,
+        generateTsEDControllers,
+        inferTypeFromValidationSchema,
+      });
+
+      const { schemaToEntityMappings, modelsToValidationSchemaMappings } =
+        modelMappings;
+      //#endregion
+
+      //#region Generate API functions code configuration
+      console.log(` -> Generating API functions code configuration...`);
+      const apiFunctionsCodeConfiguration = getAPIFunctionsCodeConfiguration({
+        requestGroupings,
+        modelsToValidationSchemaMappings,
         schemaToEntityMappings,
         tagToEntityLabelMappings,
-        authenticateDecoratorImportPath: tsEDAuthenticateDecoratorImportPath,
-        tsedControllerNamePrefix: (() => {
-          if (scopeName) {
-            return `[${scopeName}] `;
-          }
-          return tsedControllerNamePrefix;
-        })(),
-        tsedControllerNameSuffix,
       });
-    }
-  })();
+      //#endregion
+
+      //#region Generate TSED controllers code configuration
+      const tsedControllersCodeConfiguration = (() => {
+        if (generateTsEDControllers) {
+          return getTSEDControllersCodeConfiguration({
+            requestGroupings,
+            schemaToEntityMappings,
+            tagToEntityLabelMappings,
+            authenticateDecoratorImportPath:
+              tsEDAuthenticateDecoratorImportPath,
+            tsedControllerNamePrefix: (() => {
+              if (scopeName) {
+                return `[${scopeName}] `;
+              }
+              return tsedControllerNamePrefix;
+            })(),
+            tsedControllerNameSuffix,
+          });
+        }
+      })();
+      //#endregion
+
+      accumulator[localScopeName] = {
+        tagToEntityLabelMappings,
+        modelMappings,
+        apiFunctionsCodeConfiguration,
+        tsedControllersCodeConfiguration,
+        requestGroupings,
+      };
+
+      return accumulator;
+    },
+    {} as Record<
+      string,
+      {
+        tagToEntityLabelMappings: TagNameToEntityLabelsMap;
+        modelMappings: ModelMappings;
+        apiFunctionsCodeConfiguration: APIFunctionsCodeConfiguration;
+        tsedControllersCodeConfiguration?: TSEDControllersCodeConfiguration;
+        requestGroupings: RequestGroupings;
+      }
+    >
+  );
   //#endregion
 
   //#region Clean up output folder
@@ -530,218 +575,258 @@ export const generateTypescriptAPI = async ({
     console.log(` -> Writing debug output files...`);
     ensureDirSync(debugOutputRootPath);
     writeFileSync(
-      `${debugOutputRootPath}/api_request_groupped_by_tag.debug.json`,
+      `${debugOutputRootPath}/api_request_grouped_by_tag.debug.json`,
       JSON.stringify(requestGroupings, null, 2)
     );
     writeFileSync(
-      `${debugOutputRootPath}/tag_to_entity_mappings.debug.json`,
-      JSON.stringify(tagToEntityLabelMappings, null, 2)
-    );
-    writeFileSync(
-      `${debugOutputRootPath}/schema_references.debug.json`,
-      JSON.stringify(schemaEntityReferences, null, 2)
-    );
-    writeFileSync(
-      `${debugOutputRootPath}/schema_to_entity_mappings.debug.json`,
-      JSON.stringify(schemaToEntityMappings, null, 2)
-    );
-    writeFileSync(
-      `${debugOutputRootPath}/schemas_grouped_by_tag.debug.json`,
-      JSON.stringify(entitySchemaGroups, null, 2)
-    );
-    writeFileSync(
-      `${debugOutputRootPath}/validation_schemas.debug.json`,
-      JSON.stringify(models, null, 2)
-    );
-    writeFileSync(
-      `${debugOutputRootPath}/models_to_validation_schema_mappings.debug.json`,
-      JSON.stringify(modelsToValidationSchemaMappings, null, 2)
-    );
-    writeFileSync(
-      `${debugOutputRootPath}/api_functions_code_configuration.debug.json`,
-      JSON.stringify(apiFunctionsCodeConfiguration, null, 2)
+      `${debugOutputRootPath}/api_request_groups_grouped_by_scope.debug.json`,
+      JSON.stringify(requestTagGroupsByScope, null, 2)
     );
   }
   //#endregion
 
-  //#region Write model files
-  console.log(` -> Writing model files...`);
-  const modelsOutputFilePath = `${outputRootPath}/models`;
-  ensureDirSync(modelsOutputFilePath);
-  Object.keys(models).forEach((tag) => {
-    const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
-    const modelFileName = `${PascalCaseEntities}.ts`;
-    const entityModelsOutputFilePath = `${modelsOutputFilePath}/${modelFileName}`;
+  //#region Write scoped files
+  Object.entries(scopedCode).forEach(([scopeName, scopedCodeConfiguration]) => {
+    const {
+      apiFunctionsCodeConfiguration,
+      modelMappings,
+      tagToEntityLabelMappings,
+      tsedControllersCodeConfiguration,
+      requestGroupings,
+    } = scopedCodeConfiguration;
 
-    const entityModelsOutputCode = Object.values(models[tag].models)
-      .map((model) => model.zodValidationSchemaCode)
-      .join('\n\n');
+    const {
+      models,
+      schemaEntityReferences,
+      schemaToEntityMappings,
+      entitySchemaGroups,
+      modelsToValidationSchemaMappings,
+    } = modelMappings;
 
-    writeFileSync(
-      entityModelsOutputFilePath,
-      prettier.format(
-        [
-          autogeneratedFileWarningComment,
-          ...getImportsCode({
-            imports: models[tag].imports,
-          }),
-          entityModelsOutputCode,
-        ].join('\n\n'),
-        {
-          filepath: entityModelsOutputFilePath,
-          ...prettierConfig,
-        }
-      )
-    );
-  });
+    //#region Write debug output files
+    if (outputInternalState) {
+      const scopedDebugOutputRootPath = `${debugOutputRootPath}/${scopeName}`;
+      ensureDirSync(scopedDebugOutputRootPath);
+      writeFileSync(
+        `${scopedDebugOutputRootPath}/tag_to_entity_mappings.debug.json`,
+        JSON.stringify(tagToEntityLabelMappings, null, 2)
+      );
+      writeFileSync(
+        `${scopedDebugOutputRootPath}/schema_references.debug.json`,
+        JSON.stringify(schemaEntityReferences, null, 2)
+      );
+      writeFileSync(
+        `${scopedDebugOutputRootPath}/schema_to_entity_mappings.debug.json`,
+        JSON.stringify(schemaToEntityMappings, null, 2)
+      );
+      writeFileSync(
+        `${scopedDebugOutputRootPath}/schemas_grouped_by_tag.debug.json`,
+        JSON.stringify(entitySchemaGroups, null, 2)
+      );
+      writeFileSync(
+        `${scopedDebugOutputRootPath}/validation_schemas.debug.json`,
+        JSON.stringify(models, null, 2)
+      );
+      writeFileSync(
+        `${scopedDebugOutputRootPath}/models_to_validation_schema_mappings.debug.json`,
+        JSON.stringify(modelsToValidationSchemaMappings, null, 2)
+      );
+      writeFileSync(
+        `${scopedDebugOutputRootPath}/api_functions_code_configuration.debug.json`,
+        JSON.stringify(apiFunctionsCodeConfiguration, null, 2)
+      );
+    }
+    //#endregion
 
-  const modelsIndexOutputFilePath = `${modelsOutputFilePath}/index.ts`;
-  writeFileSync(
-    modelsIndexOutputFilePath,
-    prettier.format(
-      `${autogeneratedFileWarningComment}\n\n` +
-        Object.keys(models)
-          .map((tag) => {
-            return `export * from './${tagToEntityLabelMappings[tag].PascalCaseEntities}';`;
-          })
-          .join('\n'),
-      {
-        filepath: modelsIndexOutputFilePath,
-        ...prettierConfig,
-      }
-    )
-  );
-  //#endregion
+    const scopedOutputRootPath =
+      scopeName === 'Root'
+        ? outputRootPath
+        : `${outputRootPath}/proxies/${scopeName}`;
 
-  //#region Write API files
-  console.log(` -> Writing API files...`);
-  const apiOutputFilePath = `${outputRootPath}/api`;
-  ensureDirSync(apiOutputFilePath);
-  Object.keys(apiFunctionsCodeConfiguration).forEach((tag) => {
-    const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
-    const apiFileName = `${PascalCaseEntities}.ts`;
-    const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
-    const { outputCode, requestPathsOutputCode, imports, dataKeyVariableName } =
-      apiFunctionsCodeConfiguration[tag];
+    //#region Write model files
+    console.log(` -> Writing model files...`);
+    const modelsOutputFilePath = `${scopedOutputRootPath}/models`;
+    ensureDirSync(modelsOutputFilePath);
+    Object.keys(models).forEach((tag) => {
+      const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
+      const modelFileName = `${PascalCaseEntities}.ts`;
+      const entityModelsOutputFilePath = `${modelsOutputFilePath}/${modelFileName}`;
 
-    writeFileSync(
-      entityAPIOutputFilePath,
-      prettier.format(
-        [
-          autogeneratedFileWarningComment,
-          ...getImportsCode({
-            imports,
-          }),
-          `
-            //#region Endpoint Paths
-            ${requestPathsOutputCode}
-            //#endregion
-          `.trimIndent(),
-          `
-            //#region Data Keys
-            export const ${dataKeyVariableName} = '${tagToEntityLabelMappings[tag].PascalCaseEntities}';
-            //#endregion
-          `.trimIndent(),
-          `
-            //#region API
-            ${outputCode}
-            //#endregion
-          `.trimIndent(),
-        ].join('\n\n'),
-        {
-          filepath: entityAPIOutputFilePath,
-          ...prettierConfig,
-        }
-      )
-    );
-  });
-
-  const apiAdapterOutputFilePath = `${apiOutputFilePath}/Adapter.ts`;
-  if (!existsSync(apiAdapterOutputFilePath)) {
-    writeFileSync(
-      apiAdapterOutputFilePath,
-      prettier.format(
-        `${autogeneratedFileWarningComment}\n\n${getAPIAdapterCode()}`,
-        {
-          filepath: apiAdapterOutputFilePath,
-          ...prettierConfig,
-        }
-      )
-    );
-  }
-
-  const apiIndexOutputFilePath = `${apiOutputFilePath}/index.ts`;
-  writeFileSync(
-    apiIndexOutputFilePath,
-    prettier.format(
-      `${autogeneratedFileWarningComment}\n\n` +
-        [
-          ...Object.keys(requestGroupings).map((tag) => {
-            return tagToEntityLabelMappings[tag].PascalCaseEntities;
-          }),
-          'Adapter',
-        ]
-          .map((PascalCaseEntities) => {
-            return `export * from './${PascalCaseEntities}';`;
-          })
-          .join('\n'),
-      {
-        filepath: apiIndexOutputFilePath,
-        ...prettierConfig,
-      }
-    )
-  );
-  //#endregion
-
-  //#region Write TSED controller files
-  if (generateTsEDControllers && tsedControllersCodeConfiguration) {
-    console.log(` -> Writing TSED controller files...`);
-    const tsedControllersOutputFilePath = `${outputRootPath}/controllers`;
-    ensureDirSync(tsedControllersOutputFilePath);
-    Object.keys(tsedControllersCodeConfiguration).forEach((tag) => {
-      const { PascalCaseEntity } = tagToEntityLabelMappings[tag];
-      const controllerFileName = `${PascalCaseEntity}Controller.ts`;
-      const controllerOutputFilePath = `${tsedControllersOutputFilePath}/${controllerFileName}`;
-      const { outputCode, imports } = tsedControllersCodeConfiguration[tag];
+      const entityModelsOutputCode = Object.values(models[tag].models)
+        .map((model) => model.zodValidationSchemaCode)
+        .join('\n\n');
 
       writeFileSync(
-        controllerOutputFilePath,
+        entityModelsOutputFilePath,
         prettier.format(
           [
             autogeneratedFileWarningComment,
             ...getImportsCode({
-              imports,
+              imports: models[tag].imports,
             }),
-            outputCode,
+            entityModelsOutputCode,
           ].join('\n\n'),
           {
-            filepath: controllerOutputFilePath,
+            filepath: entityModelsOutputFilePath,
             ...prettierConfig,
           }
         )
       );
     });
 
-    const tsedControllersIndexOutputFilePath = `${tsedControllersOutputFilePath}/index.ts`;
+    const modelsIndexOutputFilePath = `${modelsOutputFilePath}/index.ts`;
     writeFileSync(
-      tsedControllersIndexOutputFilePath,
+      modelsIndexOutputFilePath,
       prettier.format(
         `${autogeneratedFileWarningComment}\n\n` +
-          Object.keys(requestGroupings)
+          Object.keys(models)
             .map((tag) => {
-              return tagToEntityLabelMappings[tag].PascalCaseEntity;
-            })
-            .map((PascalCaseEntity) => {
-              return `export * from './${PascalCaseEntity}Controller';`;
+              return `export * from './${tagToEntityLabelMappings[tag].PascalCaseEntities}';`;
             })
             .join('\n'),
         {
-          filepath: tsedControllersIndexOutputFilePath,
+          filepath: modelsIndexOutputFilePath,
           ...prettierConfig,
         }
       )
     );
-  }
+    //#endregion
+
+    //#region Write API files
+    console.log(` -> Writing API files...`);
+    const apiOutputFilePath = `${scopedOutputRootPath}/api`;
+    ensureDirSync(apiOutputFilePath);
+    Object.keys(apiFunctionsCodeConfiguration).forEach((tag) => {
+      const { PascalCaseEntities } = tagToEntityLabelMappings[tag];
+      const apiFileName = `${PascalCaseEntities}.ts`;
+      const entityAPIOutputFilePath = `${apiOutputFilePath}/${apiFileName}`;
+      const {
+        outputCode,
+        requestPathsOutputCode,
+        imports,
+        dataKeyVariableName,
+      } = apiFunctionsCodeConfiguration[tag];
+
+      writeFileSync(
+        entityAPIOutputFilePath,
+        prettier.format(
+          [
+            autogeneratedFileWarningComment,
+            ...getImportsCode({
+              imports,
+            }),
+            `
+            //#region Endpoint Paths
+            ${requestPathsOutputCode}
+            //#endregion
+          `.trimIndent(),
+            `
+            //#region Data Keys
+            export const ${dataKeyVariableName} = '${tagToEntityLabelMappings[tag].PascalCaseEntities}';
+            //#endregion
+          `.trimIndent(),
+            `
+            //#region API
+            ${outputCode}
+            //#endregion
+          `.trimIndent(),
+          ].join('\n\n'),
+          {
+            filepath: entityAPIOutputFilePath,
+            ...prettierConfig,
+          }
+        )
+      );
+    });
+
+    const apiAdapterOutputFilePath = `${apiOutputFilePath}/Adapter.ts`;
+    if (!existsSync(apiAdapterOutputFilePath)) {
+      writeFileSync(
+        apiAdapterOutputFilePath,
+        prettier.format(
+          `${autogeneratedFileWarningComment}\n\n${getAPIAdapterCode()}`,
+          {
+            filepath: apiAdapterOutputFilePath,
+            ...prettierConfig,
+          }
+        )
+      );
+    }
+
+    const apiIndexOutputFilePath = `${apiOutputFilePath}/index.ts`;
+    writeFileSync(
+      apiIndexOutputFilePath,
+      prettier.format(
+        `${autogeneratedFileWarningComment}\n\n` +
+          [
+            ...Object.keys(requestGroupings).map((tag) => {
+              return tagToEntityLabelMappings[tag].PascalCaseEntities;
+            }),
+            'Adapter',
+          ]
+            .map((PascalCaseEntities) => {
+              return `export * from './${PascalCaseEntities}';`;
+            })
+            .join('\n'),
+        {
+          filepath: apiIndexOutputFilePath,
+          ...prettierConfig,
+        }
+      )
+    );
+    //#endregion
+
+    //#region Write TSED controller files
+    if (generateTsEDControllers && tsedControllersCodeConfiguration) {
+      console.log(` -> Writing TSED controller files...`);
+      const tsedControllersOutputFilePath = `${scopedOutputRootPath}/controllers`;
+      ensureDirSync(tsedControllersOutputFilePath);
+      Object.keys(tsedControllersCodeConfiguration).forEach((tag) => {
+        const { PascalCaseEntity } = tagToEntityLabelMappings[tag];
+        const controllerFileName = `${PascalCaseEntity}Controller.ts`;
+        const controllerOutputFilePath = `${tsedControllersOutputFilePath}/${controllerFileName}`;
+        const { outputCode, imports } = tsedControllersCodeConfiguration[tag];
+
+        writeFileSync(
+          controllerOutputFilePath,
+          prettier.format(
+            [
+              autogeneratedFileWarningComment,
+              ...getImportsCode({
+                imports,
+              }),
+              outputCode,
+            ].join('\n\n'),
+            {
+              filepath: controllerOutputFilePath,
+              ...prettierConfig,
+            }
+          )
+        );
+      });
+
+      const tsedControllersIndexOutputFilePath = `${tsedControllersOutputFilePath}/index.ts`;
+      writeFileSync(
+        tsedControllersIndexOutputFilePath,
+        prettier.format(
+          `${autogeneratedFileWarningComment}\n\n` +
+            Object.keys(requestGroupings)
+              .map((tag) => {
+                return tagToEntityLabelMappings[tag].PascalCaseEntity;
+              })
+              .map((PascalCaseEntity) => {
+                return `export * from './${PascalCaseEntity}Controller';`;
+              })
+              .join('\n'),
+          {
+            filepath: tsedControllersIndexOutputFilePath,
+            ...prettierConfig,
+          }
+        )
+      );
+    }
+    //#endregion
+  });
   //#endregion
 
   //#region Write index file
@@ -753,16 +838,10 @@ export const generateTypescriptAPI = async ({
       indexOutputFilePath,
       prettier.format(
         `${autogeneratedFileWarningComment}\n\n` +
-          [
-            'api',
-            'models',
-            ...(() => {
-              if (generateTsEDControllers) {
-                return ['controllers'];
-              }
-              return [];
-            })(),
-          ]
+          ['api', 'models', 'proxies', 'controllers']
+            .filter((folderName) => {
+              return existsSync(`${outputRootPath}/${folderName}`);
+            })
             .map((folderName) => {
               return `export * from './${folderName}';`;
             })

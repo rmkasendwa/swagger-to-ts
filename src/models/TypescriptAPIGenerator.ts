@@ -212,6 +212,43 @@ export type RequestGroupings = Record<
   }
 >;
 
+export type RequestScopeGroupings = Record<string, RequestGroupings>;
+
+export type ModelMappings = {
+  entitySchemaGroups: Record<string, string[]>;
+  schemaToEntityMappings: Record<string, string>;
+  schemaEntityReferences: Record<string, string[]>;
+  models: Record<
+    string,
+    {
+      models: Record<string, GeneratedSchemaCodeConfiguration>;
+      imports?: ModuleImports | undefined;
+    }
+  >;
+  modelsToValidationSchemaMappings: Record<
+    string,
+    GeneratedSchemaCodeConfiguration
+  >;
+};
+
+export type APIFunctionsCodeConfiguration = Record<
+  string,
+  {
+    requestPathsOutputCode: string;
+    outputCode: string;
+    imports: ModuleImports;
+    dataKeyVariableName: string;
+  }
+>;
+
+export type TSEDControllersCodeConfiguration = Record<
+  string,
+  {
+    outputCode: string;
+    imports: ModuleImports;
+  }
+>;
+
 export const TSED_SCHEMA_LIBRARY_PATH = `@tsed/schema`;
 export const TSED_COMMON_LIBRARY_PATH = `@tsed/common`;
 export const TSED_DEPENDENCY_INJECTION_LIBRARY_PATH = `@tsed/di`;

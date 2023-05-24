@@ -5,6 +5,7 @@ import {
   BINARY_RESPONSE_TYPE_MODEL_NAME,
   ENVIRONMENT_DEFINED_MODELS,
   GeneratedSchemaCodeConfiguration,
+  ModelMappings,
   RequestGroupings,
   TSED_SCHEMA_LIBRARY_PATH,
   TsedModelProperty,
@@ -26,13 +27,12 @@ export const generateModelMappings = ({
   openAPISpecification,
   generateTsEDControllers,
   inferTypeFromValidationSchema,
-}: GenerateModelMappingsOptions) => {
+}: GenerateModelMappingsOptions): ModelMappings => {
   //#region Find all Schemas referenced in the requests
-  const schemaEntityReferences = Object.values(requestGroupings).reduce(
-    (accumulator, { requests }) => {
+  const schemaEntityReferences = Object.entries(requestGroupings).reduce(
+    (accumulator, [tag, { requests }]) => {
       requests.forEach(
         ({
-          tags,
           responses,
           requestBody,
           headerParametersModelReference,
@@ -69,11 +69,9 @@ export const generateModelMappings = ({
                     if (!accumulator[schemaName]) {
                       accumulator[schemaName] = [];
                     }
-                    tags.forEach((tag) => {
-                      if (!accumulator[schemaName].includes(tag)) {
-                        accumulator[schemaName].push(tag);
-                      }
-                    });
+                    if (!accumulator[schemaName].includes(tag)) {
+                      accumulator[schemaName].push(tag);
+                    }
                   });
                 } else if (
                   content['application/json'].schema.type === 'array' &&
@@ -96,11 +94,9 @@ export const generateModelMappings = ({
                     if (!accumulator[schemaName]) {
                       accumulator[schemaName] = [];
                     }
-                    tags.forEach((tag) => {
-                      if (!accumulator[schemaName].includes(tag)) {
-                        accumulator[schemaName].push(tag);
-                      }
-                    });
+                    if (!accumulator[schemaName].includes(tag)) {
+                      accumulator[schemaName].push(tag);
+                    }
                   });
                 }
               }
@@ -113,11 +109,9 @@ export const generateModelMappings = ({
                 if (!accumulator[schemaName]) {
                   accumulator[schemaName] = [];
                 }
-                tags.forEach((tag) => {
-                  if (!accumulator[schemaName].includes(tag)) {
-                    accumulator[schemaName].push(tag);
-                  }
-                });
+                if (!accumulator[schemaName].includes(tag)) {
+                  accumulator[schemaName].push(tag);
+                }
               }
             }
           });
@@ -134,11 +128,9 @@ export const generateModelMappings = ({
               if (!accumulator[schemaName]) {
                 accumulator[schemaName] = [];
               }
-              tags.forEach((tag) => {
-                if (!accumulator[schemaName].includes(tag)) {
-                  accumulator[schemaName].push(tag);
-                }
-              });
+              if (!accumulator[schemaName].includes(tag)) {
+                accumulator[schemaName].push(tag);
+              }
             });
           }
 
@@ -154,11 +146,9 @@ export const generateModelMappings = ({
               if (!accumulator[schemaName]) {
                 accumulator[schemaName] = [];
               }
-              tags.forEach((tag) => {
-                if (!accumulator[schemaName].includes(tag)) {
-                  accumulator[schemaName].push(tag);
-                }
-              });
+              if (!accumulator[schemaName].includes(tag)) {
+                accumulator[schemaName].push(tag);
+              }
             });
           }
         }
