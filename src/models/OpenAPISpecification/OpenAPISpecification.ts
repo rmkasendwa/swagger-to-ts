@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { RequestValidationSchema } from './Request';
+import { Request, RequestValidationSchema } from './Request';
 import { SchemaValidationSchema } from './Schema';
 
 //#region OpenAPISpecificationInfo
