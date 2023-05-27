@@ -1066,11 +1066,11 @@ export const generateModelCode = ({
                 }
 
                 if ('oneOf' in property) {
-                  isNullable = Boolean(
-                    property.oneOf.find((property) => {
-                      return 'type' in property && property.type === 'null';
-                    })
-                  );
+                  // isNullable = Boolean(
+                  //   property.oneOf.find((property) => {
+                  //     return 'type' in property && property.type === 'null';
+                  //   })
+                  // );
 
                   let code = (() => {
                     const nonNullTypes = property.oneOf.filter(
