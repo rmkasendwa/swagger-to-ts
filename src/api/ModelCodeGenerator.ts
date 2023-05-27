@@ -598,9 +598,11 @@ export const generateModelCode = ({
         return code;
       }
       if ('oneOf' in property) {
-        const isNullable = property.oneOf.find((property) => {
-          return 'type' in property && property.type === 'null';
-        });
+        const isNullable = Boolean(
+          property.oneOf.find((property) => {
+            return 'type' in property && property.type === 'null';
+          })
+        );
 
         let code = (() => {
           const nonNullTypes = property.oneOf.filter(
@@ -732,23 +734,18 @@ export const generateModelCode = ({
                 }
               }
 
-              const baseTsedProperty: Pick<
+              type BaseProperty = Pick<
                 TsedModelProperty,
                 | 'propertyName'
                 | 'accessModifier'
                 | 'required'
                 | 'decorators'
                 | 'openAPISpecification'
-              > = {
-                openAPISpecification: baseProperty as any,
-                propertyName,
-                accessModifier: 'public',
-                decorators: baseTsedPropertyDecorators,
-                required,
-              };
+              >;
 
               const getTsEDPrimitivePropertyTypeCode = (
-                property: typeof baseProperty
+                property: typeof baseProperty,
+                baseTsedProperty: BaseProperty
               ):
                 | Omit<TsedModelProperty, 'typeDefinitionSnippet'>
                 | undefined => {
@@ -972,79 +969,154 @@ export const generateModelCode = ({
                 }
               };
 
-              if ('type' in baseProperty) {
-                if ('example' in baseProperty) {
-                  baseTsedPropertyDecorators.push(
-                    `@Example(${JSON.stringify(baseProperty.example)})`
-                  );
-                  if (generateTsEDControllers) {
-                    addModuleImport({
-                      imports,
-                      importName: 'Example',
-                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                    });
+              const getTsEDPropertyTypeCode = (
+                property: typeof baseProperty,
+                propertyName: string
+              ):
+                | Omit<TsedModelProperty, 'typeDefinitionSnippet'>
+                | undefined => {
+                const baseTsedProperty: Pick<
+                  TsedModelProperty,
+                  | 'propertyName'
+                  | 'accessModifier'
+                  | 'required'
+                  | 'decorators'
+                  | 'openAPISpecification'
+                > = {
+                  openAPISpecification: baseProperty as any,
+                  propertyName,
+                  accessModifier: 'public',
+                  decorators: baseTsedPropertyDecorators,
+                  required,
+                };
+
+                if ('type' in property) {
+                  if ('example' in property) {
+                    baseTsedPropertyDecorators.push(
+                      `@Example(${JSON.stringify(property.example)})`
+                    );
+                    if (generateTsEDControllers) {
+                      addModuleImport({
+                        imports,
+                        importName: 'Example',
+                        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                      });
+                    }
+                  }
+
+                  if ('default' in property && property.default) {
+                    baseTsedPropertyDecorators.push(
+                      `@Default(${JSON.stringify(property.default)})`
+                    );
+                    if (generateTsEDControllers) {
+                      addModuleImport({
+                        imports,
+                        importName: 'Default',
+                        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                      });
+                    }
+                  }
+
+                  if (Array.isArray(property.type)) {
+                    isNullable = property.type.includes('null');
+
+                    const nonNullTypes = property.type.filter(
+                      (type) => type !== 'null'
+                    );
+
+                    if (nonNullTypes.length === 1) {
+                      return getTsEDPrimitivePropertyTypeCode(
+                        {
+                          ...property,
+                          type: nonNullTypes[0] as any,
+                        },
+                        baseTsedProperty
+                      );
+                    }
+
+                    const propertyType = property.type
+                      .map((type) => {
+                        return type;
+                      })
+                      .join(' | ');
+                    return {
+                      ...baseTsedProperty,
+                      propertyType,
+                      propertyModels: [],
+                    };
+                  } else {
+                    return getTsEDPrimitivePropertyTypeCode(
+                      property,
+                      baseTsedProperty
+                    );
                   }
                 }
 
-                if ('default' in baseProperty && baseProperty.default) {
-                  baseTsedPropertyDecorators.push(
-                    `@Default(${JSON.stringify(baseProperty.default)})`
+                if ('$ref' in property) {
+                  const schemaName = property.$ref.replace(
+                    '#/components/schemas/',
+                    ''
                   );
-                  if (generateTsEDControllers) {
-                    addModuleImport({
-                      imports,
-                      importName: 'Default',
-                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                    });
-                  }
-                }
-
-                if (Array.isArray(baseProperty.type)) {
-                  isNullable = baseProperty.type.includes('null');
-
-                  const nonNullTypes = baseProperty.type.filter(
-                    (type) => type !== 'null'
-                  );
-
-                  if (nonNullTypes.length === 1) {
-                    return getTsEDPrimitivePropertyTypeCode({
-                      ...baseProperty,
-                      type: nonNullTypes[0] as any,
-                    });
-                  }
-
-                  const propertyType = baseProperty.type
-                    .map((type) => {
-                      return type;
-                    })
-                    .join(' | ');
                   return {
                     ...baseTsedProperty,
-                    propertyType,
-                    propertyModels: [],
+                    propertyType: schemaName,
+                    decorators: [...baseTsedPropertyDecorators],
+                    propertyModels: [schemaName],
                   };
-                } else {
-                  return getTsEDPrimitivePropertyTypeCode(baseProperty);
                 }
-              }
-              if ('$ref' in baseProperty) {
-                const schemaName = baseProperty.$ref.replace(
-                  '#/components/schemas/',
-                  ''
-                );
+
+                if ('oneOf' in property) {
+                  isNullable = Boolean(
+                    property.oneOf.find((property) => {
+                      return 'type' in property && property.type === 'null';
+                    })
+                  );
+
+                  let code = (() => {
+                    const nonNullTypes = property.oneOf.filter(
+                      (property) =>
+                        !('type' in property && property.type === 'null')
+                    );
+
+                    if (nonNullTypes.length === 1) {
+                      return getTsEDPropertyTypeCode(
+                        nonNullTypes[0] as any,
+                        propertyName
+                      );
+                    }
+
+                    const propertyCode = property.oneOf.map((type) => {
+                      return getTsEDPropertyTypeCode(type, propertyName);
+                    });
+
+                    return {
+                      ...baseTsedProperty,
+                      propertyType: propertyCode
+                        .map((code) => code!.propertyType)
+                        .join(' | '),
+                      propertyModels: propertyCode.reduce(
+                        (acumulator, code) => {
+                          if (code?.propertyModels) {
+                            acumulator.push(...code.propertyModels);
+                          }
+                          return acumulator;
+                        },
+                        [] as string[]
+                      ),
+                    };
+                  })();
+
+                  return code;
+                }
+
                 return {
                   ...baseTsedProperty,
-                  propertyType: schemaName,
-                  decorators: [...baseTsedPropertyDecorators],
-                  propertyModels: [schemaName],
+                  propertyType: `any`,
+                  propertyModels: [],
                 };
-              }
-
-              return {
-                ...baseTsedProperty,
-                propertyType: `any`,
-                propertyModels: [],
               };
+
+              return getTsEDPropertyTypeCode(baseProperty, propertyName);
             })();
             if (tsedProperty) {
               if (isNullable) {
