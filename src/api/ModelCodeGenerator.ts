@@ -1,6 +1,8 @@
 import { isEmpty } from 'lodash';
 
 import { ModuleImports, OpenAPISpecification } from '../models';
+import { SchemaProperty } from '../models/OpenAPISpecification/Schema';
+import { UnionSchemaProperty } from '../models/OpenAPISpecification/Schema';
 import {
   BINARY_RESPONSE_TYPE_MODEL_NAME,
   ENVIRONMENT_DEFINED_MODELS,
@@ -405,170 +407,212 @@ export const generateModelCode = ({
 
     const schemaProperties = schema.properties;
 
-    //#region Zod validation schema
-    const zodValidationSchemaConfiguration = Object.keys(
-      schemaProperties
-    ).reduce((accumulator, propertyName) => {
-      const code = (() => {
-        const property = schemaProperties[propertyName]!;
-        if ('type' in property) {
-          let code = (() => {
-            if (Array.isArray(property.type)) {
-              const zodSchemasCode = property.type
-                .map((type) => {
-                  return `z.${type}()`;
-                })
-                .join(', ');
-              return `z.union([${zodSchemasCode}])`;
+    const getSchemaPrimitiveTypeValidationSchemaCode = (
+      property: SchemaProperty,
+      propertyName: string
+    ) => {
+      if ('type' in property) {
+        switch (property.type) {
+          case 'number':
+          case 'integer': {
+            let validationCode = `z.number()`;
+            if (property.min != null) {
+              validationCode += `.min(${property.min})`;
+            }
+            if (property.max != null) {
+              validationCode += `.max(${property.max})`;
+            }
+            return validationCode;
+          }
+          case 'string': {
+            if (property.enum) {
+              const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
+              const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+
+              generatedVariables[
+                enumValuesName
+              ] = `export const ${enumValuesName} = ${JSON.stringify(
+                property.enum
+              )} as const`;
+
+              generatedVariables[
+                enumTypeName
+              ] = `export type ${enumTypeName} = (typeof ${enumValuesName})[number]`;
+
+              return `z.enum(${enumValuesName})`;
             } else {
-              switch (property.type) {
-                case 'number':
-                case 'integer': {
-                  let validationCode = `z.number()`;
-                  if (property.min != null) {
-                    validationCode += `.min(${property.min})`;
+              let validationCode = `z.string()`;
+              if (property.minLength != null) {
+                validationCode += `.min(${property.minLength})`;
+              }
+              if (property.maxLength != null) {
+                validationCode += `.max(${property.maxLength})`;
+              }
+              return validationCode;
+            }
+          }
+          case 'boolean': {
+            return `z.boolean()`;
+          }
+          case 'null':
+            return `z.null()`;
+          case 'object':
+            {
+              if (property.properties) {
+                const propertiesTypeCode = (() => {
+                  const firstProperty = Object.values(property.properties)[0];
+                  if (
+                    Array.isArray(firstProperty) &&
+                    firstProperty[0].type === 'string'
+                  ) {
+                    return `z.array(z.string())`;
                   }
-                  if (property.max != null) {
-                    validationCode += `.max(${property.max})`;
+                  if ('$ref' in firstProperty) {
+                    const referencedSchemaName = firstProperty.$ref.replace(
+                      '#/components/schemas/',
+                      ''
+                    );
+                    referencedSchemas.push(referencedSchemaName);
+                    const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                    if (referencedSchemaName === schemaName) {
+                      modelIsRecursive = true;
+                      // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+                      return `z.any()`;
+                    }
+                    return validationSchemaName;
                   }
-                  return validationCode;
-                }
-                case 'string': {
-                  if (property.enum) {
-                    const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
-                    const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
-
-                    generatedVariables[
-                      enumValuesName
-                    ] = `export const ${enumValuesName} = ${JSON.stringify(
-                      property.enum
-                    )} as const`;
-
-                    generatedVariables[
-                      enumTypeName
-                    ] = `export type ${enumTypeName} = (typeof ${enumValuesName})[number]`;
-
-                    return `z.enum(${enumValuesName})`;
-                  } else {
-                    let validationCode = `z.string()`;
-                    if (property.minLength != null) {
-                      validationCode += `.min(${property.minLength})`;
-                    }
-                    if (property.maxLength != null) {
-                      validationCode += `.max(${property.maxLength})`;
-                    }
-                    return validationCode;
-                  }
-                }
-                case 'boolean': {
-                  return `z.boolean()`;
-                }
-                case 'null':
-                  return `z.null()`;
-                case 'object':
-                  {
-                    if (property.properties) {
-                      const propertiesTypeCode = (() => {
-                        const firstProperty = Object.values(
-                          property.properties
-                        )[0];
-                        if (
-                          Array.isArray(firstProperty) &&
-                          firstProperty[0].type === 'string'
-                        ) {
-                          return `z.array(z.string())`;
-                        }
-                        if ('$ref' in firstProperty) {
-                          const referencedSchemaName =
-                            firstProperty.$ref.replace(
-                              '#/components/schemas/',
-                              ''
-                            );
-                          referencedSchemas.push(referencedSchemaName);
-                          const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-                          if (referencedSchemaName === schemaName) {
-                            modelIsRecursive = true;
-                            // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
-                            return `z.any()`;
-                          }
-                          return validationSchemaName;
-                        }
-                        return `z.any()`;
-                      })();
-                      return `z.record(${propertiesTypeCode})`;
-                    }
-                  }
-                  break;
-                case 'array': {
-                  if (property.items) {
-                    if ('$ref' in property.items) {
-                      const referencedSchemaName = property.items.$ref.replace(
-                        '#/components/schemas/',
-                        ''
-                      );
-                      referencedSchemas.push(referencedSchemaName);
-                      const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-                      if (referencedSchemaName === schemaName) {
-                        modelIsRecursive = true;
-                        // return `z.array(z.lazy(() => ${validationSchemaName}))`; // TODO: Lazy reference validation schema
-                        return `z.array(z.any())`;
-                      }
-                      return `z.array(${validationSchemaName})`;
-                    }
-                    if (
-                      'type' in property.items &&
-                      (
-                        [
-                          'boolean',
-                          'number',
-                          'string',
-                        ] as (typeof property.items.type)[]
-                      ).includes(property.items.type)
-                    ) {
-                      return `z.array(z.${property.items.type}())`;
-                    }
-                  }
-                  return `z.array(z.any())`;
-                }
+                  return `z.any()`;
+                })();
+                return `z.record(${propertiesTypeCode})`;
               }
             }
-          })();
-          if (code) {
-            if (!schema.required || !schema.required.includes(propertyName)) {
-              code += `.optional()`;
+            break;
+          case 'array': {
+            if (property.items) {
+              if ('$ref' in property.items) {
+                const referencedSchemaName = property.items.$ref.replace(
+                  '#/components/schemas/',
+                  ''
+                );
+                referencedSchemas.push(referencedSchemaName);
+                const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                if (referencedSchemaName === schemaName) {
+                  modelIsRecursive = true;
+                  // return `z.array(z.lazy(() => ${validationSchemaName}))`; // TODO: Lazy reference validation schema
+                  return `z.array(z.any())`;
+                }
+                return `z.array(${validationSchemaName})`;
+              }
+              if (
+                'type' in property.items &&
+                (
+                  [
+                    'boolean',
+                    'number',
+                    'string',
+                  ] as (typeof property.items.type)[]
+                ).includes(property.items.type)
+              ) {
+                return `z.array(z.${property.items.type}())`;
+              }
             }
-            if ('description' in property) {
-              code += `.describe(\`${property.description}\`)`;
-            }
+            return `z.array(z.any())`;
           }
-          return code;
         }
-        if ('$ref' in property) {
-          let code = (() => {
-            const referencedSchemaName = property.$ref.replace(
-              '#/components/schemas/',
-              ''
+      }
+    };
+
+    const getSchemaTypValidationSchemaCode = (
+      property: SchemaProperty | UnionSchemaProperty,
+      propertyName: string
+    ): string => {
+      if ('type' in property) {
+        let isNullable = false;
+        let code = (() => {
+          if (Array.isArray(property.type)) {
+            isNullable = property.type.includes('null');
+            const nonNullTypes = property.type.filter(
+              (type) => type !== 'null'
             );
-            referencedSchemas.push(referencedSchemaName);
-            const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-            if (referencedSchemaName === schemaName) {
-              modelIsRecursive = true;
-              // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
-              return `z.any()`;
+            if (nonNullTypes.length === 1) {
+              return getSchemaPrimitiveTypeValidationSchemaCode(
+                {
+                  ...property,
+                  type: nonNullTypes[0] as any,
+                },
+                propertyName
+              );
             }
-            return validationSchemaName;
-          })();
-          if (code) {
-            if (!schema.required || !schema.required.includes(propertyName)) {
-              code += `.optional()`;
-            }
-            if (property.description) {
-              code += `.describe(\`${property.description}\`)`;
-            }
+            const zodSchemasCode = property.type
+              .map((type) => {
+                return `z.${type}()`;
+              })
+              .join(', ');
+            return `z.union([${zodSchemasCode}])`;
+          } else {
+            return getSchemaPrimitiveTypeValidationSchemaCode(
+              property,
+              propertyName
+            );
+          }
+        })();
+        if (code) {
+          if (isNullable) {
+            code += `.nullable()`;
+          }
+          if (!schema.required || !schema.required.includes(propertyName)) {
+            code += `.optional()`;
+          }
+          if ('description' in property) {
+            code += `.describe(\`${property.description}\`)`;
           }
           return code;
         }
-      })();
+      }
+      if ('$ref' in property) {
+        let code = (() => {
+          const referencedSchemaName = property.$ref.replace(
+            '#/components/schemas/',
+            ''
+          );
+          referencedSchemas.push(referencedSchemaName);
+          const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+          if (referencedSchemaName === schemaName) {
+            modelIsRecursive = true;
+            // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+            return `z.any()`;
+          }
+          return validationSchemaName;
+        })();
+        if (code) {
+          if (!schema.required || !schema.required.includes(propertyName)) {
+            code += `.optional()`;
+          }
+          if (property.description) {
+            code += `.describe(\`${property.description}\`)`;
+          }
+        }
+        return code;
+      }
+      if ('oneOf' in property) {
+        const zodSchemasCode = property.oneOf
+          .map((type) => {
+            return getSchemaTypValidationSchemaCode(type, propertyName);
+          })
+          .join(', ');
+        return `z.union([${zodSchemasCode}])`;
+      }
+      return `z.any()`;
+    };
+
+    //#region Zod validation schema
+    const zodValidationSchemaConfiguration = Object.entries(
+      schemaProperties
+    ).reduce((accumulator, [propertyName, property]) => {
+      const code = getSchemaTypValidationSchemaCode(
+        property as any,
+        propertyName
+      );
       if (code) {
         accumulator[propertyName] = {
           code,
@@ -648,7 +692,7 @@ export const generateModelCode = ({
                 }
               }
 
-              if ('description' in property) {
+              if ('description' in property && property.description) {
                 baseTsedPropertyDecorators.push(
                   `@Description(${JSON.stringify(property.description)})`
                 );
@@ -938,6 +982,11 @@ export const generateModelCode = ({
                   decorators: [...baseTsedPropertyDecorators],
                 };
               }
+
+              return {
+                ...baseTsedProperty,
+                propertyType: `any`,
+              };
             })();
             if (tsedProperty) {
               const propertyValueSeparator = tsedProperty.required

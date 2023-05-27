@@ -388,7 +388,9 @@ export const generateTypescriptAPI = async ({
                   }
                 );
                 if (headerParameters.length > 0) {
-                  const headerParametersModelReference = `${pascalCaseOperationName}HeaderParams`;
+                  const headerParametersModelReference = `${
+                    scopeModelPrefix || ''
+                  }${pascalCaseOperationName}HeaderParams`;
                   openAPISpecification.components.schemas[
                     headerParametersModelReference
                   ] = generateSchemaFromRequestParameters({
@@ -410,7 +412,9 @@ export const generateTypescriptAPI = async ({
                   (parameter) => parameter.in === 'query'
                 );
                 if (queryParameters.length > 0) {
-                  const queryParametersModelReference = `${pascalCaseOperationName}QueryParams`;
+                  const queryParametersModelReference = `${
+                    scopeModelPrefix || ''
+                  }${pascalCaseOperationName}QueryParams`;
                   openAPISpecification.components.schemas[
                     queryParametersModelReference
                   ] = generateSchemaFromRequestParameters({
