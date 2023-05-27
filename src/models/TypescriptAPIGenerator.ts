@@ -122,6 +122,11 @@ export interface TsedModelProperty {
   propertyType: string;
 
   /**
+   * The list of models that represent the property.
+   */
+  propertyModels: string[];
+
+  /**
    * The list of decorators that will be used to decorate the property.
    */
   decorators: string[];

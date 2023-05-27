@@ -1,8 +1,10 @@
 import { isEmpty } from 'lodash';
 
 import { ModuleImports, OpenAPISpecification } from '../models';
-import { SchemaProperty } from '../models/OpenAPISpecification/Schema';
-import { UnionSchemaProperty } from '../models/OpenAPISpecification/Schema';
+import {
+  SchemaProperty,
+  UnionSchemaProperty,
+} from '../models/OpenAPISpecification/Schema';
 import {
   BINARY_RESPONSE_TYPE_MODEL_NAME,
   ENVIRONMENT_DEFINED_MODELS,
@@ -407,6 +409,7 @@ export const generateModelCode = ({
 
     const schemaProperties = schema.properties;
 
+    //#region Zod validation schema
     const getSchemaPrimitiveTypeValidationSchemaCode = (
       property: SchemaProperty,
       propertyName: string
@@ -563,7 +566,7 @@ export const generateModelCode = ({
           if (!schema.required || !schema.required.includes(propertyName)) {
             code += `.optional()`;
           }
-          if ('description' in property) {
+          if ('description' in property && property.description) {
             code += `.describe(\`${property.description}\`)`;
           }
           return code;
@@ -595,17 +598,39 @@ export const generateModelCode = ({
         return code;
       }
       if ('oneOf' in property) {
-        const zodSchemasCode = property.oneOf
-          .map((type) => {
-            return getSchemaTypValidationSchemaCode(type, propertyName);
-          })
-          .join(', ');
-        return `z.union([${zodSchemasCode}])`;
+        const isNullable = property.oneOf.find((property) => {
+          return 'type' in property && property.type === 'null';
+        });
+
+        let code = (() => {
+          const nonNullTypes = property.oneOf.filter(
+            (property) => !('type' in property && property.type === 'null')
+          );
+
+          if (nonNullTypes.length === 1) {
+            return getSchemaTypValidationSchemaCode(
+              nonNullTypes[0] as any,
+              propertyName
+            );
+          }
+
+          const zodSchemasCode = property.oneOf
+            .map((type) => {
+              return getSchemaTypValidationSchemaCode(type, propertyName);
+            })
+            .join(', ');
+          return `z.union([${zodSchemasCode}])`;
+        })();
+
+        if (isNullable) {
+          code += `.nullable()`;
+        }
+
+        return code;
       }
       return `z.any()`;
     };
 
-    //#region Zod validation schema
     const zodValidationSchemaConfiguration = Object.entries(
       schemaProperties
     ).reduce((accumulator, [propertyName, property]) => {
@@ -633,6 +658,7 @@ export const generateModelCode = ({
     //#endregion
 
     //#region Tsed model
+
     const { tsedModelCode, tsedModelConfiguration } = ((): {
       tsedModelConfiguration?: Record<string, TsedModelProperty>;
       tsedModelCode?: string;
@@ -642,8 +668,8 @@ export const generateModelCode = ({
         !inferTypeFromValidationSchema ||
         modelIsRecursive
       ) {
-        const tsedModelConfiguration = Object.keys(schemaProperties).reduce(
-          (accumulator, basePropertyName) => {
+        const tsedModelConfiguration = Object.entries(schemaProperties).reduce(
+          (accumulator, [basePropertyName]) => {
             const propertyName = (() => {
               if (basePropertyName.match(/\W/g)) {
                 if (generateTsEDControllers) {
@@ -654,10 +680,11 @@ export const generateModelCode = ({
               }
               return basePropertyName;
             })();
+            let isNullable = false;
             const tsedProperty = (():
               | Omit<TsedModelProperty, 'typeDefinitionSnippet'>
               | undefined => {
-              const property = schemaProperties[basePropertyName]!;
+              const baseProperty = schemaProperties[basePropertyName]!;
               const required = Boolean(
                 schema.required && schema.required.includes(basePropertyName)
               );
@@ -692,9 +719,9 @@ export const generateModelCode = ({
                 }
               }
 
-              if ('description' in property && property.description) {
+              if ('description' in baseProperty && baseProperty.description) {
                 baseTsedPropertyDecorators.push(
-                  `@Description(${JSON.stringify(property.description)})`
+                  `@Description(${JSON.stringify(baseProperty.description)})`
                 );
                 if (generateTsEDControllers) {
                   addModuleImport({
@@ -713,51 +740,19 @@ export const generateModelCode = ({
                 | 'decorators'
                 | 'openAPISpecification'
               > = {
-                openAPISpecification: property as any,
+                openAPISpecification: baseProperty as any,
                 propertyName,
                 accessModifier: 'public',
                 decorators: baseTsedPropertyDecorators,
                 required,
               };
 
-              if ('type' in property) {
-                if ('example' in property) {
-                  baseTsedPropertyDecorators.push(
-                    `@Example(${JSON.stringify(property.example)})`
-                  );
-                  if (generateTsEDControllers) {
-                    addModuleImport({
-                      imports,
-                      importName: 'Example',
-                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                    });
-                  }
-                }
-
-                if ('default' in property) {
-                  baseTsedPropertyDecorators.push(
-                    `@Default(${JSON.stringify(property.default)})`
-                  );
-                  if (generateTsEDControllers) {
-                    addModuleImport({
-                      imports,
-                      importName: 'Default',
-                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                    });
-                  }
-                }
-
-                if (Array.isArray(property.type)) {
-                  const propertyType = property.type
-                    .map((type) => {
-                      return type;
-                    })
-                    .join(' | ');
-                  return {
-                    ...baseTsedProperty,
-                    propertyType,
-                  };
-                } else {
+              const getTsEDPrimitivePropertyTypeCode = (
+                property: typeof baseProperty
+              ):
+                | Omit<TsedModelProperty, 'typeDefinitionSnippet'>
+                | undefined => {
+                if ('type' in property) {
                   switch (property.type) {
                     case 'number':
                     case 'integer': {
@@ -786,6 +781,7 @@ export const generateModelCode = ({
                         ...baseTsedProperty,
                         decorators,
                         propertyType: `number`,
+                        propertyModels: [`Number`],
                       };
                     }
                     case 'string': {
@@ -832,6 +828,7 @@ export const generateModelCode = ({
                             `@Enum(...${enumValuesName})`,
                           ],
                           propertyType: enumTypeName,
+                          propertyModels: [`String`],
                         };
                       } else {
                         const decorators = [...baseTsedPropertyDecorators];
@@ -859,6 +856,7 @@ export const generateModelCode = ({
                           ...baseTsedProperty,
                           decorators,
                           propertyType: `string`,
+                          propertyModels: [`String`],
                         };
                       }
                     }
@@ -866,13 +864,9 @@ export const generateModelCode = ({
                       return {
                         ...baseTsedProperty,
                         propertyType: `boolean`,
+                        propertyModels: [`Boolean`],
                       };
                     }
-                    case 'null':
-                      return {
-                        ...baseTsedProperty,
-                        propertyType: `null`,
-                      };
                     case 'object':
                       {
                         if (property.properties) {
@@ -909,6 +903,7 @@ export const generateModelCode = ({
                               ...baseTsedPropertyDecorators,
                               `@RecordOf([String])`,
                             ],
+                            propertyModels: [`Object`],
                           };
                         }
                       }
@@ -934,6 +929,7 @@ export const generateModelCode = ({
                               ...baseTsedPropertyDecorators,
                               `@ArrayOf(${schemaName})`,
                             ],
+                            propertyModels: [schemaName],
                           };
                         }
                         if (
@@ -960,19 +956,79 @@ export const generateModelCode = ({
                               ...baseTsedPropertyDecorators,
                               `@ArrayOf(${property.items.type.toPascalCase()})`,
                             ],
+                            propertyModels: [
+                              property.items.type.toPascalCase(),
+                            ],
                           };
                         }
                       }
                       return {
                         ...baseTsedProperty,
                         propertyType: `any[]`,
+                        propertyModels: [],
                       };
                     }
                   }
                 }
+              };
+
+              if ('type' in baseProperty) {
+                if ('example' in baseProperty) {
+                  baseTsedPropertyDecorators.push(
+                    `@Example(${JSON.stringify(baseProperty.example)})`
+                  );
+                  if (generateTsEDControllers) {
+                    addModuleImport({
+                      imports,
+                      importName: 'Example',
+                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                    });
+                  }
+                }
+
+                if ('default' in baseProperty && baseProperty.default) {
+                  baseTsedPropertyDecorators.push(
+                    `@Default(${JSON.stringify(baseProperty.default)})`
+                  );
+                  if (generateTsEDControllers) {
+                    addModuleImport({
+                      imports,
+                      importName: 'Default',
+                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                    });
+                  }
+                }
+
+                if (Array.isArray(baseProperty.type)) {
+                  isNullable = baseProperty.type.includes('null');
+
+                  const nonNullTypes = baseProperty.type.filter(
+                    (type) => type !== 'null'
+                  );
+
+                  if (nonNullTypes.length === 1) {
+                    return getTsEDPrimitivePropertyTypeCode({
+                      ...baseProperty,
+                      type: nonNullTypes[0] as any,
+                    });
+                  }
+
+                  const propertyType = baseProperty.type
+                    .map((type) => {
+                      return type;
+                    })
+                    .join(' | ');
+                  return {
+                    ...baseTsedProperty,
+                    propertyType,
+                    propertyModels: [],
+                  };
+                } else {
+                  return getTsEDPrimitivePropertyTypeCode(baseProperty);
+                }
               }
-              if ('$ref' in property) {
-                const schemaName = property.$ref.replace(
+              if ('$ref' in baseProperty) {
+                const schemaName = baseProperty.$ref.replace(
                   '#/components/schemas/',
                   ''
                 );
@@ -980,15 +1036,40 @@ export const generateModelCode = ({
                   ...baseTsedProperty,
                   propertyType: schemaName,
                   decorators: [...baseTsedPropertyDecorators],
+                  propertyModels: [schemaName],
                 };
               }
 
               return {
                 ...baseTsedProperty,
                 propertyType: `any`,
+                propertyModels: [],
               };
             })();
             if (tsedProperty) {
+              if (isNullable) {
+                const nullableModelsCode = (() => {
+                  if (tsedProperty.propertyModels.length > 0) {
+                    return tsedProperty.propertyModels.join(', ');
+                  }
+                  addModuleImport({
+                    imports,
+                    importName: 'Any',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
+                  return `Any`;
+                })();
+                tsedProperty.decorators.push(
+                  `@Nullable(${nullableModelsCode})`
+                );
+                if (generateTsEDControllers) {
+                  addModuleImport({
+                    imports,
+                    importName: 'Nullable',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
+                }
+              }
               const propertyValueSeparator = tsedProperty.required
                 ? '!:'
                 : '?:';
