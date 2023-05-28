@@ -5,6 +5,7 @@ import {
   ENVIRONMENT_DEFINED_MODELS,
   GeneratedSchemaCodeConfiguration,
   PATHS_LIBRARY_PATH,
+  RMK_UTILS_LIBRARY_PATH,
   RequestGroupings,
   TagNameToEntityLabelsMap,
 } from '../models';
@@ -63,19 +64,40 @@ export const getAPIAdapterCode = () => {
 const API_ADAPTER_PATH = `./Adapter`;
 
 export interface GenerateAPIFunctionsCodeConfigurationOptions {
+  /**
+   * The request groupings to generate code for.
+   */
   requestGroupings: RequestGroupings;
+
+  /**
+   * The tag to entity label mappings.
+   */
   tagToEntityLabelMappings: TagNameToEntityLabelsMap;
+
+  /**
+   * The schema to entity mappings.
+   */
   schemaToEntityMappings: Record<string, string>;
+
+  /**
+   * The models to validation schema mappings.
+   */
   modelsToValidationSchemaMappings: Record<
     string,
     GeneratedSchemaCodeConfiguration
   >;
+
+  /**
+   * Whether or not to trim null values from responses.
+   */
+  trimNullValuesFromResponses?: boolean;
 }
 export const getAPIFunctionsCodeConfiguration = ({
   requestGroupings,
   tagToEntityLabelMappings,
   schemaToEntityMappings,
   modelsToValidationSchemaMappings,
+  trimNullValuesFromResponses = true,
 }: GenerateAPIFunctionsCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce((accumulator, tag) => {
     const dataKeyVariableName = `${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
@@ -332,6 +354,14 @@ export const getAPIFunctionsCodeConfiguration = ({
                     importFilePath: validationSchemaSource,
                   });
 
+                  if (trimNullValuesFromResponses) {
+                    addModuleImport({
+                      imports,
+                      importName: 'removeNullValues',
+                      importFilePath: RMK_UTILS_LIBRARY_PATH,
+                    });
+                  }
+
                   jsDocCommentLines.push(`@returns ${description}`);
                   if (isArray) {
                     addModuleImport({
@@ -339,10 +369,19 @@ export const getAPIFunctionsCodeConfiguration = ({
                       importName: 'z',
                       importFilePath: 'zod',
                     });
+                    if (trimNullValuesFromResponses) {
+                      return `z.array(${successResponseValidationSchemaName}).parse(removeNullValues(data))`;
+                    }
                     return `z.array(${successResponseValidationSchemaName}).parse(data)`;
+                  }
+                  if (trimNullValuesFromResponses) {
+                    return `${successResponseValidationSchemaName}.parse(removeNullValues(data))`;
                   }
                   return `${successResponseValidationSchemaName}.parse(data)`;
                 }
+              }
+              if (trimNullValuesFromResponses) {
+                return 'removeNullValues(data)';
               }
               return 'data';
             })();
