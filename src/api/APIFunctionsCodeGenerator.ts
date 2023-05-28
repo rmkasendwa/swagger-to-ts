@@ -380,9 +380,6 @@ export const getAPIFunctionsCodeConfiguration = ({
                   return `${successResponseValidationSchemaName}.parse(data)`;
                 }
               }
-              if (trimNullValuesFromResponses) {
-                return 'removeNullValues(data)';
-              }
               return 'data';
             })();
 
