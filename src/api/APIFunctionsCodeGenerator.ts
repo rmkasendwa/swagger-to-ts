@@ -165,14 +165,6 @@ export const getAPIFunctionsCodeConfiguration = ({
               );
             }
 
-            if (trimNullValuesFromResponses) {
-              addModuleImport({
-                imports,
-                importName: 'removeNullValues',
-                importFilePath: RMK_UTILS_LIBRARY_PATH,
-              });
-            }
-
             //#region API function parameters code
             const apiFunctionParametersCode = [
               //#region Path parameters
@@ -370,11 +362,21 @@ export const getAPIFunctionsCodeConfiguration = ({
                       importFilePath: 'zod',
                     });
                     if (trimNullValuesFromResponses) {
+                      addModuleImport({
+                        imports,
+                        importName: 'removeNullValues',
+                        importFilePath: RMK_UTILS_LIBRARY_PATH,
+                      });
                       return `z.array(${successResponseValidationSchemaName}).parse(removeNullValues(data))`;
                     }
                     return `z.array(${successResponseValidationSchemaName}).parse(data)`;
                   }
                   if (trimNullValuesFromResponses) {
+                    addModuleImport({
+                      imports,
+                      importName: 'removeNullValues',
+                      importFilePath: RMK_UTILS_LIBRARY_PATH,
+                    });
                     return `${successResponseValidationSchemaName}.parse(removeNullValues(data))`;
                   }
                   return `${successResponseValidationSchemaName}.parse(data)`;
