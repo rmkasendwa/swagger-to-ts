@@ -48,7 +48,13 @@ fs.writeFileSync(
   `${outputDirectory}/package.json`,
   JSON.stringify(project, null, 2)
 );
-['README.md', 'LICENSE'].forEach((fileName) => {
+[
+  'README.md',
+  'LICENSE',
+  '.eslintrc.js',
+  '.prettierrc.js',
+  '.prettierignore',
+].forEach((fileName) => {
   fs.copySync(
     `${currentWorkingDirectory}/${fileName}`,
     `${outputDirectory}/${fileName}`

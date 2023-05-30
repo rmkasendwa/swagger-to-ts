@@ -1,4 +1,5 @@
 import { isEmpty } from 'lodash';
+import { singular } from 'pluralize';
 
 import { ModuleImports, OpenAPISpecification } from '../models';
 import {
@@ -413,7 +414,7 @@ export const generateModelCode = ({
     const getSchemaPrimitiveTypeValidationSchemaCode = (
       property: SchemaProperty,
       propertyName: string
-    ) => {
+    ): string | undefined => {
       if ('type' in property) {
         switch (property.type) {
           case 'number':
@@ -516,7 +517,13 @@ export const generateModelCode = ({
                   ] as (typeof property.items.type)[]
                 ).includes(property.items.type)
               ) {
-                return `z.array(z.${property.items.type}())`;
+                const zodCodeString =
+                  getSchemaPrimitiveTypeValidationSchemaCode(
+                    property.items,
+                    singular(propertyName)
+                  ) || `z.${property.items.type}()`;
+
+                return `z.array(${zodCodeString})`;
               }
             }
             return `z.array(z.any())`;
@@ -939,20 +946,58 @@ export const generateModelCode = ({
                             ] as (typeof property.items.type)[]
                           ).includes(property.items.type)
                         ) {
-                          if (generateTsEDControllers) {
-                            addModuleImport({
-                              imports,
-                              importName: 'ArrayOf',
-                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                            });
+                          const decorators = [...baseTsedPropertyDecorators];
+                          const enumTypeName = (() => {
+                            if (
+                              property.items.type === 'string' &&
+                              property.items.enum
+                            ) {
+                              return `${schemaName.toPascalCase()}${singular(
+                                baseTsedProperty.propertyName
+                              ).toPascalCase()}`;
+                            }
+                          })();
+                          const propertyType = (() => {
+                            if (
+                              property.items.type === 'string' &&
+                              property.items.enum &&
+                              enumTypeName
+                            ) {
+                              return `${enumTypeName}[]`;
+                            }
+                            return `${property.items.type}[]`;
+                          })();
+                          if (
+                            property.items.type === 'string' &&
+                            property.items.enum &&
+                            enumTypeName
+                          ) {
+                            if (generateTsEDControllers) {
+                              addModuleImport({
+                                imports,
+                                importName: 'Enum',
+                                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                              });
+                            }
+                            decorators.push(
+                              `@Enum(...${enumTypeName.toCamelCase()}Options)`
+                            );
+                          } else {
+                            if (generateTsEDControllers) {
+                              addModuleImport({
+                                imports,
+                                importName: 'ArrayOf',
+                                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                              });
+                            }
+                            decorators.push(
+                              `@ArrayOf(${property.items.type.toPascalCase()})`
+                            );
                           }
                           return {
                             ...baseTsedProperty,
-                            propertyType: `${property.items.type}[]`,
-                            decorators: [
-                              ...baseTsedPropertyDecorators,
-                              `@ArrayOf(${property.items.type.toPascalCase()})`,
-                            ],
+                            propertyType,
+                            decorators,
                             propertyModels: [
                               property.items.type.toPascalCase(),
                             ],
