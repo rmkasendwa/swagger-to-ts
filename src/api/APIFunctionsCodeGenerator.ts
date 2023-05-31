@@ -523,9 +523,17 @@ export const getAPIFunctionsCodeConfiguration = ({
           return `
               ${jsDocCommentSnippet}
               export const ${operationName} = async (${apiFunctionParametersCode}) => {
+                if (rest.getStaleWhileRevalidate) {
+                  const baseGetStaleWhileRevalidate = rest.getStaleWhileRevalidate;
+                  rest.getStaleWhileRevalidate = (data) => {
+                    return baseGetStaleWhileRevalidate(${returnValueString});
+                  };
+                }
+
                 const { data } = await ${httpActionName}(${interpolatedEndpointPathString}, {
                   ${requestOptionsCode}
                 });
+
                 return ${returnValueString};
               };
             `.trimIndent();
