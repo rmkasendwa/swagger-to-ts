@@ -1,6 +1,6 @@
 {
   "name": "@infinite-debugger/swagger-to-ts",
-  "version": "0.1.0-alpha.30",
+  "version": "0.1.0-alpha.31",
   "description": "swagger-to-ts is a powerful library that allows you to generate TypeScript code from Swagger documentation or OpenAPI specifications. It simplifies the process of integrating API definitions into your TypeScript projects, saving you time and effort.",
   "keywords": [
     "swagger",
@@ -12,6 +12,10 @@
     "api-client",
     "api-client-generator"
   ],
+  "homepage": "https://github.com/rmkasendwa/swagger-to-ts#readme",
+  "bugs": {
+    "url": "https://github.com/rmkasendwa/swagger-to-ts/issues"
+  },
   "license": "MIT",
   "author": {
     "name": "Ronald M. Kasendwa",

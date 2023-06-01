@@ -165,6 +165,36 @@ export const getAPIFunctionsCodeConfiguration = ({
               );
             }
 
+            const responseType = (() => {
+              if (successResponseSchemas && successResponseSchemas.length > 0) {
+                const [successResponseSchema] = successResponseSchemas;
+                if (
+                  'name' in successResponseSchema &&
+                  modelsToValidationSchemaMappings[successResponseSchema.name]
+                ) {
+                  const { name: successResponseSchemaName } =
+                    successResponseSchema;
+                  return modelsToValidationSchemaMappings[
+                    successResponseSchemaName
+                  ].name;
+                }
+              }
+            })();
+
+            if (responseType) {
+              addModuleImport({
+                imports,
+                importName: responseType,
+                importFilePath: `
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[responseType]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent(),
+              });
+            }
+
             //#region API function parameters code
             const apiFunctionParametersCode = [
               //#region Path parameters
@@ -315,7 +345,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               })(),
               //#endregion
 
-              `{ ...rest }: RequestOptions = {}`,
+              `{ ...rest }: RequestOptions<${responseType ?? 'any'}> = {}`,
             ].join(', ');
             //#endregion
 
