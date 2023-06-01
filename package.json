@@ -1,6 +1,6 @@
 {
   "name": "@infinite-debugger/swagger-to-ts",
-  "version": "0.1.0-alpha.31",
+  "version": "0.1.0-alpha.33",
   "description": "swagger-to-ts is a powerful library that allows you to generate TypeScript code from Swagger documentation or OpenAPI specifications. It simplifies the process of integrating API definitions into your TypeScript projects, saving you time and effort.",
   "keywords": [
     "swagger",

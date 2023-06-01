@@ -181,19 +181,33 @@ export const getAPIFunctionsCodeConfiguration = ({
               }
             })();
 
-            if (responseType) {
-              addModuleImport({
-                imports,
-                importName: responseType,
-                importFilePath: `
-                  ../models/${
-                    tagToEntityLabelMappings[
-                      schemaToEntityMappings[responseType]
-                    ].PascalCaseEntities
+            const responseTypeGenericParameter = (() => {
+              if (responseType) {
+                addModuleImport({
+                  imports,
+                  importName: responseType,
+                  importFilePath: `
+                    ../models/${
+                      tagToEntityLabelMappings[
+                        schemaToEntityMappings[responseType]
+                      ].PascalCaseEntities
+                    }
+                  `.trimIndent(),
+                });
+
+                if (
+                  successResponseSchemas &&
+                  successResponseSchemas.length > 0
+                ) {
+                  const [successResponseSchema] = successResponseSchemas;
+                  if (successResponseSchema.isArray) {
+                    return `<${responseType}[]>`;
                   }
-                `.trimIndent(),
-              });
-            }
+                }
+                return `<${responseType}>`;
+              }
+              return '';
+            })();
 
             //#region API function parameters code
             const apiFunctionParametersCode = [
@@ -345,7 +359,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               })(),
               //#endregion
 
-              `{ ...rest }: RequestOptions<${responseType ?? 'any'}> = {}`,
+              `{ ...rest }: RequestOptions${responseTypeGenericParameter} = {}`,
             ].join(', ');
             //#endregion
 
