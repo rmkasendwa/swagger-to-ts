@@ -5,6 +5,7 @@ import {
   BooleanSchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
   SchemaValidationSchema,
+  StringSchemaPropertyValidationSchema,
 } from './Schema';
 
 //#region JSONContent
@@ -16,6 +17,7 @@ export const JSONContentValidationSchema = z.object({
         SchemaValidationSchema,
         ArraySchemaPropertyValidationSchema,
         BooleanSchemaPropertyValidationSchema,
+        StringSchemaPropertyValidationSchema,
       ])
       .optional(),
   }),
