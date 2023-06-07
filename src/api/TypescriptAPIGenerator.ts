@@ -213,6 +213,13 @@ export const generateTypescriptAPI = async ({
           }
 
           const { requests } = accumulator[tag];
+          const typePrefix = (() => {
+            const match = /^\[(.+)\]\s/g.exec(tag);
+            if (match) {
+              return match[1].toPascalCase();
+            }
+            return scopeModelPrefix || '';
+          })();
 
           requests.push({
             ...request,
@@ -388,9 +395,7 @@ export const generateTypescriptAPI = async ({
                   }
                 );
                 if (headerParameters.length > 0) {
-                  const headerParametersModelReference = `${
-                    scopeModelPrefix || ''
-                  }${pascalCaseOperationName}HeaderParams`;
+                  const headerParametersModelReference = `${typePrefix}${pascalCaseOperationName}HeaderParams`;
                   openAPISpecification.components.schemas[
                     headerParametersModelReference
                   ] = generateSchemaFromRequestParameters({
@@ -412,9 +417,7 @@ export const generateTypescriptAPI = async ({
                   (parameter) => parameter.in === 'query'
                 );
                 if (queryParameters.length > 0) {
-                  const queryParametersModelReference = `${
-                    scopeModelPrefix || ''
-                  }${pascalCaseOperationName}QueryParams`;
+                  const queryParametersModelReference = `${typePrefix}${pascalCaseOperationName}QueryParams`;
                   openAPISpecification.components.schemas[
                     queryParametersModelReference
                   ] = generateSchemaFromRequestParameters({
@@ -738,7 +741,9 @@ export const generateTypescriptAPI = async ({
           `.trimIndent(),
             `
             //#region Data Keys
-            export const ${dataKeyVariableName} = '${tagToEntityLabelMappings[tag].PascalCaseEntities}';
+            export const ${dataKeyVariableName} = '${
+              scopeName !== 'Root' ? scopeName.toPascalCase() : ''
+            }${tagToEntityLabelMappings[tag].PascalCaseEntities}';
             //#endregion
           `.trimIndent(),
             `
