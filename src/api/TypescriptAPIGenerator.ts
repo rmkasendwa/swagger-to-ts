@@ -516,6 +516,7 @@ export const generateTypescriptAPI = async ({
         modelsToValidationSchemaMappings,
         schemaToEntityMappings,
         tagToEntityLabelMappings,
+        localScopeName,
       });
       //#endregion
 

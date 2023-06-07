@@ -91,6 +91,11 @@ export interface GenerateAPIFunctionsCodeConfigurationOptions {
    * Whether or not to trim null values from responses.
    */
   trimNullValuesFromResponses?: boolean;
+
+  /**
+   * The name of the local scope.
+   */
+  localScopeName: string;
 }
 export const getAPIFunctionsCodeConfiguration = ({
   requestGroupings,
@@ -98,9 +103,14 @@ export const getAPIFunctionsCodeConfiguration = ({
   schemaToEntityMappings,
   modelsToValidationSchemaMappings,
   trimNullValuesFromResponses = true,
+  localScopeName,
 }: GenerateAPIFunctionsCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce((accumulator, tag) => {
-    const dataKeyVariableName = `${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
+    const dataKeyVariableName = `${
+      localScopeName !== 'Root'
+        ? localScopeName.replace(/\s/g, '_').toUpperCase() + '_'
+        : ''
+    }${tagToEntityLabelMappings[tag].UPPER_CASE_ENTITIES}_DATA_KEY`;
     const imports = cloneDeep(requestGroupings[tag].imports);
     const exports: string[] = [];
 
