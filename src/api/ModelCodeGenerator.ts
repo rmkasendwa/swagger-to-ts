@@ -465,25 +465,27 @@ export const generateModelCode = ({
               if (property.properties) {
                 const propertiesTypeCode = (() => {
                   const firstProperty = Object.values(property.properties)[0];
-                  if (
-                    Array.isArray(firstProperty) &&
-                    firstProperty[0].type === 'string'
-                  ) {
-                    return `z.array(z.string())`;
-                  }
-                  if ('$ref' in firstProperty) {
-                    const referencedSchemaName = firstProperty.$ref.replace(
-                      '#/components/schemas/',
-                      ''
-                    );
-                    referencedSchemas.push(referencedSchemaName);
-                    const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-                    if (referencedSchemaName === schemaName) {
-                      modelIsRecursive = true;
-                      // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
-                      return `z.any()`;
+                  if (firstProperty) {
+                    if (
+                      Array.isArray(firstProperty) &&
+                      firstProperty[0].type === 'string'
+                    ) {
+                      return `z.array(z.string())`;
                     }
-                    return validationSchemaName;
+                    if ('$ref' in firstProperty) {
+                      const referencedSchemaName = firstProperty.$ref.replace(
+                        '#/components/schemas/',
+                        ''
+                      );
+                      referencedSchemas.push(referencedSchemaName);
+                      const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                      if (referencedSchemaName === schemaName) {
+                        modelIsRecursive = true;
+                        // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+                        return `z.any()`;
+                      }
+                      return validationSchemaName;
+                    }
                   }
                   return `z.any()`;
                 })();
@@ -885,18 +887,20 @@ export const generateModelCode = ({
                             const firstProperty = Object.values(
                               property.properties
                             )[0];
-                            if (
-                              Array.isArray(firstProperty) &&
-                              firstProperty[0].type === 'string'
-                            ) {
-                              return `string[]`;
-                            }
-                            if ('$ref' in firstProperty) {
-                              const schemaName = firstProperty.$ref.replace(
-                                '#/components/schemas/',
-                                ''
-                              );
-                              return schemaName;
+                            if (firstProperty) {
+                              if (
+                                Array.isArray(firstProperty) &&
+                                firstProperty[0].type === 'string'
+                              ) {
+                                return `string[]`;
+                              }
+                              if ('$ref' in firstProperty) {
+                                const schemaName = firstProperty.$ref.replace(
+                                  '#/components/schemas/',
+                                  ''
+                                );
+                                return schemaName;
+                              }
                             }
                             return `any`;
                           })();
