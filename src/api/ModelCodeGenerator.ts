@@ -466,11 +466,28 @@ export const generateModelCode = ({
                 const propertiesTypeCode = (() => {
                   const firstProperty = Object.values(property.properties)[0];
                   if (firstProperty) {
-                    if (
-                      Array.isArray(firstProperty) &&
-                      firstProperty[0].type === 'string'
-                    ) {
-                      return `z.array(z.string())`;
+                    if (Array.isArray(firstProperty)) {
+                      if (
+                        'type' in firstProperty[0] &&
+                        firstProperty[0].type === 'string'
+                      ) {
+                        return `z.array(z.string())`;
+                      }
+                      if ('$ref' in firstProperty[0]) {
+                        const referencedSchemaName =
+                          firstProperty[0].$ref.replace(
+                            '#/components/schemas/',
+                            ''
+                          );
+                        referencedSchemas.push(referencedSchemaName);
+                        const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+                        if (referencedSchemaName === schemaName) {
+                          modelIsRecursive = true;
+                          // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+                          return `z.any()`;
+                        }
+                        return `z.array(${validationSchemaName})`;
+                      }
                     }
                     if ('$ref' in firstProperty) {
                       const referencedSchemaName = firstProperty.$ref.replace(
@@ -888,11 +905,21 @@ export const generateModelCode = ({
                               property.properties
                             )[0];
                             if (firstProperty) {
-                              if (
-                                Array.isArray(firstProperty) &&
-                                firstProperty[0].type === 'string'
-                              ) {
-                                return `string[]`;
+                              if (Array.isArray(firstProperty)) {
+                                if (
+                                  'type' in firstProperty[0] &&
+                                  firstProperty[0].type === 'string'
+                                ) {
+                                  return `string[]`;
+                                }
+                                if ('$ref' in firstProperty[0]) {
+                                  const schemaName =
+                                    firstProperty[0].$ref.replace(
+                                      '#/components/schemas/',
+                                      ''
+                                    );
+                                  return `${schemaName}[]`;
+                                }
                               }
                               if ('$ref' in firstProperty) {
                                 const schemaName = firstProperty.$ref.replace(

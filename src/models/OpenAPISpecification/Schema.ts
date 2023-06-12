@@ -108,19 +108,26 @@ export type RefSchemaProperty = z.infer<
 //#endregion
 
 //#region ObjectSchemaProperty
+export const ObjectSchemaPropertyMemberValidationSchema = z.union([
+  z.array(
+    z.union([
+      z.object({
+        type: z.literal('string').describe('The schema property type.'),
+      }),
+      RefSchemaPropertyValidationSchema,
+    ])
+  ),
+  RefSchemaPropertyValidationSchema,
+]);
+
+export type ObjectSchemaPropertyMember = z.infer<
+  typeof ObjectSchemaPropertyMemberValidationSchema
+>;
+
 export const ObjectSchemaPropertyValidationSchema = z.object({
   type: z.literal('object').describe('The schema property type.'),
   properties: z
-    .record(
-      z.union([
-        z.array(
-          z.object({
-            type: z.literal('string').describe('The schema property type.'),
-          })
-        ),
-        RefSchemaPropertyValidationSchema,
-      ])
-    )
+    .record(ObjectSchemaPropertyMemberValidationSchema)
     .optional()
     .describe('The schema property properties.'),
   description: z
