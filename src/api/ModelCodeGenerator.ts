@@ -593,7 +593,10 @@ export const generateModelCode = ({
             code += `.optional()`;
           }
           if ('description' in property && property.description) {
-            code += `.describe(\`${property.description}\`)`;
+            code += `.describe(\`${property.description.replace(
+              /(`)/gm,
+              '\\`'
+            )}\`)`;
           }
           return code;
         }

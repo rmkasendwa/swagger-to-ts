@@ -38,7 +38,12 @@ export type BaseRequestParameter = z.infer<
 //#endregion
 
 //#region RequestParameter
-export const requestParameterLocations = ['query', 'header', 'path'] as const;
+export const requestParameterLocations = [
+  'query',
+  'header',
+  'path',
+  'cookie',
+] as const;
 export type RequestParameterLocation =
   (typeof requestParameterLocations)[number];
 
