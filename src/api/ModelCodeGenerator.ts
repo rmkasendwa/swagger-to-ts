@@ -430,7 +430,8 @@ export const generateModelCode = ({
           }
           case 'string': {
             if (property.enum) {
-              const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
+              const enumTypeName =
+                `${schemaName} ${propertyName}`.toPascalCase();
               const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
 
               generatedVariables[
@@ -836,7 +837,8 @@ export const generateModelCode = ({
                         }
                       }
                       if (property.enum) {
-                        const enumTypeName = `${schemaName.toPascalCase()}${propertyName.toPascalCase()}`;
+                        const enumTypeName =
+                          `${schemaName} ${propertyName}`.toPascalCase();
                         const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
 
                         if (generateTsEDControllers) {
