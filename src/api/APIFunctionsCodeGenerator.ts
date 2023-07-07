@@ -161,6 +161,7 @@ export const getAPIFunctionsCodeConfiguration = ({
             jsDocCommentSnippet,
             apiFunctionParametersCode,
             returnValueString,
+            definedSchemaResponseType,
           } = (() => {
             const jsDocCommentLines: string[] = [];
 
@@ -175,7 +176,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               );
             }
 
-            const responseType = (() => {
+            const definedSchemaResponseName = (() => {
               if (successResponseSchemas && successResponseSchemas.length > 0) {
                 const [successResponseSchema] = successResponseSchemas;
                 if (
@@ -191,30 +192,30 @@ export const getAPIFunctionsCodeConfiguration = ({
               }
             })();
 
+            const definedSchemaResponseType = (() => {
+              if (successResponseSchemas && successResponseSchemas.length > 0) {
+                const [successResponseSchema] = successResponseSchemas;
+                if (successResponseSchema.isArray) {
+                  return `${definedSchemaResponseName}[]`;
+                }
+              }
+              return definedSchemaResponseName;
+            })();
+
             const responseTypeGenericParameter = (() => {
-              if (responseType) {
+              if (definedSchemaResponseName && definedSchemaResponseType) {
                 addModuleImport({
                   imports,
-                  importName: responseType,
+                  importName: definedSchemaResponseName,
                   importFilePath: `
                     ../models/${
                       tagToEntityLabelMappings[
-                        schemaToEntityMappings[responseType]
+                        schemaToEntityMappings[definedSchemaResponseName]
                       ].PascalCaseEntities
                     }
                   `.trimIndent(),
                 });
-
-                if (
-                  successResponseSchemas &&
-                  successResponseSchemas.length > 0
-                ) {
-                  const [successResponseSchema] = successResponseSchemas;
-                  if (successResponseSchema.isArray) {
-                    return `<${responseType}[]>`;
-                  }
-                }
-                return `<${responseType}>`;
+                return `<${definedSchemaResponseType}>`;
               }
               return '';
             })();
@@ -457,6 +458,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               })(),
               apiFunctionParametersCode,
               returnValueString,
+              definedSchemaResponseType,
             };
           })();
 
@@ -498,7 +500,7 @@ export const getAPIFunctionsCodeConfiguration = ({
           //#endregion
 
           //#region API adapter request call code
-          let httpActionName = (() => {
+          const httpActionName = (() => {
             if (method === 'delete') {
               return `_delete`;
             }
@@ -525,22 +527,20 @@ export const getAPIFunctionsCodeConfiguration = ({
                 return 'type' in successResponseSchema;
               })
           );
-
-          if (isEnvironmentDefinedModel && successResponseSchemas) {
-            const responseType = `${successResponseSchemas
-              .map((successResponseSchema) => {
-                if ('name' in successResponseSchema) {
-                  return successResponseSchema.name;
-                }
-                if ('type' in successResponseSchema) {
-                  return successResponseSchema.type;
-                }
-              })
-              .join('|')}`;
-            if (responseType.length > 0) {
-              httpActionName += `<${responseType}>`;
+          const environmentDefinedResponseType = (() => {
+            if (isEnvironmentDefinedModel && successResponseSchemas) {
+              return `${successResponseSchemas
+                .map((successResponseSchema) => {
+                  if ('name' in successResponseSchema) {
+                    return successResponseSchema.name;
+                  }
+                  if ('type' in successResponseSchema) {
+                    return successResponseSchema.type;
+                  }
+                })
+                .join('|')}`;
             }
-          }
+          })();
           //#endregion
 
           const requestOptionsCode = [
@@ -574,9 +574,13 @@ export const getAPIFunctionsCodeConfiguration = ({
 
           exports.push(operationName);
 
+          const responseTypeCode = `Promise<${
+            definedSchemaResponseType || environmentDefinedResponseType || 'any'
+          }>`;
+
           return `
               ${jsDocCommentSnippet}
-              export const ${operationName} = async (${apiFunctionParametersCode}) => {
+              export const ${operationName} = async (${apiFunctionParametersCode}): ${responseTypeCode} => {
                 if (rest.getStaleWhileRevalidate) {
                   const baseGetStaleWhileRevalidate = rest.getStaleWhileRevalidate;
                   rest.getStaleWhileRevalidate = (data) => {
