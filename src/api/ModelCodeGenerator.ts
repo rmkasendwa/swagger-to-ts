@@ -552,121 +552,119 @@ export const generateModelCode = ({
       }
     };
 
-    const getSchemaTypValidationSchemaCode = (
+    const getSchemaTypeValidationSchemaCode = (
       property: SchemaProperty | UnionSchemaProperty,
       propertyName: string
     ): string => {
-      if ('type' in property) {
-        let isNullable = false;
-        let code = (() => {
-          if (Array.isArray(property.type)) {
-            isNullable = property.type.includes('null');
-            const nonNullTypes = property.type.filter(
-              (type) => type !== 'null'
-            );
-            if (nonNullTypes.length === 1) {
+      const isNullable = Boolean(
+        ('nullable' in property && property.nullable) ||
+          ('oneOf' in property &&
+            property.oneOf.find((property) => {
+              return 'type' in property && property.type === 'null';
+            }))
+      );
+      let code = (() => {
+        if ('type' in property) {
+          let code = (() => {
+            if (Array.isArray(property.type)) {
+              const nonNullTypes = property.type.filter(
+                (type) => type !== 'null'
+              );
+              if (nonNullTypes.length === 1) {
+                return getSchemaPrimitiveTypeValidationSchemaCode(
+                  {
+                    ...property,
+                    type: nonNullTypes[0] as any,
+                  },
+                  propertyName
+                );
+              }
+              const zodSchemasCode = property.type
+                .map((type) => {
+                  return `z.${type}()`;
+                })
+                .join(', ');
+              return `z.union([${zodSchemasCode}])`;
+            } else {
               return getSchemaPrimitiveTypeValidationSchemaCode(
-                {
-                  ...property,
-                  type: nonNullTypes[0] as any,
-                },
+                property,
                 propertyName
               );
             }
-            const zodSchemasCode = property.type
-              .map((type) => {
-                return `z.${type}()`;
-              })
-              .join(', ');
-            return `z.union([${zodSchemasCode}])`;
-          } else {
-            return getSchemaPrimitiveTypeValidationSchemaCode(
-              property,
-              propertyName
+          })();
+          if (code) {
+            if (!schema.required || !schema.required.includes(propertyName)) {
+              code += `.optional()`;
+            }
+            if ('description' in property && property.description) {
+              code += `.describe(\`${property.description.replace(
+                /(`)/gm,
+                '\\`'
+              )}\`)`;
+            }
+            return code;
+          }
+        }
+        if ('$ref' in property) {
+          let code = (() => {
+            const referencedSchemaName = property.$ref.replace(
+              '#/components/schemas/',
+              ''
             );
-          }
-        })();
-        if (code) {
-          if (isNullable) {
-            code += `.nullable()`;
-          }
-          if (!schema.required || !schema.required.includes(propertyName)) {
-            code += `.optional()`;
-          }
-          if ('description' in property && property.description) {
-            code += `.describe(\`${property.description.replace(
-              /(`)/gm,
-              '\\`'
-            )}\`)`;
+            referencedSchemas.push(referencedSchemaName);
+            const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
+            if (referencedSchemaName === schemaName) {
+              modelIsRecursive = true;
+              // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
+              return `z.any()`;
+            }
+            return validationSchemaName;
+          })();
+          if (code) {
+            if (!schema.required || !schema.required.includes(propertyName)) {
+              code += `.optional()`;
+            }
+            if (property.description) {
+              code += `.describe(\`${property.description}\`)`;
+            }
           }
           return code;
         }
-      }
-      if ('$ref' in property) {
-        let code = (() => {
-          const referencedSchemaName = property.$ref.replace(
-            '#/components/schemas/',
-            ''
-          );
-          referencedSchemas.push(referencedSchemaName);
-          const validationSchemaName = `${referencedSchemaName}ValidationSchema`;
-          if (referencedSchemaName === schemaName) {
-            modelIsRecursive = true;
-            // return `z.lazy(() => ${validationSchemaName})`; // TODO: Lazy reference validation schema
-            return `z.any()`;
-          }
-          return validationSchemaName;
-        })();
-        if (code) {
-          if (!schema.required || !schema.required.includes(propertyName)) {
-            code += `.optional()`;
-          }
-          if (property.description) {
-            code += `.describe(\`${property.description}\`)`;
-          }
-        }
-        return code;
-      }
-      if ('oneOf' in property) {
-        const isNullable = Boolean(
-          property.oneOf.find((property) => {
-            return 'type' in property && property.type === 'null';
-          })
-        );
-
-        let code = (() => {
-          const nonNullTypes = property.oneOf.filter(
-            (property) => !('type' in property && property.type === 'null')
-          );
-
-          if (nonNullTypes.length === 1) {
-            return getSchemaTypValidationSchemaCode(
-              nonNullTypes[0] as any,
-              propertyName
+        if ('oneOf' in property) {
+          let code = (() => {
+            const nonNullTypes = property.oneOf.filter(
+              (property) => !('type' in property && property.type === 'null')
             );
-          }
 
-          const zodSchemasCode = property.oneOf
-            .map((type) => {
-              return getSchemaTypValidationSchemaCode(type, propertyName);
-            })
-            .join(', ');
-          return `z.union([${zodSchemasCode}])`;
-        })();
+            if (nonNullTypes.length === 1) {
+              return getSchemaTypeValidationSchemaCode(
+                nonNullTypes[0] as any,
+                propertyName
+              );
+            }
 
-        if (isNullable) {
-          code += `.nullable()`;
+            const zodSchemasCode = property.oneOf
+              .map((type) => {
+                return getSchemaTypeValidationSchemaCode(type, propertyName);
+              })
+              .join(', ');
+            return `z.union([${zodSchemasCode}])`;
+          })();
+
+          return code;
         }
-
-        return code;
+        return `z.any()`;
+      })();
+      if (isNullable) {
+        code += `.nullable()`;
       }
-      return `z.any()`;
+      return code;
     };
 
     const zodValidationSchemaConfiguration = Object.entries(
       schemaProperties
     ).reduce((accumulator, [propertyName, property]) => {
-      const code = getSchemaTypValidationSchemaCode(
+      const code = getSchemaTypeValidationSchemaCode(
         property as any,
         propertyName
       );
@@ -701,7 +699,7 @@ export const generateModelCode = ({
         modelIsRecursive
       ) {
         const tsedModelConfiguration = Object.entries(schemaProperties).reduce(
-          (accumulator, [basePropertyName]) => {
+          (accumulator, [basePropertyName, property]) => {
             const propertyName = (() => {
               if (basePropertyName.match(/\W/g)) {
                 if (generateTsEDControllers) {
@@ -712,7 +710,6 @@ export const generateModelCode = ({
               }
               return basePropertyName;
             })();
-            let isNullable = false;
             const tsedProperty = (():
               | Omit<TsedModelProperty, 'typeDefinitionSnippet'>
               | undefined => {
@@ -1099,8 +1096,6 @@ export const generateModelCode = ({
                   }
 
                   if (Array.isArray(property.type)) {
-                    isNullable = property.type.includes('null');
-
                     const nonNullTypes = property.type.filter(
                       (type) => type !== 'null'
                     );
@@ -1147,12 +1142,6 @@ export const generateModelCode = ({
                 }
 
                 if ('oneOf' in property) {
-                  // isNullable = Boolean(
-                  //   property.oneOf.find((property) => {
-                  //     return 'type' in property && property.type === 'null';
-                  //   })
-                  // );
-
                   let code = (() => {
                     const nonNullTypes = property.oneOf.filter(
                       (property) =>
@@ -1200,7 +1189,14 @@ export const generateModelCode = ({
               return getTsEDPropertyTypeCode(baseProperty, propertyName);
             })();
             if (tsedProperty) {
+              let propertyTypeCode = tsedProperty.propertyType;
+              const isNullable = Boolean(
+                property &&
+                  (('type' in property && property.type.includes('null')) ||
+                    ('nullable' in property && property.nullable))
+              );
               if (isNullable) {
+                tsedProperty.isNullable = true;
                 const nullableModelsCode = (() => {
                   if (tsedProperty.propertyModels.length > 0) {
                     return tsedProperty.propertyModels.join(', ');
@@ -1222,6 +1218,7 @@ export const generateModelCode = ({
                     importFilePath: TSED_SCHEMA_LIBRARY_PATH,
                   });
                 }
+                propertyTypeCode = `${propertyTypeCode} | null`;
               }
               const propertyValueSeparator = tsedProperty.required
                 ? '!:'
@@ -1232,7 +1229,7 @@ export const generateModelCode = ({
                 ${tsedProperty.decorators.join('\n')}
                 ${tsedProperty.accessModifier} ${
                   tsedProperty.propertyName
-                }${propertyValueSeparator} ${tsedProperty.propertyType}
+                }${propertyValueSeparator} ${propertyTypeCode}
               `.trimIndent(),
               };
             }
@@ -1285,9 +1282,14 @@ export const generateModelCode = ({
                 propertyType,
                 required,
                 openAPISpecification,
+                isNullable,
               } = tsedModelConfiguration[key];
+              let propertiesTypeCode = propertyType;
+              if (isNullable) {
+                propertiesTypeCode = `${propertiesTypeCode} | null`;
+              }
               const propertyValueSeparator = required ? ': ' : '?: ';
-              const propertyValueSnippet = `${propertyName}${propertyValueSeparator} ${propertyType}`;
+              const propertyValueSnippet = `${propertyName}${propertyValueSeparator} ${propertiesTypeCode}`;
               const jsDocCommentLines: string[] = [];
               if (
                 'description' in openAPISpecification &&

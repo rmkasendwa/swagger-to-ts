@@ -16,6 +16,10 @@ export const StringSchemaPropertyValidationSchema = z.object({
   maxLength: z.number().optional().describe('The schema property max length.'),
   example: z.string().optional().describe('The schema property example.'),
   default: z.string().optional().describe('The schema property default.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type StringSchemaProperty = z.infer<
@@ -36,6 +40,10 @@ export const NumberSchemaPropertyValidationSchema = z.object({
   default: z.number().optional().describe('The schema property default.'),
   min: z.number().optional().describe('The schema property min.'),
   max: z.number().optional().describe('The schema property max.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type NumberSchemaProperty = z.infer<
@@ -52,6 +60,10 @@ export const BooleanSchemaPropertyValidationSchema = z.object({
     .describe('The schema property description.'),
   example: z.boolean().optional().describe('The schema property example.'),
   default: z.boolean().optional().describe('The schema property default.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type BooleanSchemaProperty = z.infer<
@@ -86,6 +98,10 @@ export const PrimitiveUnionSchemaPropertyValidationSchema = z.object({
     .describe('The schema property description.'),
   example: z.any().optional().describe('The schema property example.'),
   default: z.any().optional().describe('The schema property default.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type PrimitiveUnionSchemaProperty = z.infer<
@@ -136,6 +152,10 @@ export const ObjectSchemaPropertyValidationSchema = z.object({
     .describe('The schema property description.'),
   example: z.any().optional().describe('The schema property example.'),
   default: z.any().optional().describe('The schema property default.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type ObjectSchemaProperty = z.infer<
@@ -169,6 +189,10 @@ export const ArraySchemaPropertyValidationSchema = z.object({
     .describe('The schema property description.'),
   example: z.array(z.any()).optional().describe('The schema property example.'),
   default: z.array(z.any()).optional().describe('The schema property default.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type ArraySchemaProperty = z.infer<
@@ -211,6 +235,10 @@ const UnionSchemaPropertyValidationSchema = z.object({
     .string()
     .optional()
     .describe('The schema property description.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type UnionSchemaProperty = z.infer<
@@ -236,6 +264,10 @@ export const ObjectSchemaValidationSchema = z.object({
     .array(z.string())
     .optional()
     .describe('The schema required properties.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type ObjectSchema = z.infer<typeof ObjectSchemaValidationSchema>;
@@ -248,6 +280,10 @@ export const ArraySchemaValidationSchema = z.object({
     SchemaPropertyValidationSchema,
     UnionSchemaPropertyValidationSchema,
   ]),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
 });
 
 export type ArraySchema = z.infer<typeof ArraySchemaValidationSchema>;

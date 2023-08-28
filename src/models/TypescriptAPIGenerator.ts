@@ -150,6 +150,11 @@ export interface TsedModelProperty {
    * The open api specification of the property.
    */
   openAPISpecification: SchemaProperty;
+
+  /**
+   * Whether the property is nullable or not.
+   */
+  isNullable?: boolean;
 }
 
 export interface GeneratedSchemaCodeConfiguration {
