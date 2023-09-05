@@ -490,7 +490,11 @@ export const generateModelCode = ({
                         return `z.array(${validationSchemaName})`;
                       }
                     }
-                    if ('$ref' in firstProperty) {
+                    if (
+                      typeof firstProperty === 'object' &&
+                      '$ref' in firstProperty &&
+                      typeof firstProperty.$ref === 'string'
+                    ) {
                       const referencedSchemaName = firstProperty.$ref.replace(
                         '#/components/schemas/',
                         ''
@@ -892,59 +896,67 @@ export const generateModelCode = ({
                         propertyModels: [`Boolean`],
                       };
                     }
-                    case 'object':
-                      {
-                        if (property.properties) {
-                          if (generateTsEDControllers) {
-                            addModuleImport({
-                              imports,
-                              importName: 'RecordOf',
-                              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                            });
-                          }
-                          const propertiesTypeCode = (() => {
-                            const firstProperty = Object.values(
-                              property.properties
-                            )[0];
-                            if (firstProperty) {
-                              if (Array.isArray(firstProperty)) {
-                                if (
-                                  'type' in firstProperty[0] &&
-                                  firstProperty[0].type === 'string'
-                                ) {
-                                  return `string[]`;
-                                }
-                                if ('$ref' in firstProperty[0]) {
-                                  const schemaName =
-                                    firstProperty[0].$ref.replace(
-                                      '#/components/schemas/',
-                                      ''
-                                    );
-                                  return `${schemaName}[]`;
-                                }
+                    case 'object': {
+                      if (property.properties) {
+                        if (generateTsEDControllers) {
+                          addModuleImport({
+                            imports,
+                            importName: 'RecordOf',
+                            importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                          });
+                        }
+                        const propertiesTypeCode = (() => {
+                          const firstProperty = Object.values(
+                            property.properties
+                          )[0];
+                          if (firstProperty) {
+                            if (Array.isArray(firstProperty)) {
+                              if (
+                                'type' in firstProperty[0] &&
+                                firstProperty[0].type === 'string'
+                              ) {
+                                return `string[]`;
                               }
-                              if ('$ref' in firstProperty) {
-                                const schemaName = firstProperty.$ref.replace(
-                                  '#/components/schemas/',
-                                  ''
-                                );
-                                return schemaName;
+                              if ('$ref' in firstProperty[0]) {
+                                const schemaName =
+                                  firstProperty[0].$ref.replace(
+                                    '#/components/schemas/',
+                                    ''
+                                  );
+                                return `${schemaName}[]`;
                               }
                             }
-                            return `any`;
-                          })();
-                          return {
-                            ...baseTsedProperty,
-                            propertyType: `Record<string, ${propertiesTypeCode}>`,
-                            decorators: [
-                              ...baseTsedPropertyDecorators,
-                              `@RecordOf([String])`,
-                            ],
-                            propertyModels: [`Object`],
-                          };
-                        }
+                            if (
+                              typeof firstProperty === 'object' &&
+                              '$ref' in firstProperty &&
+                              typeof firstProperty.$ref === 'string'
+                            ) {
+                              const schemaName = firstProperty.$ref.replace(
+                                '#/components/schemas/',
+                                ''
+                              );
+                              return schemaName;
+                            }
+                          }
+                          return `any`;
+                        })();
+                        return {
+                          ...baseTsedProperty,
+                          propertyType: `Record<string, ${propertiesTypeCode}>`,
+                          decorators: [
+                            ...baseTsedPropertyDecorators,
+                            `@RecordOf([String])`,
+                          ],
+                          propertyModels: [`Object`],
+                        };
                       }
-                      break;
+                      return {
+                        ...baseTsedProperty,
+                        propertyType: `any`,
+                        decorators: [...baseTsedPropertyDecorators],
+                        propertyModels: [`Object`],
+                      };
+                    }
                     case 'array': {
                       if (property.items) {
                         if ('$ref' in property.items) {

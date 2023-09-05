@@ -33,7 +33,12 @@ export const findSchemaReferencedSchemas = ({
           {
             if (property.properties) {
               Object.values(property.properties).forEach((property) => {
-                if ('$ref' in property) {
+                if (
+                  typeof property === 'object' &&
+                  property &&
+                  '$ref' in property &&
+                  typeof property.$ref === 'string'
+                ) {
                   const schemaName = property.$ref.replace(
                     '#/components/schemas/',
                     ''

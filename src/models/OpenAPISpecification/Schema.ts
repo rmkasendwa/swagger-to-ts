@@ -163,6 +163,52 @@ export type ObjectSchemaProperty = z.infer<
 >;
 //#endregion
 
+//#region RecordSchemaProperty
+export const RecordSchemaPropertyValidationSchema = z.object({
+  type: z.literal('object').describe('The schema property type.'),
+  additionalProperties: z.union([
+    z.object({
+      type: z.literal('array').describe('The schema property type.'),
+      items: z
+        .union([
+          StringSchemaPropertyValidationSchema,
+          NumberSchemaPropertyValidationSchema,
+          BooleanSchemaPropertyValidationSchema,
+          NullSchemaPropertyValidationSchema,
+          RefSchemaPropertyValidationSchema,
+        ])
+        .optional()
+        .describe('The schema property items.'),
+    }),
+    z
+      .union([
+        StringSchemaPropertyValidationSchema,
+        NumberSchemaPropertyValidationSchema,
+        BooleanSchemaPropertyValidationSchema,
+        NullSchemaPropertyValidationSchema,
+        RefSchemaPropertyValidationSchema,
+      ])
+      .optional()
+      .describe('The schema property items.'),
+  ]),
+  properties: z.any().optional().describe('The schema property properties.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The schema property description.'),
+  example: z.any().optional().describe('The schema property example.'),
+  default: z.any().optional().describe('The schema property default.'),
+  nullable: z
+    .boolean()
+    .optional()
+    .describe('Whether the schema property is nullable or not.'),
+});
+
+export type RecordSchemaProperty = z.infer<
+  typeof RecordSchemaPropertyValidationSchema
+>;
+//#endregion
+
 //#region PrimitiveSchemaProperty
 export const ArraySchemaPropertyMemberValidationSchema = z.union([
   StringSchemaPropertyValidationSchema,
@@ -210,6 +256,7 @@ export const SchemaPropertyValidationSchema = z.union([
   ObjectSchemaPropertyValidationSchema,
   ArraySchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
+  RecordSchemaPropertyValidationSchema,
 ]);
 
 export type SchemaProperty = z.infer<typeof SchemaPropertyValidationSchema>;
@@ -228,6 +275,7 @@ const UnionSchemaPropertyValidationSchema = z.object({
         ObjectSchemaPropertyValidationSchema,
         ArraySchemaPropertyValidationSchema,
         RefSchemaPropertyValidationSchema,
+        RecordSchemaPropertyValidationSchema,
       ])
     )
     .describe('The schema property one of.'),
