@@ -1300,7 +1300,8 @@ export const generateModelCode = ({
               if (isNullable) {
                 propertiesTypeCode = `${propertiesTypeCode} | null`;
               }
-              const propertyValueSeparator = required ? ': ' : '?: ';
+              const propertyValueSeparator =
+                required && propertiesTypeCode !== 'any' ? ': ' : '?: ';
               const propertyValueSnippet = `${propertyName}${propertyValueSeparator} ${propertiesTypeCode}`;
               const jsDocCommentLines: string[] = [];
               if (
