@@ -119,7 +119,7 @@ export const getTSEDControllersCodeConfiguration = ({
                 importFilePath: TSED_SCHEMA_LIBRARY_PATH,
               });
               controllerMethodDecorators.push(
-                `@Description('${description}')`,
+                `@Description(${JSON.stringify(description)})`,
                 ''
               );
             }
@@ -309,7 +309,9 @@ export const getTSEDControllersCodeConfiguration = ({
                       `@Returns(${httpStatusCode}, Array).Of(${name})` +
                         (() => {
                           if (description) {
-                            return `.Description('${description}')`;
+                            return `.Description(${JSON.stringify(
+                              description
+                            )})`;
                           }
                           return '';
                         })()
@@ -319,7 +321,9 @@ export const getTSEDControllersCodeConfiguration = ({
                       `@Returns(${httpStatusCode}, ${name})` +
                         (() => {
                           if (description) {
-                            return `.Description('${description}')`;
+                            return `.Description(${JSON.stringify(
+                              description
+                            )})`;
                           }
                           return '';
                         })()
@@ -331,7 +335,7 @@ export const getTSEDControllersCodeConfiguration = ({
                     `@Returns(${httpStatusCode}, ${successResponseSchema.type.toPascalCase()})` +
                       (() => {
                         if (description) {
-                          return `.Description('${description}')`;
+                          return `.Description(${JSON.stringify(description)})`;
                         }
                         return '';
                       })()

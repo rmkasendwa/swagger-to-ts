@@ -8,6 +8,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs-extra';
+import pluralize from 'pluralize';
 import prettier from 'prettier';
 import walkSync from 'walk-sync';
 import { z } from 'zod';
@@ -467,12 +468,7 @@ export const generateTypescriptAPI = async ({
         'Utils',
       ].reduce((accumulator, tag) => {
         const labelPlural = tag;
-        const labelSingular = (() => {
-          if (tag.endsWith('s')) {
-            return tag.slice(0, -1);
-          }
-          return tag;
-        })();
+        const labelSingular = pluralize.singular(tag);
         accumulator[tag] = {
           'Entities Label': labelPlural,
           'Entity Label': labelSingular,
