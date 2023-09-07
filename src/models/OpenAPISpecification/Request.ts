@@ -78,6 +78,27 @@ export type RequestBody = {
 };
 //#endregion
 
+//#region RequstConfig
+export const RequestConfigValidationSchema = z.object({
+  tsedControllerConfig: z
+    .object({
+      permissons: z
+        .array(z.string())
+        .optional()
+        .describe('The request permissions.'),
+      path: z.string().optional().describe('The request path.'),
+    })
+    .optional(),
+  apiFunctionConfig: z
+    .object({
+      responseType: z.string().optional().describe('The response type.'),
+    })
+    .optional(),
+});
+
+export type RequestConfig = z.infer<typeof RequestConfigValidationSchema>;
+//#endregion
+
 //#region Request
 export const RequestValidationSchema = z.object({
   description: z.string().optional().describe('The request description.'),
@@ -91,6 +112,9 @@ export const RequestValidationSchema = z.object({
   responses: ResponsesValidationSchema.describe('The request responses.'),
   summary: z.string().optional().describe('The request summary.'),
   tags: z.array(z.string()).describe('The request tags.'),
+  'x-requestConfig': RequestConfigValidationSchema.optional().describe(
+    'The custom request configuration.'
+  ),
 });
 
 export type Request = z.infer<typeof RequestValidationSchema>;
