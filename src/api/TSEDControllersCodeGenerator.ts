@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import {
+  ENVIRONMENT_DEFINED_MODELS,
   RequestGroupings,
   TSEDControllersCodeConfiguration,
   TSED_COMMON_LIBRARY_PATH,
@@ -295,14 +296,17 @@ export const getTSEDControllersCodeConfiguration = ({
                 });
                 if ('name' in successResponseSchema) {
                   const { name, isArray } = successResponseSchema;
-                  addModuleImport({
-                    imports,
-                    importName: name,
-                    importFilePath: `../models/${
-                      tagToEntityLabelMappings[schemaToEntityMappings[name]]
-                        .PascalCaseEntities
-                    }`,
-                  });
+
+                  if (!ENVIRONMENT_DEFINED_MODELS.includes(name as any)) {
+                    addModuleImport({
+                      imports,
+                      importName: name,
+                      importFilePath: `../models/${
+                        tagToEntityLabelMappings[schemaToEntityMappings[name]]
+                          .PascalCaseEntities
+                      }`,
+                    });
+                  }
 
                   if (isArray) {
                     controllerMethodDecorators.push(

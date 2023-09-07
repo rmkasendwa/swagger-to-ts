@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { OpenAPISpecification } from '../models';
+import { ENVIRONMENT_DEFINED_MODELS, OpenAPISpecification } from '../models';
 
 export interface PrefixModelsAndModelReferencesOptions {
   openAPISpecification: OpenAPISpecification;
@@ -16,8 +16,10 @@ export const prefixModelsAndModelReferences = ({
   //#region Prefix models
   Object.entries(openAPISpecification.components.schemas).forEach(
     ([key, value]) => {
-      delete openAPISpecification.components.schemas[key];
-      openAPISpecification.components.schemas[`${prefix}${key}`] = value;
+      if (!ENVIRONMENT_DEFINED_MODELS.includes(key as any)) {
+        delete openAPISpecification.components.schemas[key];
+        openAPISpecification.components.schemas[`${prefix}${key}`] = value;
+      }
     }
   );
   //#endregion
@@ -35,7 +37,7 @@ export const prefixModelsAndModelReferences = ({
     Object.entries(obj).forEach(([key, value]) => {
       if (typeof value === 'string') {
         const match = /^#\/components\/schemas\/(\w+)$/g.exec(value);
-        if (match) {
+        if (match && !ENVIRONMENT_DEFINED_MODELS.includes(match[1] as any)) {
           obj[key] = `#/components/schemas/${prefix}${match[1]}`;
         }
       } else if (typeof value === 'object' && value !== null) {
