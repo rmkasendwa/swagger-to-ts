@@ -26,6 +26,18 @@ export const JSONContentValidationSchema = z.object({
 export type JSONContent = z.infer<typeof JSONContentValidationSchema>;
 //#endregion
 
+//#region PDFContent
+export const PDFContentValidationSchema = z.object({
+  'application/pdf': z.object({
+    schema: z
+      .union([RefSchemaPropertyValidationSchema, SchemaValidationSchema])
+      .optional(),
+  }),
+});
+
+export type PDFContent = z.infer<typeof PDFContentValidationSchema>;
+//#endregion
+
 //#region PNGContent
 export const PNGContentValidationSchema = z.object({
   'image/png': z.object({
@@ -54,7 +66,9 @@ export type GenericContent = z.infer<typeof GenericContentValidationSchema>;
 export const ContentValidationSchema: any = z.union([
   JSONContentValidationSchema,
   PNGContentValidationSchema,
+  PDFContentValidationSchema,
   GenericContentValidationSchema,
+  z.record(z.any()),
 ]);
 
 export type Content = JSONContent | PNGContent | GenericContent;

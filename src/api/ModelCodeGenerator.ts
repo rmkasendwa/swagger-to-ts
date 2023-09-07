@@ -118,6 +118,19 @@ export const generateModelMappings = ({
                   accumulator[schemaName].push(tag);
                 }
               }
+
+              if (
+                'application/pdf' in content &&
+                '$ref' in content['application/pdf'].schema
+              ) {
+                const schemaName = BINARY_RESPONSE_TYPE_MODEL_NAME;
+                if (!accumulator[schemaName]) {
+                  accumulator[schemaName] = [];
+                }
+                if (!accumulator[schemaName].includes(tag)) {
+                  accumulator[schemaName].push(tag);
+                }
+              }
             }
           });
 
@@ -298,40 +311,42 @@ export const generateModelMappings = ({
           });
 
         //#region Sort models by dependency on eath other
-        accumulator[entityName].models = (() => {
-          const models = accumulator[entityName].models;
-          const modelKeys = Object.keys(models);
+        if (accumulator[entityName]?.models) {
+          accumulator[entityName].models = (() => {
+            const models = accumulator[entityName].models;
+            const modelKeys = Object.keys(models);
 
-          const modelsReferencingModelsInSameFile = modelKeys.filter(
-            (modelKey) => {
-              const model = models[modelKey];
-              return model.referencedSchemas?.some((referencedSchema) => {
-                return modelKeys.includes(referencedSchema);
-              });
-            }
-          );
+            const modelsReferencingModelsInSameFile = modelKeys.filter(
+              (modelKey) => {
+                const model = models[modelKey];
+                return model.referencedSchemas?.some((referencedSchema) => {
+                  return modelKeys.includes(referencedSchema);
+                });
+              }
+            );
 
-          return modelKeys
-            .sort((aKey, bKey) => {
-              if (
-                modelsReferencingModelsInSameFile.includes(aKey) &&
-                !modelsReferencingModelsInSameFile.includes(bKey)
-              ) {
-                return 1;
-              }
-              if (
-                !modelsReferencingModelsInSameFile.includes(aKey) &&
-                modelsReferencingModelsInSameFile.includes(bKey)
-              ) {
-                return -1;
-              }
-              return 0;
-            })
-            .reduce((accumulator, modelKey) => {
-              accumulator[modelKey] = models[modelKey];
-              return accumulator;
-            }, {} as Record<string, GeneratedSchemaCodeConfiguration>);
-        })();
+            return modelKeys
+              .sort((aKey, bKey) => {
+                if (
+                  modelsReferencingModelsInSameFile.includes(aKey) &&
+                  !modelsReferencingModelsInSameFile.includes(bKey)
+                ) {
+                  return 1;
+                }
+                if (
+                  !modelsReferencingModelsInSameFile.includes(aKey) &&
+                  modelsReferencingModelsInSameFile.includes(bKey)
+                ) {
+                  return -1;
+                }
+                return 0;
+              })
+              .reduce((accumulator, modelKey) => {
+                accumulator[modelKey] = models[modelKey];
+                return accumulator;
+              }, {} as Record<string, GeneratedSchemaCodeConfiguration>);
+          })();
+        }
         //#endregion
 
         return accumulator;

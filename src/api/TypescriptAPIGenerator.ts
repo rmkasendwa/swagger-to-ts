@@ -359,6 +359,17 @@ export const generateTypescriptAPI = async ({
                         httpStatusCode: +successResponse,
                       } as SuccessResponseSchema;
                     }
+                    if (
+                      'application/pdf' in
+                      request.responses[successResponse].content
+                    ) {
+                      return {
+                        name: BINARY_RESPONSE_TYPE_MODEL_NAME,
+                        description:
+                          request.responses[successResponse].description,
+                        httpStatusCode: +successResponse,
+                      } as SuccessResponseSchema;
+                    }
                     if ('*/*' in request.responses[successResponse].content!) {
                       return {
                         type: 'string',
@@ -367,6 +378,12 @@ export const generateTypescriptAPI = async ({
                         httpStatusCode: +successResponse,
                       } as SuccessResponseSchema;
                     }
+                    return {
+                      name: BINARY_RESPONSE_TYPE_MODEL_NAME,
+                      description:
+                        request.responses[successResponse].description,
+                      httpStatusCode: +successResponse,
+                    } as SuccessResponseSchema;
                   })
                   .filter((schema) => schema) as SuccessResponseSchema[];
               }
