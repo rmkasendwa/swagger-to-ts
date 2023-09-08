@@ -57,8 +57,8 @@ export const getTSEDControllersCodeConfiguration = ({
 
     //#region Generate entity api request functions
     const controllerMethodsCode = requestGroupings[tag].requests
-      .map(
-        ({
+      .map((request) => {
+        const {
           method,
           operationName,
           description,
@@ -74,101 +74,105 @@ export const getTSEDControllersCodeConfiguration = ({
           requestBodyTypeDependentSchemaName,
           successResponseSchemas,
           summary,
-        }) => {
-          const {
-            controllerMethodDecorators,
-            controllerMethodParametersCode,
-            apiFunctionCallArgumentsCode,
-          } = (() => {
-            const controllerMethodRequestMethodName = method.toPascalCase();
-            const controllerRequestPath = requestPath
-              .replace(/(\/api\b|\/v\d+\b)/g, '')
-              .replace(
-                new RegExp(
-                  `\\/${tagToEntityLabelMappings[tag]['kebab-case-entities']}\\b`,
-                  'g'
-                ),
-                ''
-              )
-              .replace(/\{(\w+?)\}/g, ':$1');
+        } = request;
 
-            const controllerMethodDecorators: string[] = [
-              controllerRequestPath.length > 0
-                ? `@${controllerMethodRequestMethodName}('${controllerRequestPath}')`
-                : `@${controllerMethodRequestMethodName}()`,
-            ];
+        const streamAPIResponse =
+          request['x-requestConfig']?.tsedControllerConfig?.streamAPIResponse;
 
+        const {
+          controllerMethodDecorators,
+          controllerMethodParametersCode,
+          apiFunctionCallArgumentsCode,
+        } = (() => {
+          const controllerMethodRequestMethodName = method.toPascalCase();
+          const controllerRequestPath = requestPath
+            .replace(/(\/api\b|\/v\d+\b)/g, '')
+            .replace(
+              new RegExp(
+                `\\/${tagToEntityLabelMappings[tag]['kebab-case-entities']}\\b`,
+                'g'
+              ),
+              ''
+            )
+            .replace(/\{(\w+?)\}/g, ':$1');
+
+          const controllerMethodDecorators: string[] = [
+            controllerRequestPath.length > 0
+              ? `@${controllerMethodRequestMethodName}('${controllerRequestPath}')`
+              : `@${controllerMethodRequestMethodName}()`,
+          ];
+
+          addModuleImport({
+            imports,
+            importName: controllerMethodRequestMethodName,
+            importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+          });
+
+          if (summary) {
             addModuleImport({
               imports,
-              importName: controllerMethodRequestMethodName,
+              importName: 'Summary',
               importFilePath: TSED_SCHEMA_LIBRARY_PATH,
             });
+            controllerMethodDecorators.push(`@Summary('${summary}')`, '');
+          }
 
-            if (summary) {
-              addModuleImport({
-                imports,
-                importName: 'Summary',
-                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-              });
-              controllerMethodDecorators.push(`@Summary('${summary}')`, '');
-            }
+          if (description) {
+            addModuleImport({
+              imports,
+              importName: 'Description',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
+            controllerMethodDecorators.push(
+              `@Description(${JSON.stringify(description)})`,
+              ''
+            );
+          }
 
-            if (description) {
-              addModuleImport({
-                imports,
-                importName: 'Description',
-                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-              });
-              controllerMethodDecorators.push(
-                `@Description(${JSON.stringify(description)})`,
-                ''
-              );
-            }
+          //#region Controller Method parameters code
+          const controllerMethodParametersCode = [
+            //#region Path parameters
+            ...(() => {
+              if (pathParameters) {
+                addModuleImport({
+                  imports,
+                  importName: 'PathParams',
+                  importFilePath: TSED_COMMON_LIBRARY_PATH,
+                });
+                return pathParameters.map(({ name, schema }) => {
+                  const type = (() => {
+                    if (
+                      'type' in schema &&
+                      (
+                        [
+                          'boolean',
+                          'number',
+                          'string',
+                        ] as (typeof schema.type)[]
+                      ).includes(schema.type)
+                    ) {
+                      return schema.type;
+                    }
+                    return 'string';
+                  })();
+                  return `@PathParams('${name}') ${name}: ${type}`;
+                });
+              }
+              return [];
+            })(),
+            //#endregion
 
-            //#region Controller Method parameters code
-            const controllerMethodParametersCode = [
-              //#region Path parameters
-              ...(() => {
-                if (pathParameters) {
-                  addModuleImport({
-                    imports,
-                    importName: 'PathParams',
-                    importFilePath: TSED_COMMON_LIBRARY_PATH,
-                  });
-                  return pathParameters.map(({ name, schema }) => {
-                    const type = (() => {
-                      if (
-                        'type' in schema &&
-                        (
-                          [
-                            'boolean',
-                            'number',
-                            'string',
-                          ] as (typeof schema.type)[]
-                        ).includes(schema.type)
-                      ) {
-                        return schema.type;
-                      }
-                      return 'string';
-                    })();
-                    return `@PathParams('${name}') ${name}: ${type}`;
-                  });
-                }
-                return [];
-              })(),
-              //#endregion
+            //#region Request body parameters
+            ...(() => {
+              if (requestBody && (requestBodySchemaName || requestBodyType)) {
+                addModuleImport({
+                  imports,
+                  importName: 'BodyParams',
+                  importFilePath: TSED_COMMON_LIBRARY_PATH,
+                });
 
-              //#region Request body parameters
-              ...(() => {
-                if (requestBody && (requestBodySchemaName || requestBodyType)) {
-                  addModuleImport({
-                    imports,
-                    importName: 'BodyParams',
-                    importFilePath: TSED_COMMON_LIBRARY_PATH,
-                  });
-
-                  if (requestBodySchemaName) {
-                    const schemaSource = `
+                if (requestBodySchemaName) {
+                  const schemaSource = `
                           ../models/${
                             tagToEntityLabelMappings[
                               schemaToEntityMappings[requestBodySchemaName]
@@ -176,20 +180,20 @@ export const getTSEDControllersCodeConfiguration = ({
                           }
                         `.trimIndent();
 
-                    addModuleImport({
-                      imports,
-                      importName: requestBodySchemaName,
-                      importFilePath: schemaSource,
-                    });
+                  addModuleImport({
+                    imports,
+                    importName: requestBodySchemaName,
+                    importFilePath: schemaSource,
+                  });
 
-                    return [
-                      `@BodyParams() requestPayload: ${requestBodySchemaName}`,
-                    ];
-                  }
+                  return [
+                    `@BodyParams() requestPayload: ${requestBodySchemaName}`,
+                  ];
+                }
 
-                  if (requestBodyType) {
-                    if (requestBodyTypeDependentSchemaName) {
-                      const schemaSource = `
+                if (requestBodyType) {
+                  if (requestBodyTypeDependentSchemaName) {
+                    const schemaSource = `
                             ../models/${
                               tagToEntityLabelMappings[
                                 schemaToEntityMappings[
@@ -199,32 +203,32 @@ export const getTSEDControllersCodeConfiguration = ({
                             }
                           `.trimIndent();
 
-                      addModuleImport({
-                        imports,
-                        importName: requestBodyTypeDependentSchemaName,
-                        importFilePath: schemaSource,
-                      });
-                    }
-                    return [`@BodyParams() requestPayload: ${requestBodyType}`];
+                    addModuleImport({
+                      imports,
+                      importName: requestBodyTypeDependentSchemaName,
+                      importFilePath: schemaSource,
+                    });
                   }
+                  return [`@BodyParams() requestPayload: ${requestBodyType}`];
                 }
-                return [];
-              })(),
-              //#endregion
+              }
+              return [];
+            })(),
+            //#endregion
 
-              //#region Header parameters
-              ...(() => {
-                if (
-                  headerParametersModelReference &&
-                  headerParameters &&
-                  headerParameters.length > 0
-                ) {
-                  addModuleImport({
-                    imports,
-                    importName: 'HeaderParams',
-                    importFilePath: TSED_COMMON_LIBRARY_PATH,
-                  });
-                  const schemaSource = `
+            //#region Header parameters
+            ...(() => {
+              if (
+                headerParametersModelReference &&
+                headerParameters &&
+                headerParameters.length > 0
+              ) {
+                addModuleImport({
+                  imports,
+                  importName: 'HeaderParams',
+                  importFilePath: TSED_COMMON_LIBRARY_PATH,
+                });
+                const schemaSource = `
                         ../models/${
                           tagToEntityLabelMappings[
                             schemaToEntityMappings[
@@ -234,33 +238,33 @@ export const getTSEDControllersCodeConfiguration = ({
                         }
                       `.trimIndent();
 
-                  addModuleImport({
-                    imports,
-                    importName: headerParametersModelReference,
-                    importFilePath: schemaSource,
-                  });
+                addModuleImport({
+                  imports,
+                  importName: headerParametersModelReference,
+                  importFilePath: schemaSource,
+                });
 
-                  return [
-                    `@HeaderParams() headers: ${headerParametersModelReference}`,
-                  ];
-                }
-                return [];
-              })(),
-              //#endregion
+                return [
+                  `@HeaderParams() headers: ${headerParametersModelReference}`,
+                ];
+              }
+              return [];
+            })(),
+            //#endregion
 
-              //#region Query parameters
-              ...(() => {
-                if (
-                  queryParametersModelReference &&
-                  queryParameters &&
-                  queryParameters.length > 0
-                ) {
-                  addModuleImport({
-                    imports,
-                    importName: 'QueryParams',
-                    importFilePath: TSED_COMMON_LIBRARY_PATH,
-                  });
-                  const schemaSource = `
+            //#region Query parameters
+            ...(() => {
+              if (
+                queryParametersModelReference &&
+                queryParameters &&
+                queryParameters.length > 0
+              ) {
+                addModuleImport({
+                  imports,
+                  importName: 'QueryParams',
+                  importFilePath: TSED_COMMON_LIBRARY_PATH,
+                });
+                const schemaSource = `
                         ../models/${
                           tagToEntityLabelMappings[
                             schemaToEntityMappings[
@@ -270,73 +274,57 @@ export const getTSEDControllersCodeConfiguration = ({
                         }
                       `.trimIndent();
 
-                  addModuleImport({
-                    imports,
-                    importName: queryParametersModelReference,
-                    importFilePath: schemaSource,
-                  });
-
-                  return [
-                    `@QueryParams() queryParams: ${queryParametersModelReference}`,
-                  ];
-                }
-                return [];
-              })(),
-              //#endregion
-            ].join(', ');
-            //#endregion
-
-            if (successResponseSchemas && successResponseSchemas.length > 0) {
-              successResponseSchemas.forEach((successResponseSchema) => {
-                const { httpStatusCode, description } = successResponseSchema;
                 addModuleImport({
                   imports,
-                  importName: 'Returns',
-                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  importName: queryParametersModelReference,
+                  importFilePath: schemaSource,
                 });
-                if ('name' in successResponseSchema) {
-                  const { name, isArray } = successResponseSchema;
 
-                  if (!ENVIRONMENT_DEFINED_MODELS.includes(name as any)) {
-                    addModuleImport({
-                      imports,
-                      importName: name,
-                      importFilePath: `../models/${
-                        tagToEntityLabelMappings[schemaToEntityMappings[name]]
-                          .PascalCaseEntities
-                      }`,
-                    });
-                  }
+                return [
+                  `@QueryParams() queryParams: ${queryParametersModelReference}`,
+                ];
+              }
+              return [];
+            })(),
+            //#endregion
+          ].join(', ');
+          //#endregion
 
-                  if (isArray) {
-                    controllerMethodDecorators.push(
-                      `@Returns(${httpStatusCode}, Array).Of(${name})` +
-                        (() => {
-                          if (description) {
-                            return `.Description(${JSON.stringify(
-                              description
-                            )})`;
-                          }
-                          return '';
-                        })()
-                    );
-                  } else {
-                    controllerMethodDecorators.push(
-                      `@Returns(${httpStatusCode}, ${name})` +
-                        (() => {
-                          if (description) {
-                            return `.Description(${JSON.stringify(
-                              description
-                            )})`;
-                          }
-                          return '';
-                        })()
-                    );
-                  }
+          if (successResponseSchemas && successResponseSchemas.length > 0) {
+            successResponseSchemas.forEach((successResponseSchema) => {
+              const { httpStatusCode, description } = successResponseSchema;
+              addModuleImport({
+                imports,
+                importName: 'Returns',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+              if ('name' in successResponseSchema) {
+                const { name, isArray } = successResponseSchema;
+
+                if (!ENVIRONMENT_DEFINED_MODELS.includes(name as any)) {
+                  addModuleImport({
+                    imports,
+                    importName: name,
+                    importFilePath: `../models/${
+                      tagToEntityLabelMappings[schemaToEntityMappings[name]]
+                        .PascalCaseEntities
+                    }`,
+                  });
                 }
-                if ('type' in successResponseSchema) {
+
+                if (isArray) {
                   controllerMethodDecorators.push(
-                    `@Returns(${httpStatusCode}, ${successResponseSchema.type.toPascalCase()})` +
+                    `@Returns(${httpStatusCode}, Array).Of(${name})` +
+                      (() => {
+                        if (description) {
+                          return `.Description(${JSON.stringify(description)})`;
+                        }
+                        return '';
+                      })()
+                  );
+                } else {
+                  controllerMethodDecorators.push(
+                    `@Returns(${httpStatusCode}, ${name})` +
                       (() => {
                         if (description) {
                           return `.Description(${JSON.stringify(description)})`;
@@ -345,85 +333,110 @@ export const getTSEDControllersCodeConfiguration = ({
                       })()
                   );
                 }
-              });
-            }
+              }
+              if ('type' in successResponseSchema) {
+                controllerMethodDecorators.push(
+                  `@Returns(${httpStatusCode}, ${successResponseSchema.type.toPascalCase()})` +
+                    (() => {
+                      if (description) {
+                        return `.Description(${JSON.stringify(description)})`;
+                      }
+                      return '';
+                    })()
+                );
+              }
+            });
+          }
 
-            //#region API function call arguments code
-            const apiFunctionCallArgumentsCode = [
-              //#region Path parameters
-              ...(() => {
-                if (pathParameters) {
-                  return pathParameters.map(({ name }) => {
-                    return name;
-                  });
-                }
-                return [];
-              })(),
-              //#endregion
-
-              //#region Request body parameters
-              ...(() => {
-                if (requestBody && (requestBodySchemaName || requestBodyType)) {
-                  return ['requestPayload'];
-                }
-                return [];
-              })(),
-              //#endregion
-
-              //#region Header parameters
-              ...(() => {
-                if (
-                  headerParametersModelReference &&
-                  headerParameters &&
-                  headerParameters.length > 0
-                ) {
-                  return ['headers'];
-                }
-                return [];
-              })(),
-              //#endregion
-
-              //#region Query parameters
-              ...(() => {
-                if (
-                  queryParametersModelReference &&
-                  queryParameters &&
-                  queryParameters.length > 0
-                ) {
-                  return [`queryParams`];
-                }
-                return [];
-              })(),
-              //#endregion
-            ].join(', ');
+          //#region API function call arguments code
+          const apiFunctionCallArgumentsCode = [
+            //#region Path parameters
+            ...(() => {
+              if (pathParameters) {
+                return pathParameters.map(({ name }) => {
+                  return name;
+                });
+              }
+              return [];
+            })(),
             //#endregion
 
-            return {
-              controllerMethodDecorators: (() => {
-                if (controllerMethodDecorators.length > 0) {
-                  return controllerMethodDecorators.join('\n');
-                }
-                return '';
-              })(),
-              controllerMethodParametersCode,
-              apiFunctionCallArgumentsCode,
-            };
-          })();
-
-          addModuleImport({
-            imports,
-            importName: operationName,
-            importFilePath: '../api',
-          });
-
-          return `
-              ${controllerMethodDecorators}
-              async ${operationName}(${controllerMethodParametersCode}) {
-                return ${operationName}(${apiFunctionCallArgumentsCode});
+            //#region Request body parameters
+            ...(() => {
+              if (requestBody && (requestBodySchemaName || requestBodyType)) {
+                return ['requestPayload'];
               }
-            `.trimIndent();
-        }
-      )
+              return [];
+            })(),
+            //#endregion
+
+            //#region Header parameters
+            ...(() => {
+              if (
+                headerParametersModelReference &&
+                headerParameters &&
+                headerParameters.length > 0
+              ) {
+                return ['headers'];
+              }
+              return [];
+            })(),
+            //#endregion
+
+            //#region Query parameters
+            ...(() => {
+              if (
+                queryParametersModelReference &&
+                queryParameters &&
+                queryParameters.length > 0
+              ) {
+                return [`queryParams`];
+              }
+              return [];
+            })(),
+            //#endregion
+
+            //#region Request options
+            ...(() => {
+              if (streamAPIResponse) {
+                return [
+                  `{
+                    unWrapResponse: false,
+                    responseType: 'stream'
+                  }`,
+                ];
+              }
+              return [];
+            })(),
+            //#endregion
+          ].join(', ');
+          //#endregion
+
+          return {
+            controllerMethodDecorators: (() => {
+              if (controllerMethodDecorators.length > 0) {
+                return controllerMethodDecorators.join('\n');
+              }
+              return '';
+            })(),
+            controllerMethodParametersCode,
+            apiFunctionCallArgumentsCode,
+          };
+        })();
+
+        addModuleImport({
+          imports,
+          importName: operationName,
+          importFilePath: '../api',
+        });
+
+        return `
+          ${controllerMethodDecorators}
+          async ${operationName}(${controllerMethodParametersCode}) {
+            return ${operationName}(${apiFunctionCallArgumentsCode});
+          }
+        `.trimIndent();
+      })
       .join('\n\n');
     //#endregion
 

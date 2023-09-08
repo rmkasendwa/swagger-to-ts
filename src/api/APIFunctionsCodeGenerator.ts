@@ -422,6 +422,8 @@ export const getAPIFunctionsCodeConfiguration = ({
           ];
           //#endregion
 
+          jsDocCommentLines.push(`@param options The request options.`);
+
           addModuleImport({
             imports,
             importName: 'RequestOptions',
@@ -642,6 +644,12 @@ export const getAPIFunctionsCodeConfiguration = ({
         ];
 
         const dataResponseTypeCode = `Promise<${dataType}>`;
+        const dataResponseFunctionParametersWithoudUnWrapResposeOptionCode = [
+          ...apiFunctionDeclarationParameters,
+          `options?: RequestOptions<${dataType}> & {
+            unWrapResponse?: undefined;
+          }`,
+        ];
         const dataResponseFunctionParametersCode = [
           ...apiFunctionDeclarationParameters,
           `options?: RequestOptions<${dataType}> & {
@@ -658,9 +666,15 @@ export const getAPIFunctionsCodeConfiguration = ({
         ];
 
         return `
+          //#region ${description}
           ${jsDocCommentSnippet}
           export async function ${operationName} (
             ${apiFunctionDeclarationParameters.join(', ')}
+          ): ${dataResponseTypeCode};
+
+          ${jsDocCommentSnippet}
+          export async function ${operationName} (
+            ${dataResponseFunctionParametersWithoudUnWrapResposeOptionCode}
           ): ${dataResponseTypeCode};
 
           ${jsDocCommentSnippet}
@@ -697,6 +711,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               data
             };
           };
+          //#endregion
         `.trimIndent();
       })
       .join('\n\n');
