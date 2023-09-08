@@ -248,6 +248,7 @@ export type ArraySchemaProperty = z.infer<
 
 //#region SchemaProperty
 export const SchemaPropertyValidationSchema = z.union([
+  RecordSchemaPropertyValidationSchema,
   StringSchemaPropertyValidationSchema,
   NumberSchemaPropertyValidationSchema,
   BooleanSchemaPropertyValidationSchema,
@@ -256,7 +257,6 @@ export const SchemaPropertyValidationSchema = z.union([
   ObjectSchemaPropertyValidationSchema,
   ArraySchemaPropertyValidationSchema,
   RefSchemaPropertyValidationSchema,
-  RecordSchemaPropertyValidationSchema,
 ]);
 
 export type SchemaProperty = z.infer<typeof SchemaPropertyValidationSchema>;

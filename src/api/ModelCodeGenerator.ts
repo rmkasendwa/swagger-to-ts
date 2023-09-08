@@ -478,8 +478,58 @@ export const generateModelCode = ({
             return `z.null()`;
           case 'object':
             {
-              if (property.properties) {
+              if (
+                property.properties ||
+                ('additionalProperties' in property &&
+                  property.additionalProperties)
+              ) {
                 const propertiesTypeCode = (() => {
+                  if (
+                    'additionalProperties' in property &&
+                    property.additionalProperties
+                  ) {
+                    if ('type' in property.additionalProperties) {
+                      switch (property.additionalProperties.type) {
+                        case 'boolean':
+                        case 'number':
+                        case 'string':
+                          return property.additionalProperties.type;
+                        case 'array':
+                          if (
+                            property.additionalProperties.items &&
+                            'type' in property.additionalProperties.items &&
+                            ['string', 'number', 'boolean'].includes(
+                              property.additionalProperties.items.type
+                            )
+                          ) {
+                            return `z.array(z.${property.additionalProperties.items.type}())`;
+                          }
+                          if (
+                            property.additionalProperties.items &&
+                            '$ref' in property.additionalProperties.items
+                          ) {
+                            const schemaName =
+                              property.additionalProperties.items.$ref.replace(
+                                '#/components/schemas/',
+                                ''
+                              );
+                            return `z.array(${schemaName}ValidationSchema)`;
+                          }
+                          break;
+                      }
+                    }
+                    if (
+                      '$ref' in property.additionalProperties &&
+                      typeof property.additionalProperties.$ref === 'string'
+                    ) {
+                      const schemaName =
+                        property.additionalProperties.$ref.replace(
+                          '#/components/schemas/',
+                          ''
+                        );
+                      return `${schemaName}ValidationSchema`;
+                    }
+                  }
                   const firstProperty = Object.values(property.properties)[0];
                   if (firstProperty) {
                     if (Array.isArray(firstProperty)) {
@@ -912,7 +962,11 @@ export const generateModelCode = ({
                       };
                     }
                     case 'object': {
-                      if (property.properties) {
+                      if (
+                        property.properties ||
+                        ('additionalProperties' in property &&
+                          property.additionalProperties)
+                      ) {
                         if (generateTsEDControllers) {
                           addModuleImport({
                             imports,
@@ -921,6 +975,55 @@ export const generateModelCode = ({
                           });
                         }
                         const propertiesTypeCode = (() => {
+                          if (
+                            'additionalProperties' in property &&
+                            property.additionalProperties
+                          ) {
+                            if ('type' in property.additionalProperties) {
+                              switch (property.additionalProperties.type) {
+                                case 'boolean':
+                                case 'number':
+                                case 'string':
+                                  return property.additionalProperties.type;
+                                case 'array':
+                                  if (
+                                    property.additionalProperties.items &&
+                                    'type' in
+                                      property.additionalProperties.items &&
+                                    ['string', 'number', 'boolean'].includes(
+                                      property.additionalProperties.items.type
+                                    )
+                                  ) {
+                                    return `${property.additionalProperties.items.type}[]`;
+                                  }
+                                  if (
+                                    property.additionalProperties.items &&
+                                    '$ref' in
+                                      property.additionalProperties.items
+                                  ) {
+                                    const schemaName =
+                                      property.additionalProperties.items.$ref.replace(
+                                        '#/components/schemas/',
+                                        ''
+                                      );
+                                    return `${schemaName}[]`;
+                                  }
+                                  break;
+                              }
+                            }
+                            if (
+                              '$ref' in property.additionalProperties &&
+                              typeof property.additionalProperties.$ref ===
+                                'string'
+                            ) {
+                              const schemaName =
+                                property.additionalProperties.$ref.replace(
+                                  '#/components/schemas/',
+                                  ''
+                                );
+                              return schemaName;
+                            }
+                          }
                           const firstProperty = Object.values(
                             property.properties
                           )[0];
@@ -1272,10 +1375,10 @@ export const generateModelCode = ({
           .join(';\n\n');
 
         const tsedModelCode = `
-        export class ${schemaName} {
-          ${tsedModelPropertiesCode}
-        }
-      `.trimIndent();
+          export class ${schemaName} {
+            ${tsedModelPropertiesCode}
+          }
+        `.trimIndent();
 
         return {
           tsedModelConfiguration,
