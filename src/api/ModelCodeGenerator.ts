@@ -1432,9 +1432,19 @@ export const generateModelCode = ({
                 'example' in openAPISpecification &&
                 openAPISpecification.example
               ) {
-                jsDocCommentLines.push(
-                  `@example ${JSON.stringify(openAPISpecification.example)}`
-                );
+                if (typeof openAPISpecification.example === 'object') {
+                  jsDocCommentLines.push(
+                    `@example\n\`\`\`json\n${JSON.stringify(
+                      openAPISpecification.example,
+                      null,
+                      2
+                    )}\n\`\`\``
+                  );
+                } else {
+                  jsDocCommentLines.push(
+                    `@example ${JSON.stringify(openAPISpecification.example)}`
+                  );
+                }
               }
               if (
                 'default' in openAPISpecification &&
@@ -1448,11 +1458,14 @@ export const generateModelCode = ({
               if (jsDocCommentLines.length > 0) {
                 const linesString = jsDocCommentLines
                   .reduce((acumulator, line) => {
-                    acumulator.push(...line.split('\n'));
+                    acumulator.push(line);
                     return acumulator;
                   }, [] as string[])
                   .map((line) => {
-                    return ` * ${line}`;
+                    return line
+                      .split('\n')
+                      .map((lineSlice) => ` * ${lineSlice}`)
+                      .join('\n');
                   })
                   .join('\n *\n');
                 const jsDocCommentCode = `
