@@ -63,6 +63,8 @@ export const getAPIAdapterCode = () => {
 //#region API functions code generator
 const API_ADAPTER_PATH = `./Adapter`;
 
+const AXIOS_PATH = 'axios';
+
 export interface GenerateAPIFunctionsCodeConfigurationOptions {
   /**
    * The request groupings to generate code for.
@@ -163,7 +165,8 @@ export const getAPIFunctionsCodeConfiguration = ({
 
         const {
           jsDocCommentSnippet,
-          apiFunctionParametersCode,
+          apiFunctionParameters,
+          apiFunctionDeclarationParameters,
           returnValueString,
           definedSchemaResponseType,
         } = (() => {
@@ -206,26 +209,22 @@ export const getAPIFunctionsCodeConfiguration = ({
             return definedSchemaResponseName;
           })();
 
-          const responseTypeGenericParameter = (() => {
-            if (definedSchemaResponseName && definedSchemaResponseType) {
-              addModuleImport({
-                imports,
-                importName: definedSchemaResponseName,
-                importFilePath: `
-                    ../models/${
-                      tagToEntityLabelMappings[
-                        schemaToEntityMappings[definedSchemaResponseName]
-                      ].PascalCaseEntities
-                    }
-                  `.trimIndent(),
-              });
-              return `<${definedSchemaResponseType}>`;
-            }
-            return '';
-          })();
+          if (definedSchemaResponseName && definedSchemaResponseType) {
+            addModuleImport({
+              imports,
+              importName: definedSchemaResponseName,
+              importFilePath: `
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[definedSchemaResponseName]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent(),
+            });
+          }
 
-          //#region API function parameters code
-          const apiFunctionParametersCode = [
+          //#region Base API function parameters code
+          const baseAPIFunctionParameters = [
             //#region Path parameters
             ...(() => {
               if (pathParameters) {
@@ -334,7 +333,55 @@ export const getAPIFunctionsCodeConfiguration = ({
               return [];
             })(),
             //#endregion
+          ];
+          //#endregion
 
+          //#region API function declaration parameters code
+          const apiFunctionDeclarationParameters = [
+            ...baseAPIFunctionParameters,
+            //#region Query parameters
+            ...(() => {
+              if (
+                queryParametersModelReference &&
+                queryParameters &&
+                queryParameters.length > 0
+              ) {
+                jsDocCommentLines.push(`@param queryParams`);
+
+                const schemaSource = `
+                        ../models/${
+                          tagToEntityLabelMappings[
+                            schemaToEntityMappings[
+                              queryParametersModelReference
+                            ]
+                          ].PascalCaseEntities
+                        }
+                      `.trimIndent();
+
+                addModuleImport({
+                  imports,
+                  importName: queryParametersModelReference,
+                  importFilePath: schemaSource,
+                });
+
+                // Check if query params are required
+                if (
+                  queryParameters.filter(({ required }) => required).length > 0
+                ) {
+                  return [`queryParams: ${queryParametersModelReference}`];
+                }
+
+                return [`queryParams?: ${queryParametersModelReference}`];
+              }
+              return [];
+            })(),
+            //#endregion
+          ];
+          //#endregion
+
+          //#region API function parameters code
+          const apiFunctionParameters = [
+            ...baseAPIFunctionParameters,
             //#region Query parameters
             ...(() => {
               if (
@@ -372,9 +419,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               return [];
             })(),
             //#endregion
-
-            `{ ...rest }: RequestOptions${responseTypeGenericParameter} = {}`,
-          ].join(', ');
+          ];
           //#endregion
 
           addModuleImport({
@@ -425,9 +470,9 @@ export const getAPIFunctionsCodeConfiguration = ({
                       importName: 'removeNullValues',
                       importFilePath: RMK_UTILS_LIBRARY_PATH,
                     });
-                    return `z.array(${successResponseValidationSchemaName}).parse(removeNullValues(data))`;
+                    return `z.array(${successResponseValidationSchemaName}).parse(removeNullValues(response.data))`;
                   }
-                  return `z.array(${successResponseValidationSchemaName}).parse(data)`;
+                  return `z.array(${successResponseValidationSchemaName}).parse(response.data)`;
                 }
                 if (trimNullValuesFromResponses) {
                   addModuleImport({
@@ -435,12 +480,12 @@ export const getAPIFunctionsCodeConfiguration = ({
                     importName: 'removeNullValues',
                     importFilePath: RMK_UTILS_LIBRARY_PATH,
                   });
-                  return `${successResponseValidationSchemaName}.parse(removeNullValues(data))`;
+                  return `${successResponseValidationSchemaName}.parse(removeNullValues(response.data))`;
                 }
-                return `${successResponseValidationSchemaName}.parse(data)`;
+                return `${successResponseValidationSchemaName}.parse(response.data)`;
               }
             }
-            return 'data';
+            return 'response.data';
           })();
 
           return {
@@ -459,7 +504,8 @@ export const getAPIFunctionsCodeConfiguration = ({
               }
               return '';
             })(),
-            apiFunctionParametersCode,
+            apiFunctionParameters,
+            apiFunctionDeclarationParameters,
             returnValueString,
             definedSchemaResponseType,
           };
@@ -580,27 +626,78 @@ export const getAPIFunctionsCodeConfiguration = ({
 
         exports.push(operationName);
 
-        const responseTypeCode = `Promise<${
-          definedSchemaResponseType || environmentDefinedResponseType || 'any'
-        }>`;
+        const dataType =
+          definedSchemaResponseType || environmentDefinedResponseType || 'any';
+        const axiosResponseTypeCode = `Promise<AxiosResponse<${dataType}>>`;
+        addModuleImport({
+          imports,
+          importName: 'AxiosResponse',
+          importFilePath: AXIOS_PATH,
+        });
+        const axiosResponseFunctionParametersCode = [
+          ...apiFunctionDeclarationParameters,
+          `options?: RequestOptions<${dataType}> & {
+            unWrapResponse?: false;
+          }`,
+        ];
+
+        const dataResponseTypeCode = `Promise<${dataType}>`;
+        const dataResponseFunctionParametersCode = [
+          ...apiFunctionDeclarationParameters,
+          `options?: RequestOptions<${dataType}> & {
+            unWrapResponse?: true;
+          }`,
+        ];
+
+        const requestOptionsParameterCode = `{ unWrapResponse = true, ...rest }: RequestOptions<${dataType}> & {
+          unWrapResponse?: boolean;
+        } = {}`;
+        const apiFunctionImplementationParametersCode = [
+          ...apiFunctionParameters,
+          requestOptionsParameterCode,
+        ];
 
         return `
-              ${jsDocCommentSnippet}
-              export const ${operationName} = async (${apiFunctionParametersCode}): ${responseTypeCode} => {
-                if (rest.getStaleWhileRevalidate) {
-                  const baseGetStaleWhileRevalidate = rest.getStaleWhileRevalidate;
-                  rest.getStaleWhileRevalidate = (data) => {
-                    return baseGetStaleWhileRevalidate(${returnValueString});
-                  };
-                }
+          ${jsDocCommentSnippet}
+          export async function ${operationName} (
+            ${apiFunctionDeclarationParameters.join(', ')}
+          ): ${dataResponseTypeCode};
 
-                const { data } = await ${httpActionName}(${interpolatedEndpointPathString}, {
-                  ${requestOptionsCode}
-                });
+          ${jsDocCommentSnippet}
+          export async function ${operationName} (
+            ${axiosResponseFunctionParametersCode}
+          ): ${axiosResponseTypeCode};
 
-                return ${returnValueString};
+          ${jsDocCommentSnippet}
+          export async function ${operationName} (
+            ${dataResponseFunctionParametersCode}
+          ): ${dataResponseTypeCode};
+
+          ${jsDocCommentSnippet}
+          export async function ${operationName}(${apiFunctionImplementationParametersCode}) {
+            if (rest.getStaleWhileRevalidate) {
+              const baseGetStaleWhileRevalidate = rest.getStaleWhileRevalidate;
+              rest.getStaleWhileRevalidate = (data) => {
+                return baseGetStaleWhileRevalidate(${returnValueString});
               };
-            `.trimIndent();
+            }
+
+            const response = await ${httpActionName}(${interpolatedEndpointPathString}, {
+              ${requestOptionsCode}
+            });
+
+            const data = ${returnValueString};
+
+            if (unWrapResponse) {
+              return data;
+            }
+
+            return {
+              ...response,
+              data
+            };
+          };
+        `.trimIndent();
       })
       .join('\n\n');
     //#endregion

@@ -87,6 +87,14 @@ export const RequestConfigValidationSchema = z.object({
         .optional()
         .describe('The request permissions.'),
       path: z.string().optional().describe('The request path.'),
+      responseHeaders: z
+        .record(z.string())
+        .optional()
+        .describe('The response headers to add'),
+      streamAPIResponse: z
+        .boolean()
+        .optional()
+        .describe('Whether to stream the response or not.'),
     })
     .optional(),
   apiFunctionConfig: z
