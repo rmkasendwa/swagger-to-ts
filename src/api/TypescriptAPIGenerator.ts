@@ -549,6 +549,7 @@ export const generateTypescriptAPI = async ({
               return tsedControllerNamePrefix;
             })(),
             tsedControllerNameSuffix,
+            openAPISpecification,
           });
         }
       })();

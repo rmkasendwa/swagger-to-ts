@@ -69,6 +69,7 @@ export type Security = z.infer<typeof SecurityValidationSchema>;
 //#region Tag
 export const TagValidationSchema = z.object({
   name: z.string().describe('The tag name.'),
+  description: z.string().optional().describe('The tag description.'),
 });
 
 export type Tag = z.infer<typeof TagValidationSchema>;

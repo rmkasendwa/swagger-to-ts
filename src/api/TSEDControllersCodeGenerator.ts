@@ -2,6 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import {
   ENVIRONMENT_DEFINED_MODELS,
+  OpenAPISpecification,
   RequestGroupings,
   TSEDControllersCodeConfiguration,
   TSED_COMMON_LIBRARY_PATH,
@@ -43,6 +44,11 @@ export interface GenerateTSEDControllersCodeConfigurationOptions {
    * The suffix to add to the controller names.
    */
   tsedControllerNameSuffix?: string;
+
+  /**
+   * The OpenAPI specification.
+   */
+  openAPISpecification: OpenAPISpecification;
 }
 export const getTSEDControllersCodeConfiguration = ({
   requestGroupings,
@@ -51,6 +57,7 @@ export const getTSEDControllersCodeConfiguration = ({
   authenticateDecoratorImportPath,
   tsedControllerNamePrefix,
   tsedControllerNameSuffix,
+  openAPISpecification,
 }: GenerateTSEDControllersCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce((accumulator, tag) => {
     const imports = cloneDeep(requestGroupings[tag].imports);
@@ -471,6 +478,18 @@ export const getTSEDControllersCodeConfiguration = ({
       `@Docs('api-v1')`,
       `@Name('${controllerName}')`,
     ];
+
+    const classDescription = openAPISpecification.tags.find(
+      ({ name }) => name === tag
+    )?.description;
+    if (classDescription) {
+      classDecorators.push(`@Description(${JSON.stringify(classDescription)})`);
+      addModuleImport({
+        imports,
+        importName: 'Description',
+        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+      });
+    }
 
     if (authenticateDecoratorImportPath) {
       classDecorators.push(`@Authenticate()`);
