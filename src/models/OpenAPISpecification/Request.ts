@@ -157,7 +157,7 @@ export type Request = {
   /**
    * The request tags.
    */
-  tags?: string[];
+  tags: string[];
 
   /**
    * The custom request configuration.

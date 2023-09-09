@@ -214,13 +214,12 @@ export interface GeneratedSchemaCodeConfiguration {
   tsedModelCode?: string;
 }
 
-export type RequestGroupings = Record<
-  string,
-  {
+export type RequestGroupings = {
+  [tagName: string]: {
     imports: ModuleImports;
     requests: TypescriptAPIGeneratorRequest[];
-  }
->;
+  };
+};
 
 export type RequestScopeGroupings = Record<string, RequestGroupings>;
 

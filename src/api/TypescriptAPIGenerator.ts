@@ -165,192 +165,204 @@ export const generateTypescriptAPI = async ({
 
   //#region Find all requests and group them by tag
   console.log(` -> Grouping API requests by tag...`);
-  const requestGroupings = Object.keys(openAPISpecification.paths).reduce(
-    (accumulator, path) => {
-      Object.keys(openAPISpecification.paths[path]).forEach((method) => {
-        const request =
-          openAPISpecification.paths[path][method as RequestMethod];
+  const requestGroupings = Object.keys(
+    openAPISpecification.paths
+  ).reduce<RequestGroupings>((accumulator, path) => {
+    Object.keys(openAPISpecification.paths[path]).forEach((method) => {
+      const request = openAPISpecification.paths[path][method as RequestMethod];
 
-        //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
-        const { requestBody } = request;
-        const operationName = (() => {
-          if (
-            requestOperationNameSource === 'requestSummary' &&
-            request.summary
-          ) {
-            return request.summary.toCamelCase();
-          }
-          if (request.operationId) {
-            return request.operationId;
-          }
-          throw new Error('Could not determine operation name.');
-        })();
-        const pascalCaseOperationName = operationName.toPascalCase();
-        if (requestBody) {
-          const { content } = requestBody;
-          if (
-            content &&
-            'application/json' in content &&
-            'type' in content['application/json'].schema &&
-            content['application/json'].schema.type === 'object'
-          ) {
-            const schemaName = `${pascalCaseOperationName}RequestPayload`;
-            openAPISpecification.components.schemas[schemaName] =
-              content['application/json'].schema;
-
-            requestBody.content['application/json'].schema = {
-              $ref: `#/components/schemas/${schemaName}`,
-            };
-          }
+      //#region Generate anonymous schemas for all responses and request bodies that are not referenced by any other schema
+      const { requestBody } = request;
+      const operationName = (() => {
+        if (
+          requestOperationNameSource === 'requestSummary' &&
+          request.summary
+        ) {
+          return request.summary.toCamelCase();
         }
-        //#endregion
+        if (request.operationId) {
+          return request.operationId;
+        }
+        throw new Error(
+          `Could not determine operation name. ${JSON.stringify(
+            request,
+            null,
+            2
+          )}`
+        );
+      })();
+      const pascalCaseOperationName = operationName.toPascalCase();
+      if (requestBody) {
+        const { content } = requestBody;
+        if (
+          content &&
+          'application/json' in content &&
+          content['application/json'].schema &&
+          'type' in content['application/json'].schema &&
+          content['application/json'].schema.type === 'object'
+        ) {
+          const schemaName = `${pascalCaseOperationName}RequestPayload`;
+          openAPISpecification.components.schemas[schemaName] =
+            content['application/json'].schema;
+          content['application/json'].schema = {
+            $ref: `#/components/schemas/${schemaName}`,
+          };
+        }
+      }
+      //#endregion
 
-        request.tags.forEach((tag) => {
-          if (!accumulator[tag]) {
-            accumulator[tag] = {
-              imports: {},
-              requests: [],
-            };
+      request.tags.forEach((tag) => {
+        if (!accumulator[tag]) {
+          accumulator[tag] = {
+            imports: {},
+            requests: [],
+          };
+        }
+
+        const { requests } = accumulator[tag];
+        const typePrefix = (() => {
+          const match = /^\[(.+)\]\s/g.exec(tag);
+          if (match) {
+            return match[1].toPascalCase();
           }
+          return scopeModelPrefix || '';
+        })();
 
-          const { requests } = accumulator[tag];
-          const typePrefix = (() => {
-            const match = /^\[(.+)\]\s/g.exec(tag);
-            if (match) {
-              return match[1].toPascalCase();
-            }
-            return scopeModelPrefix || '';
-          })();
-
-          requests.push({
-            ...request,
-            method: method as RequestMethod,
-            requestPath: path,
-            operationName,
-            pascalCaseOperationName,
-            requestPathName:
-              (() => {
-                if (
-                  requestOperationNameSource === 'requestSummary' &&
-                  request.summary
-                ) {
-                  return request.summary.replace(/\s/g, '_').toUpperCase();
-                }
-                if (request.operationId) {
-                  return request.operationId.replace(/\s/g, '_').toUpperCase();
-                }
-                throw new Error('Could not determine operation name.');
-              })() + `_ENDPOINT_PATH`,
-            operationDescription: (() => {
+        requests.push({
+          ...request,
+          method: method as RequestMethod,
+          requestPath: path,
+          operationName,
+          pascalCaseOperationName,
+          requestPathName:
+            (() => {
               if (
                 requestOperationNameSource === 'requestSummary' &&
                 request.summary
               ) {
-                const [verb, ...restSummary] = request.summary.split(' ');
-                return (
-                  verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ')
-                );
+                return request.summary.replace(/\s/g, '_').toUpperCase();
               }
-            })(),
-            requestBodySchemaName: (() => {
+              if (request.operationId) {
+                return request.operationId.replace(/\s/g, '_').toUpperCase();
+              }
+              throw new Error('Could not determine operation name.');
+            })() + `_ENDPOINT_PATH`,
+          operationDescription: (() => {
+            if (
+              requestOperationNameSource === 'requestSummary' &&
+              request.summary
+            ) {
+              const [verb, ...restSummary] = request.summary.split(' ');
+              return (
+                verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ')
+              );
+            }
+          })(),
+          requestBodySchemaName: (() => {
+            if (
+              request.requestBody?.content &&
+              'application/json' in request.requestBody.content &&
+              request.requestBody.content['application/json'].schema &&
+              '$ref' in request.requestBody.content['application/json'].schema
+            ) {
+              const requestBodySchemaName = request.requestBody.content[
+                'application/json'
+              ].schema.$ref.replace('#/components/schemas/', '');
+              return requestBodySchemaName;
+            }
+          })(),
+          ...(() => {
+            if (request.requestBody?.content) {
+              const { content } = request.requestBody;
               if (
-                request.requestBody?.content &&
-                'application/json' in request.requestBody.content &&
-                '$ref' in request.requestBody.content['application/json'].schema
+                'application/json' in content &&
+                content['application/json'].schema &&
+                'type' in content['application/json'].schema &&
+                content['application/json'].schema.type === 'array'
               ) {
-                const requestBodySchemaName = request.requestBody.content[
-                  'application/json'
-                ].schema.$ref.replace('#/components/schemas/', '');
-                return requestBodySchemaName;
+                const { schema } = content['application/json'];
+                if (schema.items) {
+                  if ('$ref' in schema.items) {
+                    const requestBodySchemaName = schema.items.$ref.replace(
+                      '#/components/schemas/',
+                      ''
+                    );
+                    return {
+                      requestBodyType: `${requestBodySchemaName}[]`,
+                      requestBodyTypeDependentSchemaName: requestBodySchemaName,
+                    };
+                  }
+                  if (
+                    schema.items.type &&
+                    (
+                      [
+                        'boolean',
+                        'number',
+                        'string',
+                      ] as (typeof schema.items.type)[]
+                    ).includes(schema.items.type)
+                  ) {
+                    return {
+                      requestBodyType: `${schema.items.type}[]`,
+                    };
+                  }
+                }
+                return {
+                  requestBodyType: 'any[]',
+                };
               }
-            })(),
-            ...(() => {
-              if (request.requestBody?.content) {
-                const { content } = request.requestBody;
-                if (
-                  'application/json' in content &&
-                  'type' in content['application/json'].schema &&
-                  content['application/json'].schema.type === 'array'
-                ) {
-                  const { schema } = content['application/json'];
-                  if (schema.items) {
-                    if ('$ref' in schema.items) {
-                      const requestBodySchemaName = schema.items.$ref.replace(
+            }
+          })(),
+          successResponseSchemas: (() => {
+            const successResponses = Object.keys(request.responses).filter(
+              (responseCode) => responseCode.startsWith('2')
+            );
+            if (successResponses && successResponses.length > 0) {
+              return successResponses
+                .filter((successResponse) => {
+                  return request.responses[successResponse].content;
+                })
+                .map((successResponse) => {
+                  const content = request.responses[successResponse].content;
+                  if (
+                    content &&
+                    'application/json' in content &&
+                    content['application/json'].schema
+                  ) {
+                    if ('$ref' in content['application/json'].schema) {
+                      const successResponseSchemaName = content[
+                        'application/json'
+                      ].schema.$ref.replace('#/components/schemas/', '');
+                      return {
+                        name: successResponseSchemaName,
+                        httpStatusCode: +successResponse,
+                        description:
+                          request.responses[successResponse].description,
+                      } as SuccessResponseSchema;
+                    } else if (
+                      'type' in content['application/json'].schema &&
+                      content['application/json'].schema.type === 'array' &&
+                      content['application/json'].schema.items &&
+                      '$ref' in content['application/json'].schema.items
+                    ) {
+                      const schemaReference =
+                        content['application/json'].schema.items.$ref;
+                      const successResponseSchemaName = schemaReference.replace(
                         '#/components/schemas/',
                         ''
                       );
                       return {
-                        requestBodyType: `${requestBodySchemaName}[]`,
-                        requestBodyTypeDependentSchemaName:
-                          requestBodySchemaName,
-                      };
-                    }
-                    if (
-                      schema.items.type &&
-                      (
-                        [
-                          'boolean',
-                          'number',
-                          'string',
-                        ] as (typeof schema.items.type)[]
-                      ).includes(schema.items.type)
-                    ) {
-                      return {
-                        requestBodyType: `${schema.items.type}[]`,
-                      };
+                        name: successResponseSchemaName,
+                        httpStatusCode: +successResponse,
+                        description:
+                          request.responses[successResponse].description,
+                        isArray: true,
+                      } as SuccessResponseSchema;
                     }
                   }
-                  return {
-                    requestBodyType: 'any[]',
-                  };
-                }
-              }
-            })(),
-            successResponseSchemas: (() => {
-              const successResponses = Object.keys(request.responses).filter(
-                (responseCode) => responseCode.startsWith('2')
-              );
-              if (successResponses && successResponses.length > 0) {
-                return successResponses
-                  .filter((successResponse) => {
-                    return request.responses[successResponse].content;
-                  })
-                  .map((successResponse) => {
-                    const content = request.responses[successResponse].content;
+                  if (request.responses[successResponse].content) {
                     if (
-                      'application/json' in content &&
-                      content['application/json'].schema
-                    ) {
-                      if ('$ref' in content['application/json'].schema) {
-                        const successResponseSchemaName = content[
-                          'application/json'
-                        ].schema.$ref.replace('#/components/schemas/', '');
-                        return {
-                          name: successResponseSchemaName,
-                          httpStatusCode: +successResponse,
-                          description:
-                            request.responses[successResponse].description,
-                        } as SuccessResponseSchema;
-                      } else if (
-                        content['application/json'].schema.type === 'array' &&
-                        content['application/json'].schema.items &&
-                        '$ref' in content['application/json'].schema.items
-                      ) {
-                        const schemaReference =
-                          content['application/json'].schema.items.$ref;
-                        const successResponseSchemaName =
-                          schemaReference.replace('#/components/schemas/', '');
-                        return {
-                          name: successResponseSchemaName,
-                          httpStatusCode: +successResponse,
-                          description:
-                            request.responses[successResponse].description,
-                          isArray: true,
-                        } as SuccessResponseSchema;
-                      }
-                    }
-                    if (
-                      'image/png' in request.responses[successResponse].content
+                      'image/png' in request.responses[successResponse].content!
                     ) {
                       return {
                         name: BINARY_RESPONSE_TYPE_MODEL_NAME,
@@ -361,7 +373,7 @@ export const generateTypescriptAPI = async ({
                     }
                     if (
                       'application/pdf' in
-                      request.responses[successResponse].content
+                      request.responses[successResponse].content!
                     ) {
                       return {
                         name: BINARY_RESPONSE_TYPE_MODEL_NAME,
@@ -378,84 +390,82 @@ export const generateTypescriptAPI = async ({
                         httpStatusCode: +successResponse,
                       } as SuccessResponseSchema;
                     }
-                    return {
-                      name: BINARY_RESPONSE_TYPE_MODEL_NAME,
-                      description:
-                        request.responses[successResponse].description,
-                      httpStatusCode: +successResponse,
-                    } as SuccessResponseSchema;
-                  })
-                  .filter((schema) => schema) as SuccessResponseSchema[];
-              }
-            })(),
-            ...(() => {
-              if (request.parameters) {
-                const pathParameters = request.parameters.filter(
-                  (parameter) => parameter.in === 'path'
-                );
-                if (pathParameters.length > 0) {
-                  return {
-                    pathParameters,
-                  };
-                }
-              }
-            })(),
-
-            //#region Header parameters
-            ...(() => {
-              if (request.parameters) {
-                const headerParameters = request.parameters.filter(
-                  (parameter) => {
-                    return (
-                      parameter.in === 'header' &&
-                      !parameter.name.match(/authorization/gi)
-                    );
                   }
-                );
-                if (headerParameters.length > 0) {
-                  const headerParametersModelReference = `${typePrefix}${pascalCaseOperationName}HeaderParams`;
-                  openAPISpecification.components.schemas[
-                    headerParametersModelReference
-                  ] = generateSchemaFromRequestParameters({
-                    requestParameters: headerParameters,
-                  });
                   return {
-                    headerParameters,
-                    headerParametersModelReference,
-                  };
-                }
+                    name: BINARY_RESPONSE_TYPE_MODEL_NAME,
+                    description: request.responses[successResponse].description,
+                    httpStatusCode: +successResponse,
+                  } as SuccessResponseSchema;
+                })
+                .filter((schema) => schema) as SuccessResponseSchema[];
+            }
+          })(),
+          ...(() => {
+            if (request.parameters) {
+              const pathParameters = request.parameters.filter(
+                (parameter) => parameter.in === 'path'
+              );
+              if (pathParameters.length > 0) {
+                return {
+                  pathParameters,
+                };
               }
-            })(),
-            //#endregion
+            }
+          })(),
 
-            //#region Query parameters
-            ...(() => {
-              if (request.parameters) {
-                const queryParameters = request.parameters.filter(
-                  (parameter) => parameter.in === 'query'
-                );
-                if (queryParameters.length > 0) {
-                  const queryParametersModelReference = `${typePrefix}${pascalCaseOperationName}QueryParams`;
-                  openAPISpecification.components.schemas[
-                    queryParametersModelReference
-                  ] = generateSchemaFromRequestParameters({
-                    requestParameters: queryParameters,
-                  });
-                  return {
-                    queryParameters,
-                    queryParametersModelReference,
-                  };
+          //#region Header parameters
+          ...(() => {
+            if (request.parameters) {
+              const headerParameters = request.parameters.filter(
+                (parameter) => {
+                  return (
+                    parameter.in === 'header' &&
+                    !parameter.name.match(/authorization/gi)
+                  );
                 }
+              );
+              if (headerParameters.length > 0) {
+                const headerParametersModelReference = `${typePrefix}${pascalCaseOperationName}HeaderParams`;
+                openAPISpecification.components.schemas[
+                  headerParametersModelReference
+                ] = generateSchemaFromRequestParameters({
+                  requestParameters: headerParameters,
+                });
+                return {
+                  headerParameters,
+                  headerParametersModelReference,
+                };
               }
-            })(),
-            //#endregion
-          });
+            }
+          })(),
+          //#endregion
+
+          //#region Query parameters
+          ...(() => {
+            if (request.parameters) {
+              const queryParameters = request.parameters.filter(
+                (parameter) => parameter.in === 'query'
+              );
+              if (queryParameters.length > 0) {
+                const queryParametersModelReference = `${typePrefix}${pascalCaseOperationName}QueryParams`;
+                openAPISpecification.components.schemas[
+                  queryParametersModelReference
+                ] = generateSchemaFromRequestParameters({
+                  requestParameters: queryParameters,
+                });
+                return {
+                  queryParameters,
+                  queryParametersModelReference,
+                };
+              }
+            }
+          })(),
+          //#endregion
         });
       });
-      return accumulator;
-    },
-    {} as RequestGroupings
-  );
+    });
+    return accumulator;
+  }, {});
   //#endregion
 
   //#region Group request tag groups by scope
