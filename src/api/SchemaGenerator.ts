@@ -1,6 +1,6 @@
 import { OpenAPISpecification } from '../models';
 import { RequestParameter } from '../models/OpenAPISpecification/Request';
-import { Schema, SchemaProperty } from '../models/OpenAPISpecification/Schema';
+import { Schema } from '../models/OpenAPISpecification/Schema';
 
 //#region Find all schemas referenced by a schema
 export interface FindSchemaReferencedSchemasOptions {
@@ -12,7 +12,7 @@ export const findSchemaReferencedSchemas = ({
   openAPISpecification,
 }: FindSchemaReferencedSchemasOptions) => {
   const schemaReferencedSchemas: string[] = [];
-  const findSchemaReferencedBySchemaProperty = (property: SchemaProperty) => {
+  const findSchemaReferencedBySchemaProperty = (property: Schema) => {
     if ('type' in property) {
       switch (property.type) {
         case 'array':
@@ -134,7 +134,7 @@ export const generateSchemaFromRequestParameters = ({
           description,
         };
         return accumulator;
-      }, {} as Record<string, SchemaProperty>),
+      }, {} as Record<string, Schema>),
     required: requestParameters
       .filter(({ required }) => {
         return required;

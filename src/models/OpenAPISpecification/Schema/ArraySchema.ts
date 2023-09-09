@@ -3,29 +3,26 @@ import { z } from 'zod';
 import { BooleanSchemaValidationSchema } from './BooleanSchema';
 import { NullSchemaValidationSchema } from './NullSchema';
 import { NumberSchemaValidationSchema } from './NumberSchema';
+import { ObjectSchemaValidationSchema } from './ObjectSchema';
+import { RecordSchemaValidationSchema } from './RecordSchema';
 import { RefSchemaValidationSchema } from './RefSchema';
 import { StringSchemaValidationSchema } from './StringSchema';
 
-//#region PrimitiveSchemaProperty
-export const ArraySchemaPropertyMemberValidationSchema = z.union([
-  StringSchemaValidationSchema,
-  NumberSchemaValidationSchema,
-  BooleanSchemaValidationSchema,
-  NullSchemaValidationSchema,
-  RefSchemaValidationSchema,
-]);
-
-export type ArraySchemaPropertyMember = z.infer<
-  typeof ArraySchemaPropertyMemberValidationSchema
->;
-//#endregion
-
 //#region ArraySchemaProperty
-export const ArraySchemaPropertyValidationSchema = z.object({
+export const ArraySchemaValidationSchema = z.object({
   type: z.literal('array').describe('The schema property type.'),
-  items: ArraySchemaPropertyMemberValidationSchema.optional().describe(
-    'The schema property items.'
-  ),
+  items: z
+    .union([
+      StringSchemaValidationSchema,
+      NumberSchemaValidationSchema,
+      BooleanSchemaValidationSchema,
+      NullSchemaValidationSchema,
+      RecordSchemaValidationSchema,
+      ObjectSchemaValidationSchema,
+      RefSchemaValidationSchema,
+    ])
+    .optional()
+    .describe('The schema property items.'),
   description: z
     .string()
     .optional()
@@ -38,7 +35,5 @@ export const ArraySchemaPropertyValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type ArraySchemaProperty = z.infer<
-  typeof ArraySchemaPropertyValidationSchema
->;
+export type ArraySchema = z.infer<typeof ArraySchemaValidationSchema>;
 //#endregion

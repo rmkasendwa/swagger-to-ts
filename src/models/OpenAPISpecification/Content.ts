@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import {
-  ArraySchemaPropertyValidationSchema,
+  ArraySchemaValidationSchema,
   BooleanSchemaValidationSchema,
   RefSchemaValidationSchema,
   SchemaValidationSchema,
@@ -15,7 +15,7 @@ export const JSONContentValidationSchema = z.object({
       .union([
         RefSchemaValidationSchema,
         SchemaValidationSchema,
-        ArraySchemaPropertyValidationSchema,
+        ArraySchemaValidationSchema,
         BooleanSchemaValidationSchema,
         StringSchemaValidationSchema,
       ])

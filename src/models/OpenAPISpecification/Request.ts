@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { Content, ContentValidationSchema } from './Content';
-import { ResponsesValidationSchema } from './Response';
-import { SchemaPropertyValidationSchema } from './Schema';
+import { Responses, ResponsesValidationSchema } from './Response';
+import { SchemaValidationSchema } from './Schema';
 
 //#region Request methods
 export const requestMethods = [
@@ -27,9 +27,7 @@ export const BaseRequestParameterValidationSchema = z.object({
     .string()
     .optional()
     .describe('The base request parameter description.'),
-  schema: SchemaPropertyValidationSchema.describe(
-    'The base request parameter schema.'
-  ),
+  schema: SchemaValidationSchema.describe('The base request parameter schema.'),
 });
 
 export type BaseRequestParameter = z.infer<
@@ -108,7 +106,7 @@ export type RequestConfig = z.infer<typeof RequestConfigValidationSchema>;
 //#endregion
 
 //#region Request
-export const RequestValidationSchema = z.object({
+export const RequestValidationSchema = z.object<any>({
   description: z.string().optional().describe('The request description.'),
   operationId: z.string().optional().describe('The request operation id.'),
   parameters: z
@@ -125,5 +123,45 @@ export const RequestValidationSchema = z.object({
   ),
 });
 
-export type Request = z.infer<typeof RequestValidationSchema>;
+export type Request = {
+  /**
+   * The request description.
+   */
+  description?: string;
+
+  /**
+   * The request operation id.
+   */
+  operationId?: string;
+
+  /**
+   * The request parameters.
+   */
+  parameters?: RequestParameter[];
+
+  /**
+   * The request body.
+   */
+  requestBody?: RequestBody;
+
+  /**
+   * The request responses.
+   */
+  responses: Responses;
+
+  /**
+   * The request summary.
+   */
+  summary?: string;
+
+  /**
+   * The request tags.
+   */
+  tags?: string[];
+
+  /**
+   * The custom request configuration.
+   */
+  'x-requestConfig'?: RequestConfig;
+};
 //#endregion

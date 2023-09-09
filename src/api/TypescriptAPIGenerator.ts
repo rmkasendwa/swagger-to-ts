@@ -121,12 +121,12 @@ export const generateTypescriptAPI = async ({
     .toISOString()
     .replace(/:/g, '_')}`;
   const debugOutputRootPath = `${outputRootPath}/${debugOutputFolderName}`;
-  const validOpenAPISpecification = (() => {
+  const validOpenAPISpecification: OpenAPISpecification = (() => {
     try {
       console.log(' -> 🔍 Validating OpenAPI specification...');
       return OpenAPISpecificationValidationSchema.parse(
         inputOpenAPISpecification
-      );
+      ) as any;
     } catch (err) {
       const errorFilePath = `${debugOutputRootPath}/openapi_spec_validation.error.json`;
       ensureDirSync(debugOutputRootPath);

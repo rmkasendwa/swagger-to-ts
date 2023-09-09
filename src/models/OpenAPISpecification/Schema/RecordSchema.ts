@@ -3,37 +3,20 @@ import { z } from 'zod';
 import { BooleanSchemaValidationSchema } from './BooleanSchema';
 import { NullSchemaValidationSchema } from './NullSchema';
 import { NumberSchemaValidationSchema } from './NumberSchema';
+import { ObjectSchemaValidationSchema } from './ObjectSchema';
 import { RefSchemaValidationSchema } from './RefSchema';
 import { StringSchemaValidationSchema } from './StringSchema';
 
 export const RecordSchemaValidationSchema = z.object({
   type: z.literal('object').describe('The schema property type.'),
   additionalProperties: z.union([
-    z.object({
-      type: z.literal('array').describe('The schema property type.'),
-      items: z
-        .union([
-          StringSchemaValidationSchema,
-          NumberSchemaValidationSchema,
-          BooleanSchemaValidationSchema,
-          NullSchemaValidationSchema,
-          RefSchemaValidationSchema,
-        ])
-        .optional()
-        .describe('The schema property items.'),
-    }),
-    z
-      .union([
-        StringSchemaValidationSchema,
-        NumberSchemaValidationSchema,
-        BooleanSchemaValidationSchema,
-        NullSchemaValidationSchema,
-        RefSchemaValidationSchema,
-      ])
-      .optional()
-      .describe('The schema property items.'),
+    StringSchemaValidationSchema,
+    NumberSchemaValidationSchema,
+    BooleanSchemaValidationSchema,
+    NullSchemaValidationSchema,
+    ObjectSchemaValidationSchema,
+    RefSchemaValidationSchema,
   ]),
-  properties: z.any().optional().describe('The schema property properties.'),
   description: z
     .string()
     .optional()

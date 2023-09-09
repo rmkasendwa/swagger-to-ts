@@ -2,10 +2,7 @@ import { isEmpty } from 'lodash';
 import { singular } from 'pluralize';
 
 import { ModuleImports, OpenAPISpecification } from '../models';
-import {
-  SchemaProperty,
-  UnionSchemaProperty,
-} from '../models/OpenAPISpecification/Schema';
+import { AnyOfSchema, Schema } from '../models/OpenAPISpecification/Schema';
 import {
   BINARY_RESPONSE_TYPE_MODEL_NAME,
   ENVIRONMENT_DEFINED_MODELS,
@@ -427,7 +424,7 @@ export const generateModelCode = ({
 
     //#region Zod validation schema
     const getSchemaPrimitiveTypeValidationSchemaCode = (
-      property: SchemaProperty,
+      property: Schema,
       propertyName: string
     ): string | undefined => {
       if ('type' in property) {
@@ -622,7 +619,7 @@ export const generateModelCode = ({
     };
 
     const getSchemaTypeValidationSchemaCode = (
-      property: SchemaProperty | UnionSchemaProperty,
+      property: Schema | AnyOfSchema,
       propertyName: string
     ): string => {
       const isNullable = Boolean(

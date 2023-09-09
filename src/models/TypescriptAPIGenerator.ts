@@ -3,7 +3,7 @@ import {
   RequestMethod,
   RequestParameter,
 } from './OpenAPISpecification/Request';
-import { SchemaProperty } from './OpenAPISpecification/Schema';
+import { Schema } from './OpenAPISpecification/Schema';
 import { ModuleImports } from './Utils';
 
 export const BINARY_RESPONSE_TYPE_MODEL_NAME = 'ArrayBuffer';
@@ -149,7 +149,7 @@ export interface TsedModelProperty {
   /**
    * The open api specification of the property.
    */
-  openAPISpecification: SchemaProperty;
+  openAPISpecification: Schema;
 
   /**
    * Whether the property is nullable or not.
