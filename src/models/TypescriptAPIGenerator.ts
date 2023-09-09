@@ -245,7 +245,21 @@ export type RequestGroupings = {
   };
 };
 
-export type RequestScopeGroupings = Record<string, RequestGroupings>;
+/**
+ * The request scope groupings.
+ * The keys are the names of the scopes.
+ *
+ * @example
+ * ```typescript
+ * {
+ *   "Root": {
+ *   }
+ * }
+ * ```
+ */
+export type RequestScopeGroupings = {
+  [scopeName: string]: RequestGroupings;
+};
 
 export type ModelMappings = {
   /**

@@ -131,7 +131,7 @@ export const generateTypescriptAPI = async ({
       const errorFilePath = `${debugOutputRootPath}/openapi_spec_validation.error.json`;
       ensureDirSync(debugOutputRootPath);
       console.error(
-        `😞 Oops! Something went wrong while validating your OpenAPI specification. See ${errorFilePath} for details.`
+        ` -> 😞 Oops! Something went wrong while validating your OpenAPI specification. See ${errorFilePath} for details.`
       );
       writeFileSync(errorFilePath, JSON.stringify(err, null, 2));
       process.exit(1);
@@ -452,122 +452,116 @@ export const generateTypescriptAPI = async ({
 
   //#region Group request tag groups by scope
   console.log(` -> Grouping request tag groups by scope...`);
-  const requestTagGroupsByScope = Object.entries(requestGroupings).reduce(
-    (accumulator, [tag, requestGrouping]) => {
-      const match = /^\[(.+)\]\s/g.exec(tag);
-      const scopeName = match ? match[1] : 'Root';
-      if (!accumulator[scopeName]) {
-        accumulator[scopeName] = {};
-      }
-      accumulator[scopeName][tag.replace(/^\[(.+)\]\s*/g, '').trim()] =
-        requestGrouping;
-      return accumulator;
-    },
-    {} as RequestScopeGroupings
-  );
+  const requestTagGroupsByScope = Object.entries(
+    requestGroupings
+  ).reduce<RequestScopeGroupings>((accumulator, [tag, requestGrouping]) => {
+    const match = /^\[(.+)\]\s/g.exec(tag);
+    const scopeName = match ? match[1] : 'Root';
+    if (!accumulator[scopeName]) {
+      accumulator[scopeName] = {};
+    }
+    accumulator[scopeName][tag.replace(/^\[(.+)\]\s*/g, '').trim()] =
+      requestGrouping;
+    return accumulator;
+  }, {});
   //#endregion
 
   //#region Generate scoped code
-  const scopedCode = Object.entries(requestTagGroupsByScope).reduce(
-    (accumulator, [localScopeName, requestGroupings]) => {
-      //#region Generate tag to entity mappings
-      console.log(` -> Generating tag to entity mappings...`);
-      const tagToEntityLabelMappings = [
-        ...Object.keys(requestGroupings),
-        'Utils',
-      ].reduce((accumulator, tag) => {
-        const labelPlural = tag;
-        const labelSingular = pluralize.singular(tag);
-        accumulator[tag] = {
-          'Entities Label': labelPlural,
-          'Entity Label': labelSingular,
+  const scopedCode = Object.entries(requestTagGroupsByScope).reduce<{
+    [scopeName: string]: {
+      tagToEntityLabelMappings: TagNameToEntityLabelsMap;
+      modelMappings: ModelMappings;
+      apiFunctionsCodeConfiguration: APIFunctionsCodeConfiguration;
+      tsedControllersCodeConfiguration?: TSEDControllersCodeConfiguration;
+      requestGroupings: RequestGroupings;
+    };
+  }>((accumulator, [localScopeName, requestGroupings]) => {
+    //#region Generate tag to entity mappings
+    console.log(` -> Generating tag to entity mappings...`);
+    const tagToEntityLabelMappings = [
+      ...Object.keys(requestGroupings),
+      'Utils',
+    ].reduce<TagNameToEntityLabelsMap>((accumulator, tag) => {
+      const labelPlural = tag;
+      const labelSingular = pluralize.singular(tag);
+      accumulator[tag] = {
+        'Entities Label': labelPlural,
+        'Entity Label': labelSingular,
 
-          'entities label': labelPlural.toLowerCase(),
-          'entity label': labelSingular.toLowerCase(),
+        'entities label': labelPlural.toLowerCase(),
+        'entity label': labelSingular.toLowerCase(),
 
-          PascalCaseEntities: labelPlural.toPascalCase(),
-          PascalCaseEntity: labelSingular.toPascalCase(),
+        PascalCaseEntities: labelPlural.toPascalCase(),
+        PascalCaseEntity: labelSingular.toPascalCase(),
 
-          camelCaseEntities: labelPlural.toCamelCase(),
-          camelCaseEntity: labelSingular.toCamelCase(),
+        camelCaseEntities: labelPlural.toCamelCase(),
+        camelCaseEntity: labelSingular.toCamelCase(),
 
-          UPPER_CASE_ENTITIES: labelPlural.replace(/\s/g, '_').toUpperCase(),
-          UPPER_CASE_ENTITY: labelSingular.replace(/\s/g, '_').toUpperCase(),
+        UPPER_CASE_ENTITIES: labelPlural.replace(/\s/g, '_').toUpperCase(),
+        UPPER_CASE_ENTITY: labelSingular.replace(/\s/g, '_').toUpperCase(),
 
-          'kebab-case-entities': labelPlural.toKebabCase(),
-          'kebab-case-entity': labelSingular.toKebabCase(),
-        };
-        return accumulator;
-      }, {} as TagNameToEntityLabelsMap);
-      //#endregion
-
-      //#region Generate model mappings.
-      console.log(` -> Generating model mappings...`);
-      const modelMappings = generateModelMappings({
-        requestGroupings,
-        openAPISpecification: openAPISpecification,
-        generateTsEDControllers,
-        inferTypeFromValidationSchema,
-      });
-
-      const { schemaToEntityMappings, modelsToValidationSchemaMappings } =
-        modelMappings;
-      //#endregion
-
-      //#region Generate API functions code configuration
-      console.log(` -> Generating API functions code configuration...`);
-      const apiFunctionsCodeConfiguration = getAPIFunctionsCodeConfiguration({
-        requestGroupings,
-        modelsToValidationSchemaMappings,
-        schemaToEntityMappings,
-        tagToEntityLabelMappings,
-        localScopeName,
-      });
-      //#endregion
-
-      //#region Generate TSED controllers code configuration
-      const tsedControllersCodeConfiguration = (() => {
-        if (generateTsEDControllers) {
-          return getTSEDControllersCodeConfiguration({
-            requestGroupings,
-            schemaToEntityMappings,
-            tagToEntityLabelMappings,
-            authenticateDecoratorImportPath:
-              tsEDAuthenticateDecoratorImportPath,
-            tsedControllerNamePrefix: (() => {
-              if (scopeName) {
-                return `[${scopeName}] `;
-              }
-              return tsedControllerNamePrefix;
-            })(),
-            tsedControllerNameSuffix,
-            openAPISpecification,
-          });
-        }
-      })();
-      //#endregion
-
-      accumulator[localScopeName] = {
-        tagToEntityLabelMappings,
-        modelMappings,
-        apiFunctionsCodeConfiguration,
-        tsedControllersCodeConfiguration,
-        requestGroupings,
+        'kebab-case-entities': labelPlural.toKebabCase(),
+        'kebab-case-entity': labelSingular.toKebabCase(),
       };
-
       return accumulator;
-    },
-    {} as Record<
-      string,
-      {
-        tagToEntityLabelMappings: TagNameToEntityLabelsMap;
-        modelMappings: ModelMappings;
-        apiFunctionsCodeConfiguration: APIFunctionsCodeConfiguration;
-        tsedControllersCodeConfiguration?: TSEDControllersCodeConfiguration;
-        requestGroupings: RequestGroupings;
+    }, {});
+    //#endregion
+
+    //#region Generate model mappings.
+    console.log(` -> Generating model mappings...`);
+    const modelMappings = generateModelMappings({
+      requestGroupings,
+      openAPISpecification: openAPISpecification,
+      generateTsEDControllers,
+      inferTypeFromValidationSchema,
+    });
+
+    const { schemaToEntityMappings, modelsToValidationSchemaMappings } =
+      modelMappings;
+    //#endregion
+
+    //#region Generate API functions code configuration
+    console.log(` -> Generating API functions code configuration...`);
+    const apiFunctionsCodeConfiguration = getAPIFunctionsCodeConfiguration({
+      requestGroupings,
+      modelsToValidationSchemaMappings,
+      schemaToEntityMappings,
+      tagToEntityLabelMappings,
+      localScopeName,
+    });
+    //#endregion
+
+    //#region Generate TSED controllers code configuration
+    const tsedControllersCodeConfiguration = (() => {
+      if (generateTsEDControllers) {
+        return getTSEDControllersCodeConfiguration({
+          requestGroupings,
+          schemaToEntityMappings,
+          tagToEntityLabelMappings,
+          authenticateDecoratorImportPath: tsEDAuthenticateDecoratorImportPath,
+          tsedControllerNamePrefix: (() => {
+            if (scopeName) {
+              return `[${scopeName}] `;
+            }
+            return tsedControllerNamePrefix;
+          })(),
+          tsedControllerNameSuffix,
+          openAPISpecification,
+        });
       }
-    >
-  );
+    })();
+    //#endregion
+
+    accumulator[localScopeName] = {
+      tagToEntityLabelMappings,
+      modelMappings,
+      apiFunctionsCodeConfiguration,
+      tsedControllersCodeConfiguration,
+      requestGroupings,
+    };
+
+    return accumulator;
+  }, {});
   //#endregion
 
   //#region Clean up output folder
