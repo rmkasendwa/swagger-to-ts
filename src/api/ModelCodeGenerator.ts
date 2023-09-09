@@ -2,7 +2,7 @@ import { isEmpty } from 'lodash';
 import { singular } from 'pluralize';
 
 import { ModuleImports, OpenAPISpecification } from '../models';
-import { AnyOfSchema, Schema } from '../models/OpenAPISpecification/Schema';
+import { OneOfSchema, Schema } from '../models/OpenAPISpecification/Schema';
 import {
   BINARY_RESPONSE_TYPE_MODEL_NAME,
   ENVIRONMENT_DEFINED_MODELS,
@@ -619,7 +619,7 @@ export const generateModelCode = ({
     };
 
     const getSchemaTypeValidationSchemaCode = (
-      property: Schema | AnyOfSchema,
+      property: Schema | OneOfSchema,
       propertyName: string
     ): string => {
       const isNullable = Boolean(

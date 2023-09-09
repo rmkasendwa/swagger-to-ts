@@ -11,16 +11,33 @@ export const BINARY_RESPONSE_TYPE_MODEL_NAME = 'ArrayBuffer';
 export const ENVIRONMENT_DEFINED_MODELS = ['ArrayBuffer'] as const;
 
 export interface SuccessResponseBaseSchema {
+  /**
+   * The description of the response.
+   */
   description?: string;
+
+  /**
+   * The HTTP status code of the response.
+   */
   httpStatusCode: number;
+
+  /**
+   * Whether the response is an array or not.
+   */
   isArray?: boolean;
 }
 
 export interface SuccessResponseModelSchema extends SuccessResponseBaseSchema {
+  /**
+   * The name of the model that is used to define the response.
+   */
   name: string;
 }
 
 export interface SuccessResponseTypeSchema extends SuccessResponseBaseSchema {
+  /**
+   * The type of the response.
+   */
   type: string;
 }
 
@@ -216,7 +233,14 @@ export interface GeneratedSchemaCodeConfiguration {
 
 export type RequestGroupings = {
   [tagName: string]: {
+    /**
+     * The tag group module imports.
+     */
     imports: ModuleImports;
+
+    /**
+     * The requests that are grouped under this tag/module.
+     */
     requests: TypescriptAPIGeneratorRequest[];
   };
 };
@@ -224,40 +248,55 @@ export type RequestGroupings = {
 export type RequestScopeGroupings = Record<string, RequestGroupings>;
 
 export type ModelMappings = {
+  /**
+   * The entity schema groups.
+   */
   entitySchemaGroups: Record<string, string[]>;
+
+  /**
+   * The schmea to entity mappings.
+   */
   schemaToEntityMappings: Record<string, string>;
+
+  /**
+   * The schema entity references.
+   */
   schemaEntityReferences: Record<string, string[]>;
-  models: Record<
-    string,
-    {
+
+  /**
+   * The model to validation schema mappings.
+   */
+  models: {
+    [modelName: string]: {
       models: Record<string, GeneratedSchemaCodeConfiguration>;
       imports?: ModuleImports | undefined;
-    }
-  >;
-  modelsToValidationSchemaMappings: Record<
-    string,
-    GeneratedSchemaCodeConfiguration
-  >;
+    };
+  };
+
+  /**
+   * The models to validation schema mappings.
+   */
+  modelsToValidationSchemaMappings: {
+    [modelName: string]: GeneratedSchemaCodeConfiguration;
+  };
 };
 
-export type APIFunctionsCodeConfiguration = Record<
-  string,
-  {
+export type APIFunctionsCodeConfiguration = {
+  [requestPath: string]: {
     requestPathsOutputCode: string;
     outputCode: string;
     imports: ModuleImports;
     dataKeyVariableName: string;
     exports: string[];
-  }
->;
+  };
+};
 
-export type TSEDControllersCodeConfiguration = Record<
-  string,
-  {
+export type TSEDControllersCodeConfiguration = {
+  [requestPath: string]: {
     outputCode: string;
     imports: ModuleImports;
-  }
->;
+  };
+};
 
 export const TSED_SCHEMA_LIBRARY_PATH = `@tsed/schema`;
 export const TSED_COMMON_LIBRARY_PATH = `@tsed/common`;
@@ -266,9 +305,8 @@ export const TSED_SWAGGER_LIBRARY_PATH = `@tsed/swagger`;
 export const RMK_UTILS_LIBRARY_PATH = `@infinite-debugger/rmk-utils`;
 export const PATHS_LIBRARY_PATH = `@infinite-debugger/rmk-utils/paths`;
 
-export type TagNameToEntityLabelsMap = Record<
-  string,
-  {
+export type TagNameToEntityLabelsMap = {
+  [tagName: string]: {
     'Entities Label': string;
     'Entity Label': string;
 
@@ -286,5 +324,5 @@ export type TagNameToEntityLabelsMap = Record<
 
     'kebab-case-entities': string;
     'kebab-case-entity': string;
-  }
->;
+  };
+};

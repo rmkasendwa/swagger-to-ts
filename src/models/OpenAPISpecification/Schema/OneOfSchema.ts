@@ -20,7 +20,7 @@ import { StringSchemaValidationSchema } from './StringSchema';
  * When using the discriminator, inline schemas will not be considered.
  */
 
-export const AnyOfSchemaValidationSchema = z.object({
+export const OneOfSchemaValidationSchema = z.object({
   oneOf: z
     .array(
       z.union([
@@ -45,4 +45,4 @@ export const AnyOfSchemaValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type AnyOfSchema = z.infer<typeof AnyOfSchemaValidationSchema>;
+export type OneOfSchema = z.infer<typeof OneOfSchemaValidationSchema>;

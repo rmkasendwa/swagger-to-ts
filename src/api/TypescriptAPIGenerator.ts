@@ -178,10 +178,10 @@ export const generateTypescriptAPI = async ({
           requestOperationNameSource === 'requestSummary' &&
           request.summary
         ) {
-          return request.summary.toCamelCase();
+          return request.summary;
         }
         if (request.operationId) {
-          return request.operationId;
+          return request.operationId.split(/\W/g).reverse()[0];
         }
         throw new Error(
           `Could not determine operation name. ${JSON.stringify(
@@ -190,7 +190,8 @@ export const generateTypescriptAPI = async ({
             2
           )}`
         );
-      })();
+      })().trim();
+      const camelCaseOperationName = operationName.toCamelCase();
       const pascalCaseOperationName = operationName.toPascalCase();
       if (requestBody) {
         const { content } = requestBody;
@@ -232,30 +233,16 @@ export const generateTypescriptAPI = async ({
           ...request,
           method: method as RequestMethod,
           requestPath: path,
-          operationName,
+          operationName: camelCaseOperationName,
           pascalCaseOperationName,
           requestPathName:
-            (() => {
-              if (
-                requestOperationNameSource === 'requestSummary' &&
-                request.summary
-              ) {
-                return request.summary.replace(/\s/g, '_').toUpperCase();
-              }
-              if (request.operationId) {
-                return request.operationId.replace(/\s/g, '_').toUpperCase();
-              }
-              throw new Error('Could not determine operation name.');
-            })() + `_ENDPOINT_PATH`,
+            operationName.replace(/\s/g, '_').toUpperCase() + `_ENDPOINT_PATH`,
           operationDescription: (() => {
             if (
               requestOperationNameSource === 'requestSummary' &&
               request.summary
             ) {
-              const [verb, ...restSummary] = request.summary.split(' ');
-              return (
-                verb.replace(/[ei]+$/g, '') + 'ing ' + restSummary.join(' ')
-              );
+              return request.summary;
             }
           })(),
           requestBodySchemaName: (() => {
@@ -313,19 +300,21 @@ export const generateTypescriptAPI = async ({
               }
             }
           })(),
+          // TODO: Deal with oneof schema types
           successResponseSchemas: (() => {
-            const successResponses = Object.keys(request.responses).filter(
-              (responseCode) => responseCode.startsWith('2')
+            const successResponses = Object.entries(request.responses).filter(
+              ([responseCode]) => responseCode.startsWith('2')
             );
-            if (successResponses && successResponses.length > 0) {
+            if (successResponses.length > 0) {
               return successResponses
-                .filter((successResponse) => {
-                  return request.responses[successResponse].content;
+                .filter(([, response]) => {
+                  return response.content;
                 })
-                .map((successResponse) => {
-                  const content = request.responses[successResponse].content;
+                .map(([successResponse, response]) => {
+                  const httpStatusCode = +successResponse;
+                  const content = response.content!;
+                  const description = response.description;
                   if (
-                    content &&
                     'application/json' in content &&
                     content['application/json'].schema
                   ) {
@@ -335,9 +324,8 @@ export const generateTypescriptAPI = async ({
                       ].schema.$ref.replace('#/components/schemas/', '');
                       return {
                         name: successResponseSchemaName,
-                        httpStatusCode: +successResponse,
-                        description:
-                          request.responses[successResponse].description,
+                        httpStatusCode,
+                        description,
                       } as SuccessResponseSchema;
                     } else if (
                       'type' in content['application/json'].schema &&
@@ -345,6 +333,7 @@ export const generateTypescriptAPI = async ({
                       content['application/json'].schema.items &&
                       '$ref' in content['application/json'].schema.items
                     ) {
+                      //#region Array type schema
                       const schemaReference =
                         content['application/json'].schema.items.$ref;
                       const successResponseSchemaName = schemaReference.replace(
@@ -353,53 +342,45 @@ export const generateTypescriptAPI = async ({
                       );
                       return {
                         name: successResponseSchemaName,
-                        httpStatusCode: +successResponse,
-                        description:
-                          request.responses[successResponse].description,
+                        httpStatusCode,
+                        description,
                         isArray: true,
                       } as SuccessResponseSchema;
+                      //#endregion
                     }
                   }
-                  if (request.responses[successResponse].content) {
-                    if (
-                      'image/png' in request.responses[successResponse].content!
-                    ) {
-                      return {
-                        name: BINARY_RESPONSE_TYPE_MODEL_NAME,
-                        description:
-                          request.responses[successResponse].description,
-                        httpStatusCode: +successResponse,
-                      } as SuccessResponseSchema;
-                    }
-                    if (
-                      'application/pdf' in
-                      request.responses[successResponse].content!
-                    ) {
-                      return {
-                        name: BINARY_RESPONSE_TYPE_MODEL_NAME,
-                        description:
-                          request.responses[successResponse].description,
-                        httpStatusCode: +successResponse,
-                      } as SuccessResponseSchema;
-                    }
-                    if ('*/*' in request.responses[successResponse].content!) {
-                      return {
-                        type: 'string',
-                        description:
-                          request.responses[successResponse].description,
-                        httpStatusCode: +successResponse,
-                      } as SuccessResponseSchema;
-                    }
+                  if ('image/png' in content) {
+                    return {
+                      name: BINARY_RESPONSE_TYPE_MODEL_NAME,
+                      description,
+                      httpStatusCode,
+                    } as SuccessResponseSchema;
+                  }
+                  if ('application/pdf' in content) {
+                    return {
+                      name: BINARY_RESPONSE_TYPE_MODEL_NAME,
+                      description,
+                      httpStatusCode,
+                    } as SuccessResponseSchema;
+                  }
+                  if ('*/*' in content) {
+                    return {
+                      type: 'any',
+                      description,
+                      httpStatusCode,
+                    } as SuccessResponseSchema;
                   }
                   return {
-                    name: BINARY_RESPONSE_TYPE_MODEL_NAME,
-                    description: request.responses[successResponse].description,
-                    httpStatusCode: +successResponse,
+                    type: 'any',
+                    description,
+                    httpStatusCode,
                   } as SuccessResponseSchema;
                 })
                 .filter((schema) => schema) as SuccessResponseSchema[];
             }
           })(),
+
+          //#region Path parameters
           ...(() => {
             if (request.parameters) {
               const pathParameters = request.parameters.filter(
@@ -412,6 +393,7 @@ export const generateTypescriptAPI = async ({
               }
             }
           })(),
+          //#endregion
 
           //#region Header parameters
           ...(() => {

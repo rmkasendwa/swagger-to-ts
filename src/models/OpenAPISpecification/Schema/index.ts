@@ -7,4 +7,4 @@ export * from './RefSchema';
 export * from './ObjectSchema';
 export * from './RecordSchema';
 export * from './ArraySchema';
-export * from './AnyOfSchema';
+export * from './OneOfSchema';

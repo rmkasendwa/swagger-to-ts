@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
-import { AnyOfSchemaValidationSchema } from './AnyOfSchema';
 import { ArraySchemaValidationSchema } from './ArraySchema';
 import { BooleanSchemaValidationSchema } from './BooleanSchema';
 import { NullSchemaValidationSchema } from './NullSchema';
 import { NumberSchemaValidationSchema } from './NumberSchema';
 import { ObjectSchemaValidationSchema } from './ObjectSchema';
+import { OneOfSchemaValidationSchema } from './OneOfSchema';
 import { RecordSchemaValidationSchema } from './RecordSchema';
 import { RefSchemaValidationSchema } from './RefSchema';
 import { StringSchemaValidationSchema } from './StringSchema';
@@ -19,7 +19,7 @@ export const SchemaValidationSchema = z.union([
   RecordSchemaValidationSchema,
   ObjectSchemaValidationSchema,
   ArraySchemaValidationSchema,
-  AnyOfSchemaValidationSchema,
+  OneOfSchemaValidationSchema,
   RefSchemaValidationSchema,
 ]);
 
