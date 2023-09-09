@@ -1,34 +1,34 @@
 import { z } from 'zod';
 
-import { BooleanSchemaPropertyValidationSchema } from './BooleanSchema';
-import { NullSchemaPropertyValidationSchema } from './NullSchema';
-import { NumberSchemaPropertyValidationSchema } from './NumberSchema';
-import { RefSchemaPropertyValidationSchema } from './RefSchema';
-import { StringSchemaPropertyValidationSchema } from './StringSchema';
+import { BooleanSchemaValidationSchema } from './BooleanSchema';
+import { NullSchemaValidationSchema } from './NullSchema';
+import { NumberSchemaValidationSchema } from './NumberSchema';
+import { RefSchemaValidationSchema } from './RefSchema';
+import { StringSchemaValidationSchema } from './StringSchema';
 
-export const RecordSchemaPropertyValidationSchema = z.object({
+export const RecordSchemaValidationSchema = z.object({
   type: z.literal('object').describe('The schema property type.'),
   additionalProperties: z.union([
     z.object({
       type: z.literal('array').describe('The schema property type.'),
       items: z
         .union([
-          StringSchemaPropertyValidationSchema,
-          NumberSchemaPropertyValidationSchema,
-          BooleanSchemaPropertyValidationSchema,
-          NullSchemaPropertyValidationSchema,
-          RefSchemaPropertyValidationSchema,
+          StringSchemaValidationSchema,
+          NumberSchemaValidationSchema,
+          BooleanSchemaValidationSchema,
+          NullSchemaValidationSchema,
+          RefSchemaValidationSchema,
         ])
         .optional()
         .describe('The schema property items.'),
     }),
     z
       .union([
-        StringSchemaPropertyValidationSchema,
-        NumberSchemaPropertyValidationSchema,
-        BooleanSchemaPropertyValidationSchema,
-        NullSchemaPropertyValidationSchema,
-        RefSchemaPropertyValidationSchema,
+        StringSchemaValidationSchema,
+        NumberSchemaValidationSchema,
+        BooleanSchemaValidationSchema,
+        NullSchemaValidationSchema,
+        RefSchemaValidationSchema,
       ])
       .optional()
       .describe('The schema property items.'),
@@ -46,6 +46,4 @@ export const RecordSchemaPropertyValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type RecordSchemaProperty = z.infer<
-  typeof RecordSchemaPropertyValidationSchema
->;
+export type RecordSchema = z.infer<typeof RecordSchemaValidationSchema>;

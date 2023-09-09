@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const NullSchemaPropertyValidationSchema = z.object({
+export const NullSchemaValidationSchema = z.object({
   type: z.literal('null').describe('The schema property type.'),
   description: z
     .string()
@@ -10,6 +10,4 @@ export const NullSchemaPropertyValidationSchema = z.object({
   default: z.null().optional().describe('The schema property default.'),
 });
 
-export type NullSchemaProperty = z.infer<
-  typeof NullSchemaPropertyValidationSchema
->;
+export type NullSchema = z.infer<typeof NullSchemaValidationSchema>;

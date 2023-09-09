@@ -2,10 +2,10 @@ import { z } from 'zod';
 
 import {
   ArraySchemaPropertyValidationSchema,
-  BooleanSchemaPropertyValidationSchema,
-  RefSchemaPropertyValidationSchema,
+  BooleanSchemaValidationSchema,
+  RefSchemaValidationSchema,
   SchemaValidationSchema,
-  StringSchemaPropertyValidationSchema,
+  StringSchemaValidationSchema,
 } from './Schema';
 
 //#region JSONContent
@@ -13,11 +13,11 @@ export const JSONContentValidationSchema = z.object({
   'application/json': z.object({
     schema: z
       .union([
-        RefSchemaPropertyValidationSchema,
+        RefSchemaValidationSchema,
         SchemaValidationSchema,
         ArraySchemaPropertyValidationSchema,
-        BooleanSchemaPropertyValidationSchema,
-        StringSchemaPropertyValidationSchema,
+        BooleanSchemaValidationSchema,
+        StringSchemaValidationSchema,
       ])
       .optional(),
   }),
@@ -30,7 +30,7 @@ export type JSONContent = z.infer<typeof JSONContentValidationSchema>;
 export const PDFContentValidationSchema = z.object({
   'application/pdf': z.object({
     schema: z
-      .union([RefSchemaPropertyValidationSchema, SchemaValidationSchema])
+      .union([RefSchemaValidationSchema, SchemaValidationSchema])
       .optional(),
   }),
 });
@@ -42,7 +42,7 @@ export type PDFContent = z.infer<typeof PDFContentValidationSchema>;
 export const PNGContentValidationSchema = z.object({
   'image/png': z.object({
     schema: z
-      .union([RefSchemaPropertyValidationSchema, SchemaValidationSchema])
+      .union([RefSchemaValidationSchema, SchemaValidationSchema])
       .optional(),
   }),
 });

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const StringSchemaPropertyValidationSchema = z.object({
+export const StringSchemaValidationSchema = z.object({
   type: z.literal('string').describe('The schema property type.'),
   description: z
     .string()
@@ -21,6 +21,4 @@ export const StringSchemaPropertyValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type StringSchemaProperty = z.infer<
-  typeof StringSchemaPropertyValidationSchema
->;
+export type StringSchema = z.infer<typeof StringSchemaValidationSchema>;

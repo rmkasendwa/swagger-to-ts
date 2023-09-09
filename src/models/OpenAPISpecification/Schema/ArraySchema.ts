@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
-import { BooleanSchemaPropertyValidationSchema } from './BooleanSchema';
-import { NullSchemaPropertyValidationSchema } from './NullSchema';
-import { NumberSchemaPropertyValidationSchema } from './NumberSchema';
-import { RefSchemaPropertyValidationSchema } from './RefSchema';
-import { StringSchemaPropertyValidationSchema } from './StringSchema';
+import { BooleanSchemaValidationSchema } from './BooleanSchema';
+import { NullSchemaValidationSchema } from './NullSchema';
+import { NumberSchemaValidationSchema } from './NumberSchema';
+import { RefSchemaValidationSchema } from './RefSchema';
+import { StringSchemaValidationSchema } from './StringSchema';
 
 //#region PrimitiveSchemaProperty
 export const ArraySchemaPropertyMemberValidationSchema = z.union([
-  StringSchemaPropertyValidationSchema,
-  NumberSchemaPropertyValidationSchema,
-  BooleanSchemaPropertyValidationSchema,
-  NullSchemaPropertyValidationSchema,
-  RefSchemaPropertyValidationSchema,
+  StringSchemaValidationSchema,
+  NumberSchemaValidationSchema,
+  BooleanSchemaValidationSchema,
+  NullSchemaValidationSchema,
+  RefSchemaValidationSchema,
 ]);
 
 export type ArraySchemaPropertyMember = z.infer<

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const BooleanSchemaPropertyValidationSchema = z.object({
+export const BooleanSchemaValidationSchema = z.object({
   type: z.literal('boolean').describe('The schema property type.'),
   description: z
     .string()
@@ -14,6 +14,4 @@ export const BooleanSchemaPropertyValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type BooleanSchemaProperty = z.infer<
-  typeof BooleanSchemaPropertyValidationSchema
->;
+export type BooleanSchema = z.infer<typeof BooleanSchemaValidationSchema>;

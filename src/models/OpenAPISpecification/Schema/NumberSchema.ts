@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const NumberSchemaPropertyValidationSchema = z.object({
+export const NumberSchemaValidationSchema = z.object({
   type: z
     .enum(['number', 'integer'] as const)
     .describe('The schema property type.'),
@@ -18,6 +18,4 @@ export const NumberSchemaPropertyValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type NumberSchemaProperty = z.infer<
-  typeof NumberSchemaPropertyValidationSchema
->;
+export type NumberSchema = z.infer<typeof NumberSchemaValidationSchema>;

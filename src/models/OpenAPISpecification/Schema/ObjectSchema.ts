@@ -1,27 +1,27 @@
 import { z } from 'zod';
 
-import { RefSchemaPropertyValidationSchema } from './RefSchema';
+import { RefSchemaValidationSchema } from './RefSchema';
 
-export const ObjectSchemaPropertyMemberValidationSchema = z.union([
+export const ObjectSchemaMemberValidationSchema = z.union([
   z.array(
     z.union([
       z.object({
         type: z.literal('string').describe('The schema property type.'),
       }),
-      RefSchemaPropertyValidationSchema,
+      RefSchemaValidationSchema,
     ])
   ),
-  RefSchemaPropertyValidationSchema,
+  RefSchemaValidationSchema,
 ]);
 
-export type ObjectSchemaPropertyMember = z.infer<
-  typeof ObjectSchemaPropertyMemberValidationSchema
+export type ObjectSchemaMember = z.infer<
+  typeof ObjectSchemaMemberValidationSchema
 >;
 
-export const ObjectSchemaPropertyValidationSchema = z.object({
+export const ObjectSchemaValidationSchema = z.object({
   type: z.literal('object').describe('The schema property type.'),
   properties: z
-    .record(ObjectSchemaPropertyMemberValidationSchema)
+    .record(ObjectSchemaMemberValidationSchema)
     .optional()
     .describe('The schema property properties.'),
   description: z
@@ -36,6 +36,4 @@ export const ObjectSchemaPropertyValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type ObjectSchemaProperty = z.infer<
-  typeof ObjectSchemaPropertyValidationSchema
->;
+export type ObjectSchema = z.infer<typeof ObjectSchemaValidationSchema>;

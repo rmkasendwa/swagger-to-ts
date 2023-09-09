@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const RefSchemaPropertyValidationSchema = z.object({
+export const RefSchemaValidationSchema = z.object({
   $ref: z.string().describe('The schema property ref.'),
   description: z
     .string()
@@ -8,6 +8,4 @@ export const RefSchemaPropertyValidationSchema = z.object({
     .describe('The schema property description.'),
 });
 
-export type RefSchemaProperty = z.infer<
-  typeof RefSchemaPropertyValidationSchema
->;
+export type RefSchema = z.infer<typeof RefSchemaValidationSchema>;

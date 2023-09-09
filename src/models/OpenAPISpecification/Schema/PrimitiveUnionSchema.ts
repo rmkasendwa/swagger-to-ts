@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const PrimitiveUnionSchemaPropertyValidationSchema = z.object({
+export const PrimitiveUnionSchemaValidationSchema = z.object({
   type: z
     .array(z.enum(['string', 'number', 'boolean', 'null'] as const))
     .describe('The schema property type.'),
@@ -16,6 +16,6 @@ export const PrimitiveUnionSchemaPropertyValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type PrimitiveUnionSchemaProperty = z.infer<
-  typeof PrimitiveUnionSchemaPropertyValidationSchema
+export type PrimitiveUnionSchema = z.infer<
+  typeof PrimitiveUnionSchemaValidationSchema
 >;

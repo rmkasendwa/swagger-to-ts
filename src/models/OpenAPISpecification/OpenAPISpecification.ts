@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
+import { Components, ComponentsValidationSchema } from './Components';
 import { Request, RequestValidationSchema } from './Request';
-import { SchemaValidationSchema } from './Schema';
 
 //#region OpenAPISpecificationInfo
 export const InfoValidationSchema = z.object({
@@ -11,43 +11,6 @@ export const InfoValidationSchema = z.object({
 });
 
 export type Info = z.infer<typeof InfoValidationSchema>;
-//#endregion
-
-//#region SecurityScheme
-export const ApikeyAuthValidationSchema = z.object({
-  type: z.string().describe('The security scheme type.'),
-  in: z.string().optional().describe('The security scheme location.'),
-  name: z.string().optional().describe('The security scheme name.'),
-});
-
-export const BearerAuthValidationSchema = z.object({
-  type: z.string().describe('The security scheme type.'),
-  scheme: z
-    .literal('bearer')
-    .optional()
-    .describe('The security scheme scheme.'),
-  bearerFormat: z
-    .string()
-    .optional()
-    .describe('The security scheme bearer format.'),
-});
-
-export const SecuritySchemeValidationSchema = z
-  .union([ApikeyAuthValidationSchema, BearerAuthValidationSchema])
-  .describe('The open api security scheme.');
-
-export type SecurityScheme = z.infer<typeof SecuritySchemeValidationSchema>;
-//#endregion
-
-//#region Components
-export const ComponentsValidationSchema = z.object({
-  securitySchemes: z
-    .record(SecuritySchemeValidationSchema)
-    .describe('The open api security schemes.'),
-  schemas: z.record(SchemaValidationSchema).describe('The open api schemas.'),
-});
-
-export type Components = z.infer<typeof ComponentsValidationSchema>;
 //#endregion
 
 //#region SecurityScheme
@@ -76,47 +39,71 @@ export type Tag = z.infer<typeof TagValidationSchema>;
 //#endregion
 
 export const OpenAPISpecificationValidationSchema = z.object({
-  openapi: z.string().describe('The open api version.'),
-  info: InfoValidationSchema.describe('The open api information.'),
-  components: ComponentsValidationSchema.describe('The open api components.'),
+  openapi: z
+    .string()
+    .describe(
+      'This string MUST be the version number of the OpenAPI Specification that the OpenAPI document uses. The openapi field SHOULD be used by tooling to interpret the OpenAPI document. This is not related to the API info.version string.'
+    ),
+  info: InfoValidationSchema.describe(
+    'Provides metadata about the API. The metadata MAY be used by tooling as required.'
+  ),
+  components: ComponentsValidationSchema.describe(
+    'An element to hold various schemas for the document.'
+  ),
   security: z
     .array(SecurityValidationSchema)
     .optional()
-    .describe('The server security configuration.'),
+    .describe(
+      'A declaration of which security mechanisms can be used across the API. The list of values includes alternative security requirement objects that can be used. Only one of the security requirement objects need to be satisfied to authorize a request. Individual operations can override this definition. To make security optional, an empty security requirement ({}) can be included in the array.'
+    ),
   paths: z
     .record(z.record(RequestValidationSchema))
-    .describe('The server request paths.'),
-  tags: z.array(TagValidationSchema).describe('The server endpoint groups.'),
+    .describe('The available paths and operations for the API.'),
+  tags: z
+    .array(TagValidationSchema)
+    .describe(
+      "A list of tags used by the document with additional metadata. The order of the tags can be used to reflect on their order by the parsing tools. Not all tags that are used by the Operation Object must be declared. The tags that are not declared MAY be organized randomly or based on the tools' logic. Each tag name in the list MUST be unique."
+    ),
 });
 
 export type OpenAPISpecification = {
   /**
-   * The open api version.
+   * This string MUST be the version number of the OpenAPI Specification that the OpenAPI document uses.
+   * The openapi field SHOULD be used by tooling to interpret the OpenAPI document.
+   * This is not related to the API info.version string.
    */
   openapi: string;
 
   /**
-   * The open api information.
+   * Provides metadata about the API. The metadata MAY be used by tooling as required.
    */
   info: Info;
 
   /**
-   * The open api components.
+   * An element to hold various schemas for the document.
    */
   components: Components;
 
   /**
-   * The server security configuration.
+   * A declaration of which security mechanisms can be used across the API.
+   * The list of values includes alternative security requirement objects that can be used.
+   * Only one of the security requirement objects need to be satisfied to authorize a request.
+   * Individual operations can override this definition.
+   * To make security optional, an empty security requirement ({}) can be included in the array.
    */
   security?: Security[];
 
   /**
-   * The server request paths.
+   * The available paths and operations for the API.
    */
   paths: Record<string, Record<string, Request>>;
 
   /**
-   * The server endpoint groups.
+   * A list of tags used by the document with additional metadata.
+   * The order of the tags can be used to reflect on their order by the parsing tools.
+   * Not all tags that are used by the Operation Object must be declared.
+   * The tags that are not declared MAY be organized randomly or based on the tools' logic.
+   * Each tag name in the list MUST be unique.
    */
   tags: Tag[];
 };
