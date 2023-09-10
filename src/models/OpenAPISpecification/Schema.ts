@@ -1,15 +1,22 @@
 import { z } from 'zod';
 
-export type StringSchema = {
+export type BaseSchema = {
+  /**
+   * The description of the schema.
+   */
+  description?: string;
+
+  /**
+   * Whether the schema is nullable or not.
+   */
+  nullable?: boolean;
+};
+
+export type StringSchema = BaseSchema & {
   /**
    * The schema property type.
    */
   type: 'string';
-
-  /**
-   * The schema property description.
-   */
-  description?: string;
 
   /**
    * The schema property format.
@@ -40,23 +47,13 @@ export type StringSchema = {
    * The schema property default.
    */
   default?: string;
-
-  /**
-   * Whether the schema property is nullable or not.
-   */
-  nullable?: boolean;
 };
 
-export type NumberSchema = {
+export type NumberSchema = BaseSchema & {
   /**
    * The schema property type.
    */
   type: 'number' | 'integer';
-
-  /**
-   * The schema property description.
-   */
-  description?: string;
 
   /**
    * The schema property example.
@@ -77,23 +74,13 @@ export type NumberSchema = {
    * The schema property maximum value.
    */
   max?: number;
-
-  /**
-   * Whether the schema property is nullable or not.
-   */
-  nullable?: boolean;
 };
 
-export type BooleanSchema = {
+export type BooleanSchema = BaseSchema & {
   /**
    * The schema property type.
    */
   type: 'boolean';
-
-  /**
-   * The schema property description.
-   */
-  description?: string;
 
   /**
    * The schema property example.
@@ -104,23 +91,13 @@ export type BooleanSchema = {
    *
    */
   default?: boolean;
-
-  /**
-   * Whether the schema property is nullable or not.
-   */
-  nullable?: boolean;
 };
 
-export type NullSchema = {
+export type NullSchema = BaseSchema & {
   /**
    * The schema property type.
    */
   type: 'null';
-
-  /**
-   * The schema property description.
-   */
-  description?: string;
 
   /**
    * The schema property example.
@@ -133,7 +110,7 @@ export type NullSchema = {
   default?: null;
 };
 
-export type RefSchema = {
+export type RefSchema = BaseSchema & {
   /**
    * The reference schema uri.
    */
@@ -143,14 +120,9 @@ export type RefSchema = {
    * The reference schema summary.
    */
   summary?: string;
-
-  /**
-   * The reference schema description.
-   */
-  description?: string;
 };
 
-export type ObjectSchema = {
+export type ObjectSchema = BaseSchema & {
   /**
    * The schema property type.
    */
@@ -173,11 +145,6 @@ export type ObjectSchema = {
   >;
 
   /**
-   * The schema property description.
-   */
-  description?: string;
-
-  /**
    * The schema property example.
    */
   example?: any;
@@ -188,17 +155,12 @@ export type ObjectSchema = {
   default?: any;
 
   /**
-   * Whether the schema property is nullable or not.
-   */
-  nullable?: boolean;
-
-  /**
    * The object required properties
    */
   required?: string[];
 };
 
-export type RecordSchema = {
+export type RecordSchema = BaseSchema & {
   /**
    * The schema property type.
    */
@@ -219,11 +181,6 @@ export type RecordSchema = {
     | ArraySchema;
 
   /**
-   * The schema property description.
-   */
-  description?: string;
-
-  /**
    * The schema property example.
    */
   example?: any;
@@ -232,14 +189,9 @@ export type RecordSchema = {
    * The schema property default.
    */
   default?: any;
-
-  /**
-   * Whether the schema property is nullable or not.
-   */
-  nullable?: boolean;
 };
 
-export type OneOfSchema = {
+export type OneOfSchema = BaseSchema & {
   oneOf: (
     | StringSchema
     | NumberSchema
@@ -251,19 +203,9 @@ export type OneOfSchema = {
     | ObjectSchema
     | ArraySchema
   )[];
-
-  /**
-   * The schema property description.
-   */
-  description?: string;
-
-  /**
-   * Whether the schema property is nullable or not.
-   */
-  nullable?: boolean;
 };
 
-export type ArraySchema = {
+export type ArraySchema = BaseSchema & {
   /**
    * The schema property type.
    */
@@ -284,11 +226,6 @@ export type ArraySchema = {
     | ArraySchema;
 
   /**
-   * The schema property description.
-   */
-  description?: string;
-
-  /**
    * The schema property example.
    */
   example?: any[];
@@ -297,11 +234,6 @@ export type ArraySchema = {
    * The schema property default.
    */
   default?: any[];
-
-  /**
-   * Whether the schema property is nullable or not.
-   */
-  nullable?: boolean;
 };
 
 export const SchemaValidationSchema = z.any();
