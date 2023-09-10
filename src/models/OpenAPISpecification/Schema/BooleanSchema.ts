@@ -14,4 +14,10 @@ export const BooleanSchemaValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type BooleanSchema = z.infer<typeof BooleanSchemaValidationSchema>;
+export type BooleanSchema = {
+  type: 'boolean';
+  description?: string;
+  example?: boolean;
+  default?: boolean;
+  nullable?: boolean;
+};

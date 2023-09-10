@@ -18,4 +18,8 @@ export const RefSchemaValidationSchema = z.object({
     ),
 });
 
-export type RefSchema = z.infer<typeof RefSchemaValidationSchema>;
+export type RefSchema = {
+  $ref: string;
+  summary?: string;
+  description?: string;
+};

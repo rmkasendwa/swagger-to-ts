@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { ArraySchemaValidationSchema } from './ArraySchema';
-import { BooleanSchemaValidationSchema } from './BooleanSchema';
-import { NullSchemaValidationSchema } from './NullSchema';
-import { NumberSchemaValidationSchema } from './NumberSchema';
-import { ObjectSchemaValidationSchema } from './ObjectSchema';
-import { RecordSchemaValidationSchema } from './RecordSchema';
-import { RefSchemaValidationSchema } from './RefSchema';
-import { StringSchemaValidationSchema } from './StringSchema';
+import { ArraySchema, ArraySchemaValidationSchema } from './ArraySchema';
+import { BooleanSchema, BooleanSchemaValidationSchema } from './BooleanSchema';
+import { NullSchema, NullSchemaValidationSchema } from './NullSchema';
+import { NumberSchema, NumberSchemaValidationSchema } from './NumberSchema';
+import { ObjectSchema, ObjectSchemaValidationSchema } from './ObjectSchema';
+import { RecordSchema, RecordSchemaValidationSchema } from './RecordSchema';
+import { RefSchema, RefSchemaValidationSchema } from './RefSchema';
+import { StringSchema, StringSchemaValidationSchema } from './StringSchema';
 
 /**
  * Discriminator Object
@@ -45,4 +45,17 @@ export const OneOfSchemaValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type OneOfSchema = z.infer<typeof OneOfSchemaValidationSchema>;
+export type OneOfSchema = {
+  oneOf: (
+    | StringSchema
+    | NumberSchema
+    | BooleanSchema
+    | NullSchema
+    | RecordSchema
+    | ObjectSchema
+    | ArraySchema
+    | RefSchema
+  )[];
+  description?: string;
+  nullable?: boolean;
+};

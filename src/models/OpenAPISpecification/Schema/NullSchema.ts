@@ -10,4 +10,9 @@ export const NullSchemaValidationSchema = z.object({
   default: z.null().optional().describe('The schema property default.'),
 });
 
-export type NullSchema = z.infer<typeof NullSchemaValidationSchema>;
+export type NullSchema = {
+  type: 'null';
+  description?: string;
+  example?: null;
+  default?: null;
+};

@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
-import { BooleanSchemaValidationSchema } from './BooleanSchema';
-import { NullSchemaValidationSchema } from './NullSchema';
-import { NumberSchemaValidationSchema } from './NumberSchema';
-import { RefSchemaValidationSchema } from './RefSchema';
-import { StringSchemaValidationSchema } from './StringSchema';
+import { ArraySchema } from './ArraySchema';
+import { BooleanSchema, BooleanSchemaValidationSchema } from './BooleanSchema';
+import { NullSchema, NullSchemaValidationSchema } from './NullSchema';
+import { NumberSchema, NumberSchemaValidationSchema } from './NumberSchema';
+import { OneOfSchema } from './OneOfSchema';
+import { RefSchema, RefSchemaValidationSchema } from './RefSchema';
+import { StringSchema, StringSchemaValidationSchema } from './StringSchema';
 
 export const ObjectSchemaValidationSchema = z.object({
   type: z.literal('object').describe('The schema property type.'),
@@ -92,4 +94,21 @@ export const ObjectSchemaValidationSchema = z.object({
     .describe('The schema property required properties.'),
 });
 
-export type ObjectSchema = z.infer<typeof ObjectSchemaValidationSchema>;
+export type ObjectSchema = {
+  type: 'object';
+  properties?: Record<
+    string,
+    | StringSchema
+    | NumberSchema
+    | BooleanSchema
+    | NullSchema
+    | RefSchema
+    | OneOfSchema
+    | ArraySchema
+  >;
+  description?: string;
+  example?: any;
+  default?: any;
+  nullable?: boolean;
+  required?: string[];
+};

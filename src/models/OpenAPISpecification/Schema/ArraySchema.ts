@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-import { BooleanSchemaValidationSchema } from './BooleanSchema';
-import { NullSchemaValidationSchema } from './NullSchema';
-import { NumberSchemaValidationSchema } from './NumberSchema';
-import { ObjectSchemaValidationSchema } from './ObjectSchema';
-import { RecordSchemaValidationSchema } from './RecordSchema';
-import { RefSchemaValidationSchema } from './RefSchema';
-import { StringSchemaValidationSchema } from './StringSchema';
+import { BooleanSchema, BooleanSchemaValidationSchema } from './BooleanSchema';
+import { NullSchema, NullSchemaValidationSchema } from './NullSchema';
+import { NumberSchema, NumberSchemaValidationSchema } from './NumberSchema';
+import { ObjectSchema, ObjectSchemaValidationSchema } from './ObjectSchema';
+import { RecordSchema, RecordSchemaValidationSchema } from './RecordSchema';
+import { RefSchema, RefSchemaValidationSchema } from './RefSchema';
+import { StringSchema, StringSchemaValidationSchema } from './StringSchema';
 
 //#region ArraySchemaProperty
 export const ArraySchemaValidationSchema = z.object({
@@ -35,5 +35,43 @@ export const ArraySchemaValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type ArraySchema = z.infer<typeof ArraySchemaValidationSchema>;
+export type ArraySchema = {
+  /**
+   * The schema property type.
+   */
+  type: 'array';
+
+  /**
+   * The schema property items.
+   */
+  items?:
+    | StringSchema
+    | NumberSchema
+    | BooleanSchema
+    | NullSchema
+    | RecordSchema
+    | ObjectSchema
+    | RefSchema
+    | ArraySchema;
+
+  /**
+   * The schema property description.
+   */
+  description?: string;
+
+  /**
+   * The schema property example.
+   */
+  example?: any[];
+
+  /**
+   * The schema property default.
+   */
+  default?: any[];
+
+  /**
+   * Whether the schema property is nullable or not.
+   */
+  nullable?: boolean;
+};
 //#endregion

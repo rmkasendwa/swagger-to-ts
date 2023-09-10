@@ -18,4 +18,12 @@ export const NumberSchemaValidationSchema = z.object({
     .describe('Whether the schema property is nullable or not.'),
 });
 
-export type NumberSchema = z.infer<typeof NumberSchemaValidationSchema>;
+export type NumberSchema = {
+  type: 'number' | 'integer';
+  description?: string;
+  example?: number;
+  default?: number;
+  min?: number;
+  max?: number;
+  nullable?: boolean;
+};
