@@ -71,7 +71,6 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
         `@Enum(...${enumValuesName})`,
       ],
       propertyType: enumTypeName,
-      propertyModels: [`String`],
       zodCodeString,
     };
   }
@@ -126,7 +125,6 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
   return {
     decorators: baseTsedPropertyDecorators,
     propertyType: `string`,
-    propertyModels: [`String`],
     zodCodeString,
   };
 };

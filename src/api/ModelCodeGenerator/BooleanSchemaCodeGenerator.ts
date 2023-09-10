@@ -13,6 +13,5 @@ export const generateBooleanSchemaCode: SchemaCodeGeneratorFunction<
   return {
     zodCodeString: `z.boolean()`,
     propertyType: `boolean`,
-    propertyModels: [`Boolean`],
   };
 };

@@ -117,19 +117,88 @@ export const generatePropertySchemaCode = (
             ...baseOptions,
             schema: propertySchema,
           });
-        case 'array':
-          if (generateTsEDControllers) {
-            addModuleImport({
-              imports,
-              importName: 'ArrayOf',
-              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+        case 'object':
+          if (
+            'additionalProperties' in propertySchema &&
+            propertySchema.additionalProperties
+          ) {
+            const {
+              propertyType,
+              zodCodeString,
+              decorators: itemDecorators,
+              imports: propertyImports,
+            } = generatePropertySchemaCode({
+              ...options,
+              propertySchema: propertySchema.additionalProperties,
             });
+            Object.entries(propertyImports).forEach(
+              ([path, importVariables]) => {
+                if (!(path in imports)) {
+                  imports[path] = [];
+                }
+                imports[path].push(
+                  ...importVariables.filter((importVariable) => {
+                    return !imports[path].includes(importVariable);
+                  })
+                );
+              }
+            );
+
+            const propertyModels = propertyType
+              .split(' | ')
+              .map((propertyType) => {
+                return (
+                  (primitiveTypeToModelMapping as any)[propertyType] ??
+                  propertyType
+                );
+              });
+
+            referencedSchemas.push(
+              ...propertyModels.filter((modelName) => {
+                return (
+                  !primitiveTypeModels.includes(modelName as any) &&
+                  !referencedSchemas.includes(modelName as any)
+                );
+              })
+            );
+            const decorators = [...propertySchemaCodeConfiguration.decorators];
+            decorators.push(
+              ...itemDecorators.filter((decorator) => {
+                return !decorators.includes(decorator);
+              })
+            );
+            if (generateTsEDControllers) {
+              addModuleImport({
+                imports,
+                importName: 'AdditionalProperties',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+            }
+            if (propertyModels.length === 1) {
+              const modelName = propertyModels[0];
+              if (primitiveTypeModels.includes(modelName as any)) {
+                decorators.push(
+                  `@AdditionalProperties({ type: "${propertyType}" })`
+                );
+              } else {
+                decorators.push(
+                  `@AdditionalProperties({ type: ${modelName} })`
+                );
+              }
+            }
+            return {
+              ...propertySchemaCodeConfiguration,
+              propertyType: `Record<string, ${propertyType}>`,
+              zodCodeString: `z.record(${zodCodeString})`,
+              decorators,
+            };
           }
+          return propertySchemaCodeConfiguration;
+        case 'array':
           if (propertySchema.items) {
             const {
               propertyType,
               zodCodeString,
-              propertyModels,
               decorators: itemDecorators,
               imports: propertyImports,
             } = generatePropertySchemaCode({
@@ -150,6 +219,15 @@ export const generatePropertySchemaCode = (
               }
             );
 
+            const propertyModels = propertyType
+              .split(' | ')
+              .map((propertyType) => {
+                return (
+                  (primitiveTypeToModelMapping as any)[propertyType] ??
+                  propertyType
+                );
+              });
+
             referencedSchemas.push(
               ...propertyModels.filter((modelName) => {
                 return (
@@ -164,6 +242,13 @@ export const generatePropertySchemaCode = (
                 return !decorators.includes(decorator);
               })
             );
+            if (generateTsEDControllers) {
+              addModuleImport({
+                imports,
+                importName: 'ArrayOf',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+            }
             if (propertyModels.length === 1) {
               decorators.push(`@ArrayOf(${propertyModels[0]})`);
             }
@@ -180,7 +265,6 @@ export const generatePropertySchemaCode = (
             zodCodeString: `z.array(z.any())`,
           };
       }
-      return {};
     })();
     if (decorators) {
       propertySchemaCodeConfiguration.decorators.push(...decorators);
@@ -200,11 +284,9 @@ export const generatePropertySchemaCode = (
     const propertyModels = propertyTypes.map((propertyType) => {
       return (primitiveTypeToModelMapping as any)[propertyType] ?? propertyType;
     });
-
     propertySchemaCodeConfiguration.decorators.push(
       `@OneOf(${propertyModels.join(', ')})`
     );
-
     propertySchemaCodeConfiguration.propertyType = propertyTypes.join(' | ');
 
     if (generateTsEDControllers) {

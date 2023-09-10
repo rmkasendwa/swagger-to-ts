@@ -39,7 +39,6 @@ export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
   return {
     decorators,
     propertyType: `number`,
-    propertyModels: [`Number`],
     zodCodeString: (() => {
       let validationCode = `z.number()`;
       if (schema.min != null) {
