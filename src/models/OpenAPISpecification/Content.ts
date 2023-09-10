@@ -10,7 +10,7 @@ export const JSONContentValidationSchema = z.object({
 });
 
 export type JSONContent = {
-  'application/json'?: {
+  'application/json': {
     schema?: Schema;
   };
 };
@@ -24,7 +24,7 @@ export const PDFContentValidationSchema = z.object({
 });
 
 export type PDFContent = {
-  'image/png'?: {
+  'image/png': {
     schema?: any;
   };
 };
@@ -38,7 +38,7 @@ export const PNGContentValidationSchema = z.object({
 });
 
 export type PNGContent = {
-  'image/png'?: {
+  'image/png': {
     schema?: any;
   };
 };
@@ -52,7 +52,7 @@ export const GenericContentValidationSchema = z.object({
 });
 
 export type GenericContent = {
-  '*/*'?: {
+  '*/*': {
     schema?: any;
   };
 };

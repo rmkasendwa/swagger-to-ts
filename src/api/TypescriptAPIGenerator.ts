@@ -280,6 +280,7 @@ export const generateTypescriptAPI = async ({
                     };
                   }
                   if (
+                    'type' in schema.items &&
                     schema.items.type &&
                     (
                       [
