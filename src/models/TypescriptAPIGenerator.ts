@@ -330,3 +330,13 @@ export type TagNameToEntityLabelsMap = {
     'kebab-case-entity': string;
   };
 };
+
+export const primitiveTypes = [
+  'string',
+  'number',
+  'boolean',
+  'null',
+  'undefined',
+] as const;
+
+export const primitiveTypeModels = ['String', 'Number', 'Boolean'] as const;

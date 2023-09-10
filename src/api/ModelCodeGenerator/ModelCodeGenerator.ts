@@ -75,24 +75,24 @@ export const generateModelCode = ({
       return propertySchemaCodeConfiguration;
     });
 
-    const zodObjectPropertiesCode = Object.entries(
-      modelPropertiesCodeConfiguration
-    )
-      .map(([propertyName, { zodCodeString }]) => {
+    const zodObjectPropertiesCode = modelPropertiesCodeConfiguration
+      .map(({ propertyName, zodCodeString }) => {
         return `'${propertyName}': ${zodCodeString}`;
       })
       .join(',\n');
 
     const zodValidationSchemaCode = `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`;
 
-    const tsedModelPropertiesCode = Object.entries(
-      modelPropertiesCodeConfiguration
-    )
+    const tsedModelPropertiesCode = modelPropertiesCodeConfiguration
       .map(
-        ([
+        ({
+          decorators,
+          accessModifier,
+          propertyType,
+          required,
+          isNullable,
           propertyName,
-          { decorators, accessModifier, propertyType, required, isNullable },
-        ]) => {
+        }) => {
           const propertyTypeCode = isNullable
             ? `${propertyType} | null`
             : propertyType;
@@ -107,10 +107,10 @@ export const generateModelCode = ({
       .join(';\n\n');
 
     const tsedModelCode = `
-    export class ${schemaName} {
-      ${tsedModelPropertiesCode}
-    }
-  `.trimIndent();
+      export class ${schemaName} {
+        ${tsedModelPropertiesCode}
+      }
+    `.trimIndent();
 
     const schemaCode = [
       ...(() => {
@@ -125,14 +125,15 @@ export const generateModelCode = ({
           return [tsedModelCode];
         }
         if (!inferTypeFromValidationSchema || modelIsRecursive) {
-          const interfacePropertiesCode = Object.entries(
-            modelPropertiesCodeConfiguration
-          )
+          const interfacePropertiesCode = modelPropertiesCodeConfiguration
             .map(
-              ([
+              ({
                 propertyName,
-                { propertyType, required, openAPISpecification, isNullable },
-              ]) => {
+                propertyType,
+                required,
+                openAPISpecification,
+                isNullable,
+              }) => {
                 const propertiesTypeCode = isNullable
                   ? `${propertyType} | null`
                   : propertyType;
