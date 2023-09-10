@@ -17,7 +17,7 @@ export type RequestMethod = (typeof requestMethods)[number];
 //#endregion
 
 //#region BaseRequestParameter
-export const BaseRequestParameterValidationSchema = z.object({
+export const BaseRequestParameterValidationSchema = z.object<any>({
   required: z
     .boolean()
     .optional()
@@ -46,7 +46,7 @@ export type RequestParameterLocation =
   (typeof requestParameterLocations)[number];
 
 export const RequestParameterValidationSchema =
-  BaseRequestParameterValidationSchema.extend({
+  BaseRequestParameterValidationSchema.extend<any>({
     in: z
       .enum(requestParameterLocations)
       .describe('The request parameter location.'),
