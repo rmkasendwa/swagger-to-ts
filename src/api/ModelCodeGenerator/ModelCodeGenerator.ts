@@ -1,14 +1,7 @@
 import { isEmpty } from 'lodash';
 
 import { ModuleImports, OpenAPISpecification } from '../../models';
-import { generateBooleanSchemaCode } from './BooleanSchemaCodeGenerator';
-import {
-  SchemaCodeConfiguration,
-  SchemaCodeGeneratorFunctionOptions,
-} from './models';
-import { generateNullSchemaCode } from './NullSchemaCodeGenerator';
-import { generateNumberSchemaCode } from './NumberSchemaCodeGenerator';
-import { generateStringSchemaCode } from './StringSchemaCodeGenerator';
+import { generatePropertySchemaCode } from './PropertySchemaCodeGenerator';
 
 //#region Generate model code
 export interface GenerateModelCodeOptions {
@@ -64,72 +57,21 @@ export const generateModelCode = ({
     const modelPropertiesCodeConfiguration = Object.entries(
       schema.properties
     ).map(([propertyName, propertySchema]) => {
-      const propertySchemaCodeConfiguration: SchemaCodeConfiguration = {
-        openAPISpecification: schema,
+      const {
+        referencedSchemas: propertyReferencedSchemas,
+        imports: propertyImports,
+        generatedVariables: propertyGeneratedVariables,
+        ...propertySchemaCodeConfiguration
+      } = generatePropertySchemaCode({
+        schema,
+        schemaName,
+        propertySchema,
         propertyName,
-        accessModifier: 'public',
-        decorators: [`@Property()`],
-        required: Boolean(schema.required?.includes(propertyName)),
-        zodCodeString: `z.any()`,
-        propertyModels: [],
-        propertyType: `any`,
-      };
-
-      if ('$ref' in propertySchema) {
-        const referencedSchemaName = propertySchema.$ref.replace(
-          '#/components/schemas/',
-          ''
-        );
-        referencedSchemas.push(referencedSchemaName);
-        propertySchemaCodeConfiguration.propertyModels.push(
-          referencedSchemaName
-        );
-        propertySchemaCodeConfiguration.propertyType = referencedSchemaName;
-        propertySchemaCodeConfiguration.zodCodeString = `${referencedSchemaName}ValidationSchema`;
-      } else if ('type' in propertySchema) {
-        const { decorators, ...rest } =
-          ((): Partial<SchemaCodeConfiguration> => {
-            const baseOptions: SchemaCodeGeneratorFunctionOptions<
-              typeof propertySchema
-            > = {
-              generatedVariables,
-              generateTsEDControllers,
-              imports,
-              propertyName,
-              schemaName,
-              schema: propertySchema,
-            };
-            switch (propertySchema.type) {
-              case 'string':
-                return generateStringSchemaCode({
-                  ...baseOptions,
-                  schema: propertySchema,
-                });
-              case 'boolean':
-                return generateBooleanSchemaCode({
-                  ...baseOptions,
-                  schema: propertySchema,
-                });
-              case 'integer':
-              case 'number':
-                return generateNumberSchemaCode({
-                  ...baseOptions,
-                  schema: propertySchema,
-                });
-              case 'null':
-                return generateNullSchemaCode({
-                  ...baseOptions,
-                  schema: propertySchema,
-                });
-            }
-            return {};
-          })();
-        if (decorators) {
-          propertySchemaCodeConfiguration.decorators.push(...decorators);
-        }
-        Object.assign(propertySchemaCodeConfiguration, rest);
-      }
-
+        generateTsEDControllers,
+      });
+      referencedSchemas.push(...propertyReferencedSchemas);
+      Object.assign(imports, propertyImports);
+      Object.assign(generatedVariables, propertyGeneratedVariables);
       return propertySchemaCodeConfiguration;
     });
 

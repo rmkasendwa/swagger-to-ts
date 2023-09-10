@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { Content, ContentValidationSchema } from './Content';
 import { Responses, ResponsesValidationSchema } from './Response';
-import { SchemaValidationSchema } from './Schema';
+import { Schema, SchemaValidationSchema } from './Schema';
 
 //#region Request methods
 export const requestMethods = [
@@ -30,9 +30,12 @@ export const BaseRequestParameterValidationSchema = z.object<any>({
   schema: SchemaValidationSchema.describe('The base request parameter schema.'),
 });
 
-export type BaseRequestParameter = z.infer<
-  typeof BaseRequestParameterValidationSchema
->;
+export type BaseRequestParameter = {
+  required?: boolean;
+  name: string;
+  description?: string;
+  schema: Schema;
+};
 //#endregion
 
 //#region RequestParameter

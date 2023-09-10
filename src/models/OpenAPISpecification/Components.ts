@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { SchemaValidationSchema } from './Schema';
+import { Schema, SchemaValidationSchema } from './Schema';
 
 //#region SecurityScheme
 export const ApikeyAuthValidationSchema = z.object({
@@ -8,6 +8,12 @@ export const ApikeyAuthValidationSchema = z.object({
   in: z.string().optional().describe('The security scheme location.'),
   name: z.string().optional().describe('The security scheme name.'),
 });
+
+export type ApikeyAuth = {
+  type: string;
+  in?: string;
+  name?: string;
+};
 
 export const BearerAuthValidationSchema = z.object({
   type: z.string().describe('The security scheme type.'),
@@ -21,11 +27,17 @@ export const BearerAuthValidationSchema = z.object({
     .describe('The security scheme bearer format.'),
 });
 
+export type BearerAuth = {
+  type: string;
+  scheme?: 'bearer';
+  bearerFormat?: string;
+};
+
 export const SecuritySchemeValidationSchema = z
   .union([ApikeyAuthValidationSchema, BearerAuthValidationSchema])
   .describe('The open api security scheme.');
 
-export type SecurityScheme = z.infer<typeof SecuritySchemeValidationSchema>;
+export type SecurityScheme = ApikeyAuth | BearerAuth;
 //#endregion
 
 //#region Components
@@ -38,5 +50,8 @@ export const ComponentsValidationSchema = z.object({
     .describe('An object to hold reusable Schema Objects.'),
 });
 
-export type Components = z.infer<typeof ComponentsValidationSchema>;
+export type Components = {
+  securitySchemes: Record<string, SecurityScheme>;
+  schemas: Record<string, Schema>;
+};
 //#endregion

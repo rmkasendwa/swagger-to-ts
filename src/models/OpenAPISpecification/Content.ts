@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { SchemaValidationSchema } from './Schema';
+import { Schema, SchemaValidationSchema } from './Schema';
 
 //#region JSONContent
 export const JSONContentValidationSchema = z.object({
@@ -9,7 +9,11 @@ export const JSONContentValidationSchema = z.object({
   }),
 });
 
-export type JSONContent = z.infer<typeof JSONContentValidationSchema>;
+export type JSONContent = {
+  'application/json'?: {
+    schema?: Schema;
+  };
+};
 //#endregion
 
 //#region PDFContent
@@ -19,7 +23,11 @@ export const PDFContentValidationSchema = z.object({
   }),
 });
 
-export type PDFContent = z.infer<typeof PDFContentValidationSchema>;
+export type PDFContent = {
+  'image/png'?: {
+    schema?: any;
+  };
+};
 //#endregion
 
 //#region PNGContent
@@ -29,7 +37,11 @@ export const PNGContentValidationSchema = z.object({
   }),
 });
 
-export type PNGContent = z.infer<typeof PNGContentValidationSchema>;
+export type PNGContent = {
+  'image/png'?: {
+    schema?: any;
+  };
+};
 //#endregion
 
 //#region GenericContent
@@ -39,7 +51,11 @@ export const GenericContentValidationSchema = z.object({
   }),
 });
 
-export type GenericContent = z.infer<typeof GenericContentValidationSchema>;
+export type GenericContent = {
+  '*/*'?: {
+    schema?: any;
+  };
+};
 //#endregion
 
 //#region Content
