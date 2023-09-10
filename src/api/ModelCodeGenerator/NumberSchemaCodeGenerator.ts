@@ -1,7 +1,7 @@
 import { TSED_SCHEMA_LIBRARY_PATH } from '../../models';
 import { NumberSchema } from '../../models/OpenAPISpecification/Schema';
 import { addModuleImport } from '../Utils';
-import { SchemaCodeConfiguration, SchemaCodeGeneratorFunction } from './models';
+import { SchemaCodeGeneratorFunction } from './models';
 
 /**
  * Generates number schema code for a given schema
@@ -11,39 +11,9 @@ import { SchemaCodeConfiguration, SchemaCodeGeneratorFunction } from './models';
  */
 export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
   NumberSchema
-> = ({
-  schema,
-  propertyName,
-  isPropertyRequired,
-  generateTsEDControllers,
-  imports,
-}) => {
-  const zodCodeString = (() => {
-    let validationCode = `z.number()`;
-    if (schema.min != null) {
-      validationCode += `.min(${schema.min})`;
-    }
-    if (schema.max != null) {
-      validationCode += `.max(${schema.max})`;
-    }
-    return validationCode;
-  })();
+> = ({ schema, generateTsEDControllers, imports }) => {
+  const decorators: string[] = [];
 
-  const required = isPropertyRequired;
-  const baseTsedPropertyDecorators = [`@Property()`];
-  const baseTsedProperty: Omit<
-    SchemaCodeConfiguration,
-    'propertyType' | 'propertyModels'
-  > = {
-    openAPISpecification: schema,
-    propertyName,
-    accessModifier: 'public',
-    decorators: baseTsedPropertyDecorators,
-    required,
-    zodCodeString,
-  };
-
-  const decorators = [...baseTsedPropertyDecorators];
   if (schema.min != null) {
     decorators.push(`@Min(${schema.min})`);
     if (generateTsEDControllers) {
@@ -54,6 +24,7 @@ export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
       });
     }
   }
+
   if (schema.max != null) {
     decorators.push(`@Max(${schema.min})`);
     if (generateTsEDControllers) {
@@ -64,10 +35,20 @@ export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
       });
     }
   }
+
   return {
-    ...baseTsedProperty,
     decorators,
     propertyType: `number`,
     propertyModels: [`Number`],
+    zodCodeString: (() => {
+      let validationCode = `z.number()`;
+      if (schema.min != null) {
+        validationCode += `.min(${schema.min})`;
+      }
+      if (schema.max != null) {
+        validationCode += `.max(${schema.max})`;
+      }
+      return validationCode;
+    })(),
   };
 };

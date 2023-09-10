@@ -186,11 +186,6 @@ export interface GeneratedSchemaCodeConfiguration {
   zodValidationSchemaName: string;
 
   /**
-   * The configuration of the zod validation schema that will be created.
-   */
-  zodValidationSchemaConfiguration: Record<string, ZodValidationSchemaProperty>;
-
-  /**
    * The code that will be used to create the zod validation schema.
    */
   zodValidationSchemaCode: string;
@@ -219,11 +214,6 @@ export interface GeneratedSchemaCodeConfiguration {
    * The name of the tsed model that will be created.
    */
   tsedModelName?: string;
-
-  /**
-   * The configuration of the tsed model that will be created.
-   */
-  tsedModelConfiguration?: Record<string, TsedModelProperty>;
 
   /**
    * The code that will be used to create the tsed model.

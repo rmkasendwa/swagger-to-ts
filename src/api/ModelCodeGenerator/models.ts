@@ -1,14 +1,8 @@
 import { ModuleImports, TsedModelProperty } from '../../models';
 
-export type SchemaCodeConfiguration = Pick<
+export type SchemaCodeConfiguration = Omit<
   TsedModelProperty,
-  | 'propertyName'
-  | 'accessModifier'
-  | 'required'
-  | 'decorators'
-  | 'openAPISpecification'
-  | 'propertyType'
-  | 'propertyModels'
+  'typeDefinitionSnippet'
 > & {
   zodCodeString: string;
 };
@@ -30,14 +24,9 @@ export interface SchemaCodeGeneratorFunctionOptions<Schema> {
   propertyName: string;
 
   /**
-   * Whether the schema property is required
-   */
-  isPropertyRequired: boolean;
-
-  /**
    * Whether to generate code for tsed controllers
    */
-  generateTsEDControllers: boolean;
+  generateTsEDControllers?: boolean;
 
   /**
    * The module imports to add to the generated code
@@ -58,4 +47,4 @@ export interface SchemaCodeGeneratorFunctionOptions<Schema> {
  */
 export type SchemaCodeGeneratorFunction<Schema> = (
   options: SchemaCodeGeneratorFunctionOptions<Schema>
-) => SchemaCodeConfiguration;
+) => Partial<SchemaCodeConfiguration>;

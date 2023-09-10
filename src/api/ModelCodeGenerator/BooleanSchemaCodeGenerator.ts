@@ -9,13 +9,8 @@ import { SchemaCodeGeneratorFunction } from './models';
  */
 export const generateBooleanSchemaCode: SchemaCodeGeneratorFunction<
   BooleanSchema
-> = ({ schema, propertyName, isPropertyRequired }) => {
+> = () => {
   return {
-    openAPISpecification: schema,
-    propertyName,
-    accessModifier: 'public',
-    decorators: [`@Property()`],
-    required: isPropertyRequired,
     zodCodeString: `z.boolean()`,
     propertyType: `boolean`,
     propertyModels: [`Boolean`],

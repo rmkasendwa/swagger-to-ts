@@ -9,15 +9,9 @@ import { SchemaCodeGeneratorFunction } from './models';
  */
 export const generateNullSchemaCode: SchemaCodeGeneratorFunction<
   NullSchema
-> = ({ schema, propertyName, isPropertyRequired }) => {
+> = () => {
   return {
-    openAPISpecification: schema,
-    propertyName,
-    accessModifier: 'public',
-    decorators: [`@Property()`],
-    required: isPropertyRequired,
     zodCodeString: `z.null()`,
     propertyType: `null`,
-    propertyModels: [`Boolean`],
   };
 };

@@ -239,13 +239,11 @@ export const generateModelMappings = ({
             const {
               generatedVariables,
               zodValidationSchemaCode,
-              zodValidationSchemaConfiguration,
               referencedSchemas,
               inferedTypeCode,
               zodValidationSchemaName,
               imports,
               tsedModelCode,
-              tsedModelConfiguration,
               tsedModelName,
             } = modelCodeConfiguration;
 
@@ -272,13 +270,11 @@ export const generateModelMappings = ({
             accumulator[entityName].models[schemaName] = {
               name: schemaName,
               zodValidationSchemaCode,
-              zodValidationSchemaConfiguration,
               zodValidationSchemaName,
               inferedTypeCode,
               generatedVariables,
               imports,
               tsedModelCode,
-              tsedModelConfiguration,
               tsedModelName,
               ...(() => {
                 if (referencedSchemas.length > 0) {

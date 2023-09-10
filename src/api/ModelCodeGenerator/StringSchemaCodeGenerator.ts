@@ -3,7 +3,7 @@ import pluralize from 'pluralize';
 import { TSED_SCHEMA_LIBRARY_PATH } from '../../models';
 import { StringSchema } from '../../models/OpenAPISpecification/Schema';
 import { addModuleImport } from '../Utils';
-import { SchemaCodeConfiguration, SchemaCodeGeneratorFunction } from './models';
+import { SchemaCodeGeneratorFunction } from './models';
 
 /**
  * Generates string schema code for a given schema
@@ -17,7 +17,6 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
   schema,
   propertyName,
   schemaName,
-  isPropertyRequired,
   generatedVariables,
   generateTsEDControllers,
   imports,
@@ -52,19 +51,30 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
     }
   })();
 
-  const required = isPropertyRequired;
-  const baseTsedPropertyDecorators = [`@Property()`];
-  const baseTsedProperty: Omit<
-    SchemaCodeConfiguration,
-    'propertyType' | 'propertyModels'
-  > = {
-    openAPISpecification: schema,
-    propertyName,
-    accessModifier: 'public',
-    decorators: baseTsedPropertyDecorators,
-    required,
-    zodCodeString,
-  };
+  const baseTsedPropertyDecorators: string[] = [];
+
+  if (schema.enum) {
+    const enumTypeName = `${schemaName} ${propertyName}`.toPascalCase();
+    const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+
+    if (generateTsEDControllers) {
+      addModuleImport({
+        imports,
+        importName: 'Enum',
+        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+      });
+    }
+
+    return {
+      decorators: [
+        ...baseTsedPropertyDecorators,
+        `@Enum(...${enumValuesName})`,
+      ],
+      propertyType: enumTypeName,
+      propertyModels: [`String`],
+      zodCodeString,
+    };
+  }
 
   if (schema.format) {
     switch (schema.format) {
@@ -90,31 +100,9 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
         break;
     }
   }
-  if (schema.enum) {
-    const enumTypeName = `${schemaName} ${propertyName}`.toPascalCase();
-    const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
 
-    if (generateTsEDControllers) {
-      addModuleImport({
-        imports,
-        importName: 'Enum',
-        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-      });
-    }
-
-    return {
-      ...baseTsedProperty,
-      decorators: [
-        ...baseTsedPropertyDecorators,
-        `@Enum(...${enumValuesName})`,
-      ],
-      propertyType: enumTypeName,
-      propertyModels: [`String`],
-    };
-  }
-  const decorators = [...baseTsedPropertyDecorators];
   if (schema.minLength != null) {
-    decorators.push(`@MinLength(${schema.minLength})`);
+    baseTsedPropertyDecorators.push(`@MinLength(${schema.minLength})`);
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
@@ -123,8 +111,9 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
       });
     }
   }
+
   if (schema.maxLength != null) {
-    decorators.push(`@MaxLength(${schema.maxLength})`);
+    baseTsedPropertyDecorators.push(`@MaxLength(${schema.maxLength})`);
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
@@ -133,10 +122,11 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
       });
     }
   }
+
   return {
-    ...baseTsedProperty,
-    decorators,
+    decorators: baseTsedPropertyDecorators,
     propertyType: `string`,
     propertyModels: [`String`],
+    zodCodeString,
   };
 };
