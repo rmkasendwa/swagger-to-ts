@@ -133,7 +133,7 @@ export const generatePropertySchemaCode = (
             );
             return {
               ...propertySchemaCodeConfiguration,
-              propertyType: `${propertyType}[]`,
+              propertyType: `(${propertyType})[]`,
               zodCodeString: `z.array(${zodCodeString})`,
               decorators: [`@Array(${propertyModels.join(',')})`],
             };
@@ -175,8 +175,6 @@ export const generatePropertySchemaCode = (
       });
     }
     propertySchemaCodeConfiguration.decorators.push(`@Required()`);
-  } else {
-    propertySchemaCodeConfiguration.zodCodeString += `.optional()`;
   }
 
   return {

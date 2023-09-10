@@ -76,8 +76,10 @@ export const generateModelCode = ({
     });
 
     const zodObjectPropertiesCode = modelPropertiesCodeConfiguration
-      .map(({ propertyName, zodCodeString }) => {
-        return `'${propertyName}': ${zodCodeString}`;
+      .map(({ propertyName, zodCodeString, required }) => {
+        return `'${propertyName}': ${zodCodeString}${
+          !required ? '.optional()' : ''
+        }`;
       })
       .join(',\n');
 
