@@ -33,6 +33,12 @@ export interface GenerateModelCodeOptions {
   inferTypeFromValidationSchema?: boolean;
 }
 
+/**
+ * Generates model code for a given schema
+ *
+ * @param options The options to generate model code.
+ * @returns The generated model code
+ */
 export const generateModelCode = ({
   schemaName,
   openAPISpecification,
