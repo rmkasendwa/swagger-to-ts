@@ -2,6 +2,7 @@ import {
   ModuleImports,
   TSED_SCHEMA_LIBRARY_PATH,
   primitiveTypeModels,
+  primitiveTypeToModelMapping,
 } from '../../models';
 import { ObjectSchema, Schema } from '../../models/OpenAPISpecification/Schema';
 import { addModuleImport } from '../Utils';
@@ -66,7 +67,7 @@ export const generatePropertySchemaCode = (
     openAPISpecification: propertySchema,
     propertyName,
     accessModifier: 'public',
-    decorators: [`@Property()`],
+    decorators: [],
     required: Boolean(schema.required?.includes(propertyName)),
     zodCodeString: `z.any()`,
     propertyModels: [],
@@ -117,12 +118,38 @@ export const generatePropertySchemaCode = (
             schema: propertySchema,
           });
         case 'array':
+          if (generateTsEDControllers) {
+            addModuleImport({
+              imports,
+              importName: 'ArrayOf',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
+          }
           if (propertySchema.items) {
-            const { propertyType, zodCodeString, propertyModels } =
-              generatePropertySchemaCode({
-                ...options,
-                propertySchema: propertySchema.items,
-              });
+            const {
+              propertyType,
+              zodCodeString,
+              propertyModels,
+              decorators: itemDecorators,
+              imports: propertyImports,
+            } = generatePropertySchemaCode({
+              ...options,
+              propertySchema: propertySchema.items,
+            });
+
+            Object.entries(propertyImports).forEach(
+              ([path, importVariables]) => {
+                if (!(path in imports)) {
+                  imports[path] = [];
+                }
+                imports[path].push(
+                  ...importVariables.filter((importVariable) => {
+                    return !imports[path].includes(importVariable);
+                  })
+                );
+              }
+            );
+
             referencedSchemas.push(
               ...propertyModels.filter((modelName) => {
                 return (
@@ -131,18 +158,26 @@ export const generatePropertySchemaCode = (
                 );
               })
             );
+            const decorators = [...propertySchemaCodeConfiguration.decorators];
+            decorators.push(
+              ...itemDecorators.filter((decorator) => {
+                return !decorators.includes(decorator);
+              })
+            );
+            if (propertyModels.length === 1) {
+              decorators.push(`@ArrayOf(${propertyModels[0]})`);
+            }
             return {
               ...propertySchemaCodeConfiguration,
               propertyType: `(${propertyType})[]`,
               zodCodeString: `z.array(${zodCodeString})`,
-              decorators: [`@Array(${propertyModels.join(',')})`],
+              decorators,
             };
           }
           return {
             ...propertySchemaCodeConfiguration,
             propertyType: `any[]`,
             zodCodeString: `z.array(z.any())`,
-            decorators: [`@Array()`],
           };
       }
       return {};
@@ -158,9 +193,28 @@ export const generatePropertySchemaCode = (
         propertySchema: oneOfPropertySchema,
       });
     });
-    propertySchemaCodeConfiguration.propertyType = propertySchemas
-      .map(({ propertyType }) => propertyType)
-      .join(' | ');
+
+    const propertyTypes = propertySchemas.map(
+      ({ propertyType }) => propertyType
+    );
+    const propertyModels = propertyTypes.map((propertyType) => {
+      return (primitiveTypeToModelMapping as any)[propertyType] ?? propertyType;
+    });
+
+    propertySchemaCodeConfiguration.decorators.push(
+      `@OneOf(${propertyModels.join(', ')})`
+    );
+
+    propertySchemaCodeConfiguration.propertyType = propertyTypes.join(' | ');
+
+    if (generateTsEDControllers) {
+      addModuleImport({
+        imports,
+        importName: 'OneOf',
+        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+      });
+    }
+
     propertySchemaCodeConfiguration.zodCodeString = `z.union([${propertySchemas
       .map(({ zodCodeString }) => zodCodeString)
       .join(',')}])`;
@@ -174,7 +228,9 @@ export const generatePropertySchemaCode = (
         importFilePath: TSED_SCHEMA_LIBRARY_PATH,
       });
     }
-    propertySchemaCodeConfiguration.decorators.push(`@Required()`);
+    if (!propertySchemaCodeConfiguration.decorators.includes(`@Required()`)) {
+      propertySchemaCodeConfiguration.decorators.push(`@Required()`);
+    }
   }
 
   return {

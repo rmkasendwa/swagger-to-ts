@@ -1,1 +1,3 @@
-export type ModuleImports = Record<string, string[]>;
+export type ModuleImports = {
+  [modulePath: string]: string[];
+};

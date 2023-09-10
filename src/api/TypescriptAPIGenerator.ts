@@ -919,7 +919,7 @@ export const generateTypescriptAPI = async ({
   //#endregion
 
   //#region Write index file
-  console.log(`\nFinish`);
+  console.log(`\n🏁 Finish`);
   console.log(` -> Writing index file...`);
   const indexOutputFilePath = `${outputRootPath}/index.ts`;
   if (!existsSync(indexOutputFilePath)) {

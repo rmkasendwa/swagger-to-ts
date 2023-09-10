@@ -1,6 +1,11 @@
 import { isEmpty } from 'lodash';
 
-import { ModuleImports, OpenAPISpecification } from '../../models';
+import {
+  ModuleImports,
+  OpenAPISpecification,
+  TSED_SCHEMA_LIBRARY_PATH,
+} from '../../models';
+import { addModuleImport } from '../Utils';
 import { generatePropertySchemaCode } from './PropertySchemaCodeGenerator';
 
 //#region Generate model code
@@ -53,6 +58,7 @@ export const generateModelCode = ({
       zod: ['z'],
     };
     let modelIsRecursive = false;
+    // TODO: Find recursive models
 
     const modelPropertiesCodeConfiguration = Object.entries(
       schema.properties
@@ -70,7 +76,16 @@ export const generateModelCode = ({
         generateTsEDControllers,
       });
       referencedSchemas.push(...propertyReferencedSchemas);
-      Object.assign(imports, propertyImports);
+      Object.entries(propertyImports).forEach(([path, importVariables]) => {
+        if (!(path in imports)) {
+          imports[path] = [];
+        }
+        imports[path].push(
+          ...importVariables.filter((importVariable) => {
+            return !imports[path].includes(importVariable);
+          })
+        );
+      });
       Object.assign(generatedVariables, propertyGeneratedVariables);
       return propertySchemaCodeConfiguration;
     });
@@ -94,13 +109,73 @@ export const generateModelCode = ({
           required,
           isNullable,
           propertyName,
+          openAPISpecification,
         }) => {
+          if (generateTsEDControllers) {
+            addModuleImport({
+              imports,
+              importName: 'Property',
+              importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+            });
+          }
+          const propertyDecorators = ['@Property()', ...decorators];
+
+          if (
+            'description' in openAPISpecification &&
+            openAPISpecification.description
+          ) {
+            if (generateTsEDControllers) {
+              addModuleImport({
+                imports,
+                importName: 'Description',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+            }
+            propertyDecorators.push(
+              `@Description(${JSON.stringify(
+                openAPISpecification.description
+              )})`
+            );
+          }
+
+          if (
+            'example' in openAPISpecification &&
+            openAPISpecification.example
+          ) {
+            if (generateTsEDControllers) {
+              addModuleImport({
+                imports,
+                importName: 'Example',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+            }
+            propertyDecorators.push(
+              `@Example(${JSON.stringify(openAPISpecification.example)})`
+            );
+          }
+
+          if (
+            'default' in openAPISpecification &&
+            openAPISpecification.default
+          ) {
+            if (generateTsEDControllers) {
+              addModuleImport({
+                imports,
+                importName: 'Default',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+            }
+            propertyDecorators.push(
+              `@Default(${JSON.stringify(openAPISpecification.default)})`
+            );
+          }
+
           const propertyTypeCode = isNullable
             ? `${propertyType} | null`
             : propertyType;
           const propertyValueSeparator = required ? '!:' : '?:';
           const typeDefinitionSnippet = `
-          ${decorators.join('\n')}
+          ${propertyDecorators.join('\n')}
           ${accessModifier} ${propertyName}${propertyValueSeparator} ${propertyTypeCode}
         `.trimIndent();
           return typeDefinitionSnippet;
@@ -163,7 +238,9 @@ export const generateModelCode = ({
                     );
                   } else {
                     jsDocCommentLines.push(
-                      `@example ${JSON.stringify(openAPISpecification.example)}`
+                      `@example \`\`\`json${JSON.stringify(
+                        openAPISpecification.example
+                      )}\`\`\``
                     );
                   }
                 }

@@ -340,3 +340,9 @@ export const primitiveTypes = [
 ] as const;
 
 export const primitiveTypeModels = ['String', 'Number', 'Boolean'] as const;
+
+export const primitiveTypeToModelMapping = {
+  string: 'String',
+  number: 'Number',
+  boolean: 'Boolean',
+};
