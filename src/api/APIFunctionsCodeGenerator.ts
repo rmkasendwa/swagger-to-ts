@@ -692,7 +692,10 @@ export const getAPIFunctionsCodeConfiguration = ({
             if (rest.getStaleWhileRevalidate) {
               const baseGetStaleWhileRevalidate = rest.getStaleWhileRevalidate;
               rest.getStaleWhileRevalidate = (data) => {
-                return baseGetStaleWhileRevalidate(${returnValueString});
+                return baseGetStaleWhileRevalidate(${returnValueString.replace(
+                  'response.data',
+                  'data'
+                )});
               };
             }
 
