@@ -4,10 +4,12 @@ import {
   ModuleImports,
   OpenAPISpecification,
   TSED_SCHEMA_LIBRARY_PATH,
-  primitiveTypeToModelMapping,
 } from '../../models';
 import { addModuleImport } from '../Utils';
-import { generatePropertySchemaCode } from './PropertySchemaCodeGenerator';
+import {
+  generatePropertySchemaCode,
+  getModelsReferencedByPropertyType,
+} from './PropertySchemaCodeGenerator';
 
 //#region Generate model code
 export interface GenerateModelCodeOptions {
@@ -58,8 +60,6 @@ export const generateModelCode = ({
     const imports: ModuleImports = {
       zod: ['z'],
     };
-    let modelIsRecursive = false;
-    // TODO: Find recursive models
 
     const modelPropertiesCodeConfiguration = Object.entries(
       schema.properties
@@ -91,6 +91,7 @@ export const generateModelCode = ({
       return propertySchemaCodeConfiguration;
     });
 
+    const modelIsRecursive = referencedSchemas.includes(schemaName);
     const zodObjectPropertiesCode = modelPropertiesCodeConfiguration
       .map(
         ({
@@ -112,7 +113,9 @@ export const generateModelCode = ({
       )
       .join(',\n');
 
-    const zodValidationSchemaCode = `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`;
+    const zodValidationSchemaCode = modelIsRecursive
+      ? `export const ${zodValidationSchemaName} = z.lazy(() => z.object({${zodObjectPropertiesCode}}))`
+      : `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`;
 
     const tsedModelPropertiesCode = modelPropertiesCodeConfiguration
       .map(
@@ -122,7 +125,7 @@ export const generateModelCode = ({
           propertyType,
           required,
           isNullable,
-          propertyName,
+          propertyName: basePropertyName,
           openAPISpecification,
         }) => {
           if (generateTsEDControllers) {
@@ -189,17 +192,35 @@ export const generateModelCode = ({
                 importFilePath: TSED_SCHEMA_LIBRARY_PATH,
               });
             }
-            const propertyModelName = propertyType.split(' | ').shift()!;
             const nullableModel = (() => {
               if ('enum' in openAPISpecification) {
                 return 'String';
               }
-              return (
-                (primitiveTypeToModelMapping as any)[propertyModelName] ??
-                propertyModelName
-              );
+              return getModelsReferencedByPropertyType(propertyType)[0];
             })();
             propertyDecorators.push(`@Nullable(${nullableModel})`);
+          }
+
+          const propertyName = (() => {
+            if (basePropertyName.match(/\W/g)) {
+              if (generateTsEDControllers) {
+                return basePropertyName.toCamelCase();
+              } else {
+                return `'${basePropertyName}'`;
+              }
+            }
+            return basePropertyName;
+          })();
+
+          if (basePropertyName.match(/\W/g)) {
+            propertyDecorators.push(`@Name('${basePropertyName}')`);
+            if (generateTsEDControllers) {
+              addModuleImport({
+                imports,
+                importName: 'Name',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+            }
           }
 
           const propertyTypeCode = isNullable
@@ -215,7 +236,22 @@ export const generateModelCode = ({
       )
       .join(';\n\n');
 
+    const modelDecorators: string[] = [];
+    if (schema.description) {
+      if (generateTsEDControllers) {
+        addModuleImport({
+          imports,
+          importName: 'Description',
+          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+        });
+      }
+      modelDecorators.push(
+        `@Description(${JSON.stringify(schema.description)})`
+      );
+    }
+
     const tsedModelCode = `
+      ${modelDecorators.join('\n')}
       export class ${schemaName} {
         ${tsedModelPropertiesCode}
       }

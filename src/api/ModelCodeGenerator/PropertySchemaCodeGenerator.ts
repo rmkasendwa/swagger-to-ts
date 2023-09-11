@@ -126,7 +126,6 @@ export const generatePropertySchemaCode = (
             const {
               propertyType,
               zodCodeString,
-              decorators: itemDecorators,
               imports: propertyImports,
               generatedVariables: propertyGeneratedVariables,
             } = generatePropertySchemaCode({
@@ -147,15 +146,8 @@ export const generatePropertySchemaCode = (
               }
             );
 
-            const propertyModels = propertyType
-              .split(' | ')
-              .map((propertyType) => {
-                return (
-                  (primitiveTypeToModelMapping as any)[propertyType] ??
-                  propertyType
-                );
-              });
-
+            const propertyModels =
+              getModelsReferencedByPropertyType(propertyType);
             referencedSchemas.push(
               ...propertyModels.filter((modelName) => {
                 return (
@@ -165,11 +157,6 @@ export const generatePropertySchemaCode = (
               })
             );
             const decorators = [...propertySchemaCodeConfiguration.decorators];
-            decorators.push(
-              ...itemDecorators.filter((decorator) => {
-                return !decorators.includes(decorator);
-              })
-            );
             if (generateTsEDControllers) {
               addModuleImport({
                 imports,
@@ -177,17 +164,44 @@ export const generatePropertySchemaCode = (
                 importFilePath: TSED_SCHEMA_LIBRARY_PATH,
               });
             }
-            if (propertyModels.length === 1) {
-              const modelName = propertyModels[0];
-              if (primitiveTypeModels.includes(modelName as any)) {
-                decorators.push(
-                  `@AdditionalProperties({ type: "${propertyType}" })`
+            if ('$ref' in propertySchema.additionalProperties) {
+              const referencedSchemaName =
+                propertySchema.additionalProperties.$ref.replace(
+                  '#/components/schemas/',
+                  ''
                 );
-              } else {
-                decorators.push(
-                  `@AdditionalProperties({ type: ${modelName} })`
+              decorators.push(`@AdditionalProperties(${referencedSchemaName})`);
+            } else if (
+              'type' in propertySchema.additionalProperties &&
+              propertySchema.additionalProperties.type === 'array' &&
+              propertySchema.additionalProperties.items &&
+              '$ref' in propertySchema.additionalProperties.items
+            ) {
+              const referencedSchemaName =
+                propertySchema.additionalProperties.items.$ref.replace(
+                  '#/components/schemas/',
+                  ''
                 );
-              }
+              const serializedAdditionalProperties = JSON.stringify(
+                propertySchema.additionalProperties,
+                null,
+                2
+              ).replace(
+                /"items"\:\s*\{[\s\S]*?\}/gm,
+                `"items": { "type": ${referencedSchemaName}}`
+              );
+
+              decorators.push(
+                `@AdditionalProperties(${serializedAdditionalProperties})`
+              );
+            } else {
+              decorators.push(
+                `@AdditionalProperties(${JSON.stringify(
+                  propertySchema.additionalProperties,
+                  null,
+                  2
+                )})`
+              );
             }
             return {
               ...propertySchemaCodeConfiguration,
@@ -233,14 +247,8 @@ export const generatePropertySchemaCode = (
             );
 
             if (!isEnum) {
-              const propertyModels = propertyType
-                .split(' | ')
-                .map((propertyType) => {
-                  return (
-                    (primitiveTypeToModelMapping as any)[propertyType] ??
-                    propertyType
-                  );
-                });
+              const propertyModels =
+                getModelsReferencedByPropertyType(propertyType);
 
               referencedSchemas.push(
                 ...propertyModels.filter((modelName) => {
@@ -335,4 +343,20 @@ export const generatePropertySchemaCode = (
     imports,
     generatedVariables,
   };
+};
+
+/**
+ * Gets the models referenced by a property type
+ *
+ * @param propertyType The property type to get the models referenced by
+ * @returns The models referenced by the property type
+ */
+export const getModelsReferencedByPropertyType = (propertyType: string) => {
+  return propertyType
+    .replace(/\[\]$/g, '')
+    .replace(/^\(|\)$/g, '')
+    .split(' | ')
+    .map((propertyType) => {
+      return (primitiveTypeToModelMapping as any)[propertyType] ?? propertyType;
+    });
 };
