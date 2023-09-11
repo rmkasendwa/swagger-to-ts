@@ -21,13 +21,13 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
   generateTsEDControllers,
   imports,
 }) => {
+  const enumTypeName = pluralize
+    .singular(`${schemaName} ${propertyName}`)
+    .toPascalCase();
+  const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+
   const zodCodeString = (() => {
     if (schema.enum) {
-      const enumTypeName = pluralize
-        .singular(`${schemaName} ${propertyName}`)
-        .toPascalCase();
-      const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
-
       generatedVariables[
         enumValuesName
       ] = `export const ${enumValuesName} = ${JSON.stringify(
@@ -54,9 +54,6 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
   const baseTsedPropertyDecorators: string[] = [];
 
   if (schema.enum) {
-    const enumTypeName = `${schemaName} ${propertyName}`.toPascalCase();
-    const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
-
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
@@ -64,7 +61,6 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
         importFilePath: TSED_SCHEMA_LIBRARY_PATH,
       });
     }
-
     return {
       decorators: [
         ...baseTsedPropertyDecorators,

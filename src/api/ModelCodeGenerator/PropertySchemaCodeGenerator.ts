@@ -128,10 +128,12 @@ export const generatePropertySchemaCode = (
               zodCodeString,
               decorators: itemDecorators,
               imports: propertyImports,
+              generatedVariables: propertyGeneratedVariables,
             } = generatePropertySchemaCode({
               ...options,
               propertySchema: propertySchema.additionalProperties,
             });
+            Object.assign(generatedVariables, propertyGeneratedVariables);
             Object.entries(propertyImports).forEach(
               ([path, importVariables]) => {
                 if (!(path in imports)) {
@@ -202,10 +204,12 @@ export const generatePropertySchemaCode = (
               zodCodeString,
               decorators: itemDecorators,
               imports: propertyImports,
+              generatedVariables: propertyGeneratedVariables,
             } = generatePropertySchemaCode({
               ...options,
               propertySchema: propertySchema.items,
             });
+            Object.assign(generatedVariables, propertyGeneratedVariables);
 
             Object.entries(propertyImports).forEach(
               ([path, importVariables]) => {
@@ -219,39 +223,43 @@ export const generatePropertySchemaCode = (
                 );
               }
             );
+            const isEnum = 'enum' in propertySchema.items;
 
-            const propertyModels = propertyType
-              .split(' | ')
-              .map((propertyType) => {
-                return (
-                  (primitiveTypeToModelMapping as any)[propertyType] ??
-                  propertyType
-                );
-              });
-
-            referencedSchemas.push(
-              ...propertyModels.filter((modelName) => {
-                return (
-                  !primitiveTypeModels.includes(modelName as any) &&
-                  !referencedSchemas.includes(modelName as any)
-                );
-              })
-            );
             const decorators = [...propertySchemaCodeConfiguration.decorators];
             decorators.push(
               ...itemDecorators.filter((decorator) => {
                 return !decorators.includes(decorator);
               })
             );
-            if (generateTsEDControllers) {
-              addModuleImport({
-                imports,
-                importName: 'ArrayOf',
-                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-              });
-            }
-            if (propertyModels.length === 1) {
-              decorators.push(`@ArrayOf(${propertyModels[0]})`);
+
+            if (!isEnum) {
+              const propertyModels = propertyType
+                .split(' | ')
+                .map((propertyType) => {
+                  return (
+                    (primitiveTypeToModelMapping as any)[propertyType] ??
+                    propertyType
+                  );
+                });
+
+              referencedSchemas.push(
+                ...propertyModels.filter((modelName) => {
+                  return (
+                    !primitiveTypeModels.includes(modelName as any) &&
+                    !referencedSchemas.includes(modelName as any)
+                  );
+                })
+              );
+              if (generateTsEDControllers) {
+                addModuleImport({
+                  imports,
+                  importName: 'ArrayOf',
+                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                });
+              }
+              if (propertyModels.length === 1) {
+                decorators.push(`@ArrayOf(${propertyModels[0]})`);
+              }
             }
             return {
               ...propertySchemaCodeConfiguration,
@@ -301,6 +309,11 @@ export const generatePropertySchemaCode = (
     propertySchemaCodeConfiguration.zodCodeString = `z.union([${propertySchemas
       .map(({ zodCodeString }) => zodCodeString)
       .join(',')}])`;
+    propertySchemas.forEach(
+      ({ generatedVariables: propertyGeneratedVariables }) => {
+        Object.assign(generatedVariables, propertyGeneratedVariables);
+      }
+    );
   }
 
   if (propertySchemaCodeConfiguration.required) {
