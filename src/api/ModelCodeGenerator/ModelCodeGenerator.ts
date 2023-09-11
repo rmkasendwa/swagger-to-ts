@@ -190,12 +190,16 @@ export const generateModelCode = ({
               });
             }
             const propertyModelName = propertyType.split(' | ').shift()!;
-            propertyDecorators.push(
-              `@Nullable(${
+            const nullableModel = (() => {
+              if ('enum' in openAPISpecification) {
+                return 'String';
+              }
+              return (
                 (primitiveTypeToModelMapping as any)[propertyModelName] ??
                 propertyModelName
-              })`
-            );
+              );
+            })();
+            propertyDecorators.push(`@Nullable(${nullableModel})`);
           }
 
           const propertyTypeCode = isNullable
