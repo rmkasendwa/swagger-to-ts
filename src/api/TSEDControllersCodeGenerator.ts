@@ -343,19 +343,18 @@ export const getTSEDControllersCodeConfiguration = ({
                 }
               }
               if ('type' in successResponseSchema) {
-                controllerMethodDecorators.push(
-                  `@Returns(${httpStatusCode}, ${
-                    (primitiveTypeToModelMapping as any)[
-                      successResponseSchema.type
-                    ] || successResponseSchema.type
-                  })` +
-                    (() => {
-                      if (description) {
-                        return `.Description(${JSON.stringify(description)})`;
-                      }
-                      return '';
-                    })()
-                );
+                const { type } = successResponseSchema;
+                const typeModel = (primitiveTypeToModelMapping as any)[type];
+                let returnTypeDecorator = typeModel
+                  ? `@Returns(${httpStatusCode}, ${typeModel})`
+                  : `@Returns(${httpStatusCode})`;
+
+                if (description) {
+                  returnTypeDecorator += `.Description(${JSON.stringify(
+                    description
+                  )})`;
+                }
+                controllerMethodDecorators.push(returnTypeDecorator);
               }
             });
           }
