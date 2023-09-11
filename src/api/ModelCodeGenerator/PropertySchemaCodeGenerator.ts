@@ -360,6 +360,9 @@ export const getModelsReferencedByPropertyType = (propertyType: string) => {
     .replace(/^\(|\)$/g, '')
     .split(' | ')
     .map((propertyType) => {
+      if (propertyType.match(/".+"/g)) {
+        return 'String';
+      }
       return (primitiveTypeToModelMapping as any)[propertyType] ?? propertyType;
     });
 };

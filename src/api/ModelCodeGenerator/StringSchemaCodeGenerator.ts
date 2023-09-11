@@ -25,9 +25,14 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
     .singular(`${schemaName} ${propertyName}`)
     .toPascalCase();
   const enumValuesName = `${enumTypeName.toCamelCase()}Options`;
+  let propertyType = `string`;
 
   const zodCodeString = (() => {
-    if (schema.enum) {
+    if (schema.enum && schema.enum.length > 0) {
+      if (schema.enum.length === 1) {
+        propertyType = JSON.stringify(schema.enum[0]);
+        return `z.literal(${propertyType})`;
+      }
       generatedVariables[
         enumValuesName
       ] = `export const ${enumValuesName} = ${JSON.stringify(
@@ -53,7 +58,7 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
 
   const baseTsedPropertyDecorators: string[] = [];
 
-  if (schema.enum) {
+  if (schema.enum && schema.enum.length > 1) {
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
@@ -120,7 +125,7 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
 
   return {
     decorators: baseTsedPropertyDecorators,
-    propertyType: `string`,
+    propertyType,
     zodCodeString,
   };
 };
