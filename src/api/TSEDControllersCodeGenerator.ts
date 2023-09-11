@@ -10,6 +10,7 @@ import {
   TSED_SCHEMA_LIBRARY_PATH,
   TSED_SWAGGER_LIBRARY_PATH,
   TagNameToEntityLabelsMap,
+  primitiveTypeToModelMapping,
 } from '../models';
 import { addModuleImport } from './Utils';
 
@@ -343,7 +344,11 @@ export const getTSEDControllersCodeConfiguration = ({
               }
               if ('type' in successResponseSchema) {
                 controllerMethodDecorators.push(
-                  `@Returns(${httpStatusCode}, ${successResponseSchema.type.toPascalCase()})` +
+                  `@Returns(${httpStatusCode}, ${
+                    (primitiveTypeToModelMapping as any)[
+                      successResponseSchema.type
+                    ] || successResponseSchema.type
+                  })` +
                     (() => {
                       if (description) {
                         return `.Description(${JSON.stringify(description)})`;

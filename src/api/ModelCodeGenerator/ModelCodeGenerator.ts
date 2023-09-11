@@ -92,11 +92,24 @@ export const generateModelCode = ({
     });
 
     const zodObjectPropertiesCode = modelPropertiesCodeConfiguration
-      .map(({ propertyName, zodCodeString, required, isNullable }) => {
-        return `'${propertyName}': ${zodCodeString}${
-          !required ? '.optional()' : ''
-        }${isNullable ? '.nullable()' : ''}`;
-      })
+      .map(
+        ({
+          propertyName,
+          zodCodeString: baseZodCodeString,
+          required,
+          isNullable,
+          openAPISpecification,
+        }) => {
+          let zodCodeString = baseZodCodeString;
+          required || (zodCodeString += '.optional()');
+          isNullable && (zodCodeString += '.nullable()');
+          openAPISpecification.description &&
+            (zodCodeString += `.describe(${JSON.stringify(
+              openAPISpecification.description
+            )})`);
+          return `'${propertyName}': ${zodCodeString}`;
+        }
+      )
       .join(',\n');
 
     const zodValidationSchemaCode = `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`;
@@ -121,10 +134,7 @@ export const generateModelCode = ({
           }
           const propertyDecorators = ['@Property()', ...decorators];
 
-          if (
-            'description' in openAPISpecification &&
-            openAPISpecification.description
-          ) {
+          if (openAPISpecification.description) {
             if (generateTsEDControllers) {
               addModuleImport({
                 imports,
