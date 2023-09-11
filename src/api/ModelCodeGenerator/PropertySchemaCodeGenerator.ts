@@ -69,6 +69,7 @@ export const generatePropertySchemaCode = (
     accessModifier: 'public',
     decorators: [],
     required: Boolean(schema.required?.includes(propertyName)),
+    isNullable: propertySchema.nullable,
     zodCodeString: `z.any()`,
     propertyModels: [],
     propertyType: `any`,

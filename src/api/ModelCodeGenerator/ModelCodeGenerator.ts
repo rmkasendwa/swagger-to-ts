@@ -4,6 +4,7 @@ import {
   ModuleImports,
   OpenAPISpecification,
   TSED_SCHEMA_LIBRARY_PATH,
+  primitiveTypeToModelMapping,
 } from '../../models';
 import { addModuleImport } from '../Utils';
 import { generatePropertySchemaCode } from './PropertySchemaCodeGenerator';
@@ -91,10 +92,10 @@ export const generateModelCode = ({
     });
 
     const zodObjectPropertiesCode = modelPropertiesCodeConfiguration
-      .map(({ propertyName, zodCodeString, required }) => {
+      .map(({ propertyName, zodCodeString, required, isNullable }) => {
         return `'${propertyName}': ${zodCodeString}${
           !required ? '.optional()' : ''
-        }`;
+        }${isNullable ? '.nullable()' : ''}`;
       })
       .join(',\n');
 
@@ -167,6 +168,23 @@ export const generateModelCode = ({
             }
             propertyDecorators.push(
               `@Default(${JSON.stringify(openAPISpecification.default)})`
+            );
+          }
+
+          if (isNullable) {
+            if (generateTsEDControllers) {
+              addModuleImport({
+                imports,
+                importName: 'Nullable',
+                importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+              });
+            }
+            const propertyModelName = propertyType.split(' | ').shift()!;
+            propertyDecorators.push(
+              `@Nullable(${
+                (primitiveTypeToModelMapping as any)[propertyModelName] ??
+                propertyModelName
+              })`
             );
           }
 
