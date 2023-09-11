@@ -114,7 +114,7 @@ export const generateModelCode = ({
       .join(',\n');
 
     const zodValidationSchemaCode = modelIsRecursive
-      ? `export const ${zodValidationSchemaName} = z.lazy(() => z.object({${zodObjectPropertiesCode}}))`
+      ? `export const ${zodValidationSchemaName}: z.ZodType<${schemaName}> = z.lazy(() => z.object({${zodObjectPropertiesCode}}))`
       : `export const ${zodValidationSchemaName} = z.object({${zodObjectPropertiesCode}})`;
 
     const tsedModelPropertiesCode = modelPropertiesCodeConfiguration
@@ -284,7 +284,7 @@ export const generateModelCode = ({
                   : propertyType;
                 const propertyValueSeparator =
                   required && propertiesTypeCode !== 'any' ? ': ' : '?: ';
-                const propertyValueSnippet = `${propertyName}${propertyValueSeparator} ${propertiesTypeCode}`;
+                const propertyValueSnippet = `'${propertyName}'${propertyValueSeparator} ${propertiesTypeCode}`;
                 const jsDocCommentLines: string[] = [];
                 if (
                   'description' in openAPISpecification &&

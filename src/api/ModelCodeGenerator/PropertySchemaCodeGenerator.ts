@@ -314,9 +314,12 @@ export const generatePropertySchemaCode = (
       });
     }
 
-    propertySchemaCodeConfiguration.zodCodeString = `z.union([${propertySchemas
-      .map(({ zodCodeString }) => zodCodeString)
-      .join(',')}])`;
+    propertySchemaCodeConfiguration.zodCodeString =
+      propertySchemas.length > 1
+        ? `z.union([${propertySchemas
+            .map(({ zodCodeString }) => zodCodeString)
+            .join(',')}])`
+        : propertySchemas[0].zodCodeString;
     propertySchemas.forEach(
       ({ generatedVariables: propertyGeneratedVariables }) => {
         Object.assign(generatedVariables, propertyGeneratedVariables);
