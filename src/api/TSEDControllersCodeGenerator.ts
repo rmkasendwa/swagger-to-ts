@@ -86,10 +86,13 @@ export const getTSEDControllersCodeConfiguration = ({
 
         const streamAPIResponse =
           request['x-requestConfig']?.tsedControllerConfig?.streamAPIResponse;
+        const responseHeaders =
+          request['x-requestConfig']?.tsedControllerConfig?.responseHeaders;
 
         const {
           controllerMethodDecorators,
           controllerMethodParametersCode,
+          responseHeadersCode,
           apiFunctionCallArgumentsCode,
         } = (() => {
           const controllerMethodRequestMethodName = method.toPascalCase();
@@ -181,12 +184,12 @@ export const getTSEDControllersCodeConfiguration = ({
 
                 if (requestBodySchemaName) {
                   const schemaSource = `
-                          ../models/${
-                            tagToEntityLabelMappings[
-                              schemaToEntityMappings[requestBodySchemaName]
-                            ].PascalCaseEntities
-                          }
-                        `.trimIndent();
+                    ../models/${
+                      tagToEntityLabelMappings[
+                        schemaToEntityMappings[requestBodySchemaName]
+                      ].PascalCaseEntities
+                    }
+                  `.trimIndent();
 
                   addModuleImport({
                     imports,
@@ -237,14 +240,12 @@ export const getTSEDControllersCodeConfiguration = ({
                   importFilePath: TSED_COMMON_LIBRARY_PATH,
                 });
                 const schemaSource = `
-                        ../models/${
-                          tagToEntityLabelMappings[
-                            schemaToEntityMappings[
-                              headerParametersModelReference
-                            ]
-                          ].PascalCaseEntities
-                        }
-                      `.trimIndent();
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[headerParametersModelReference]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent();
 
                 addModuleImport({
                   imports,
@@ -273,14 +274,12 @@ export const getTSEDControllersCodeConfiguration = ({
                   importFilePath: TSED_COMMON_LIBRARY_PATH,
                 });
                 const schemaSource = `
-                        ../models/${
-                          tagToEntityLabelMappings[
-                            schemaToEntityMappings[
-                              queryParametersModelReference
-                            ]
-                          ].PascalCaseEntities
-                        }
-                      `.trimIndent();
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[queryParametersModelReference]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent();
 
                 addModuleImport({
                   imports,
@@ -295,9 +294,24 @@ export const getTSEDControllersCodeConfiguration = ({
               return [];
             })(),
             //#endregion
+
+            //#region Context
+            ...(() => {
+              if (responseHeaders) {
+                addModuleImport({
+                  imports,
+                  importName: 'Context',
+                  importFilePath: TSED_COMMON_LIBRARY_PATH,
+                });
+                return [`@Context() ctx: Context`];
+              }
+              return [];
+            })(),
+            //#endregion
           ].join(', ');
           //#endregion
 
+          //#region Success response schemas
           if (successResponseSchemas && successResponseSchemas.length > 0) {
             successResponseSchemas.forEach((successResponseSchema) => {
               const { httpStatusCode, description } = successResponseSchema;
@@ -358,6 +372,16 @@ export const getTSEDControllersCodeConfiguration = ({
               }
             });
           }
+          //#endregion
+
+          //#region Response headers code
+          const responseHeadersCode = (() => {
+            if (responseHeaders) {
+              return `ctx.set(${JSON.stringify(responseHeaders, null, 2)});`;
+            }
+            return '';
+          })();
+          //#endregion
 
           //#region API function call arguments code
           const apiFunctionCallArgumentsCode = [
@@ -432,6 +456,7 @@ export const getTSEDControllersCodeConfiguration = ({
             })(),
             controllerMethodParametersCode,
             apiFunctionCallArgumentsCode,
+            responseHeadersCode,
           };
         })();
 
@@ -444,6 +469,7 @@ export const getTSEDControllersCodeConfiguration = ({
         return `
           ${controllerMethodDecorators}
           async ${operationName}(${controllerMethodParametersCode}) {
+            ${responseHeadersCode}
             return ${operationName}(${apiFunctionCallArgumentsCode});
           }
         `.trimIndent();
