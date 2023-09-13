@@ -377,7 +377,11 @@ export const getTSEDControllersCodeConfiguration = ({
           //#region Response headers code
           const responseHeadersCode = (() => {
             if (responseHeaders) {
-              return `ctx.set(${JSON.stringify(responseHeaders, null, 2)});`;
+              return `ctx.response.setHeaders(${JSON.stringify(
+                responseHeaders,
+                null,
+                2
+              )});`;
             }
             return '';
           })();
