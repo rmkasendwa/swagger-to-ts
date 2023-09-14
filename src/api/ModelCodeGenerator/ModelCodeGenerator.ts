@@ -306,9 +306,7 @@ export const generateModelCode = ({
                     );
                   } else {
                     jsDocCommentLines.push(
-                      `@example \`\`\`json${JSON.stringify(
-                        openAPISpecification.example
-                      )}\`\`\``
+                      `@example ${JSON.stringify(openAPISpecification.example)}`
                     );
                   }
                 }

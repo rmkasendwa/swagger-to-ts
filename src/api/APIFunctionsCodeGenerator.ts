@@ -147,6 +147,7 @@ export const getAPIFunctionsCodeConfiguration = ({
           operationName,
           requestPathName,
           operationDescription,
+          summary,
           description,
           pathParameters,
           headerParameters,
@@ -262,12 +263,12 @@ export const getAPIFunctionsCodeConfiguration = ({
 
                 if (requestBodySchemaName) {
                   const schemaSource = `
-                          ../models/${
-                            tagToEntityLabelMappings[
-                              schemaToEntityMappings[requestBodySchemaName]
-                            ].PascalCaseEntities
-                          }
-                        `.trimIndent();
+                    ../models/${
+                      tagToEntityLabelMappings[
+                        schemaToEntityMappings[requestBodySchemaName]
+                      ].PascalCaseEntities
+                    }
+                  `.trimIndent();
 
                   addModuleImport({
                     imports,
@@ -313,14 +314,12 @@ export const getAPIFunctionsCodeConfiguration = ({
                 jsDocCommentLines.push(`@param headers`);
 
                 const schemaSource = `
-                        ../models/${
-                          tagToEntityLabelMappings[
-                            schemaToEntityMappings[
-                              headerParametersModelReference
-                            ]
-                          ].PascalCaseEntities
-                        }
-                      `.trimIndent();
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[headerParametersModelReference]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent();
 
                 addModuleImport({
                   imports,
@@ -349,14 +348,12 @@ export const getAPIFunctionsCodeConfiguration = ({
                 jsDocCommentLines.push(`@param queryParams`);
 
                 const schemaSource = `
-                        ../models/${
-                          tagToEntityLabelMappings[
-                            schemaToEntityMappings[
-                              queryParametersModelReference
-                            ]
-                          ].PascalCaseEntities
-                        }
-                      `.trimIndent();
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[queryParametersModelReference]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent();
 
                 addModuleImport({
                   imports,
@@ -392,14 +389,12 @@ export const getAPIFunctionsCodeConfiguration = ({
                 jsDocCommentLines.push(`@param queryParams`);
 
                 const schemaSource = `
-                        ../models/${
-                          tagToEntityLabelMappings[
-                            schemaToEntityMappings[
-                              queryParametersModelReference
-                            ]
-                          ].PascalCaseEntities
-                        }
-                      `.trimIndent();
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[queryParametersModelReference]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent();
 
                 addModuleImport({
                   imports,
@@ -446,12 +441,12 @@ export const getAPIFunctionsCodeConfiguration = ({
                   modelsToValidationSchemaMappings[successResponseSchemaName]
                     .zodValidationSchemaName;
                 const validationSchemaSource = `
-                        ../models/${
-                          tagToEntityLabelMappings[
-                            schemaToEntityMappings[successResponseSchemaName]
-                          ].PascalCaseEntities
-                        }
-                      `.trimIndent();
+                  ../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[successResponseSchemaName]
+                    ].PascalCaseEntities
+                  }
+                `.trimIndent();
 
                 addModuleImport({
                   imports,
@@ -499,10 +494,10 @@ export const getAPIFunctionsCodeConfiguration = ({
                   })
                   .join('\n');
                 return `
-                        /**
-                         ${linesString}
-                        */
-                      `.trimIndent();
+                  /**
+                   ${linesString}
+                  */
+                `.trimIndent();
               }
               return '';
             })(),
@@ -524,10 +519,10 @@ export const getAPIFunctionsCodeConfiguration = ({
                 importFilePath: PATHS_LIBRARY_PATH,
               });
               return `
-                    ${interpolationFunctionName}(${requestPathName}, {
-                      ${pathParameters.map(({ name }) => name).join(',\n')}
-                    })
-                  `;
+                ${interpolationFunctionName}(${requestPathName}, {
+                  ${pathParameters.map(({ name }) => name).join(',\n')}
+                })
+              `;
             }
             return requestPathName;
           })();
@@ -540,11 +535,11 @@ export const getAPIFunctionsCodeConfiguration = ({
               importFilePath: PATHS_LIBRARY_PATH,
             });
             return `
-                  ${searchParamsFunctionName}(${interpolatedEndpointPathString},
-                    {...queryParams}, {
-                    arrayParamStyle: 'append'
-                  })
-                `.trimIndent();
+              ${searchParamsFunctionName}(${interpolatedEndpointPathString},
+                {...queryParams}, {
+                arrayParamStyle: 'append'
+              })
+            `.trimIndent();
           }
           return interpolatedEndpointPathString;
         })();
@@ -666,7 +661,7 @@ export const getAPIFunctionsCodeConfiguration = ({
         ];
 
         return `
-          //#region ${description}
+          //#region ${summary}
           ${jsDocCommentSnippet}
           export async function ${operationName} (
             ${apiFunctionDeclarationParameters.join(', ')}
