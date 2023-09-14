@@ -165,12 +165,14 @@ export const getAPIFunctionsCodeConfiguration = ({
           requestConfig['x-requestConfig']?.apiFunctionConfig?.responseType;
 
         const {
+          jsDocCommentShortOverloadSnippet,
           jsDocCommentSnippet,
           apiFunctionParameters,
           apiFunctionDeclarationParameters,
           returnValueString,
           definedSchemaResponseType,
         } = (() => {
+          const jsDocCommentShortOverloadLines: string[] = [];
           const jsDocCommentLines: string[] = [];
 
           if (description) {
@@ -417,6 +419,7 @@ export const getAPIFunctionsCodeConfiguration = ({
           ];
           //#endregion
 
+          jsDocCommentShortOverloadLines.push(...jsDocCommentLines);
           jsDocCommentLines.push(`@param options The request options.`);
 
           addModuleImport({
@@ -455,6 +458,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                 });
 
                 jsDocCommentLines.push(`@returns ${description}`);
+                jsDocCommentShortOverloadLines.push(`@returns ${description}`);
                 if (isArray) {
                   addModuleImport({
                     imports,
@@ -486,6 +490,24 @@ export const getAPIFunctionsCodeConfiguration = ({
           })();
 
           return {
+            jsDocCommentShortOverloadSnippet: (() => {
+              if (jsDocCommentShortOverloadLines.length > 0) {
+                const linesString = jsDocCommentShortOverloadLines
+                  .map((line) => {
+                    return line
+                      .split('\n')
+                      .map((lineSlice) => ` * ${lineSlice}`)
+                      .join('\n');
+                  })
+                  .join('\n');
+                return `
+                  /**
+                   ${linesString}
+                  */
+                `.trimIndent();
+              }
+              return '';
+            })(),
             jsDocCommentSnippet: (() => {
               if (jsDocCommentLines.length > 0) {
                 const linesString = jsDocCommentLines
@@ -665,7 +687,7 @@ export const getAPIFunctionsCodeConfiguration = ({
 
         return `
           //#region ${summary}
-          ${jsDocCommentSnippet}
+          ${jsDocCommentShortOverloadSnippet}
           export async function ${operationName} (
             ${apiFunctionDeclarationParameters.join(', ')}
           ): ${dataResponseTypeCode};
