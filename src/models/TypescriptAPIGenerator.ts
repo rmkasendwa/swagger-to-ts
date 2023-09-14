@@ -295,6 +295,13 @@ export type APIFunctionsCodeConfiguration = {
   };
 };
 
+export type PermissionsCodeConfiguration = {
+  [requestPath: string]: {
+    outputCode: string;
+    exports: string[];
+  };
+};
+
 export type TSEDControllersCodeConfiguration = {
   [requestPath: string]: {
     outputCode: string;

@@ -83,7 +83,7 @@ export type RequestBody = {
 export const RequestConfigValidationSchema = z.object({
   tsedControllerConfig: z
     .object({
-      permissons: z
+      permissions: z
         .array(z.string())
         .optional()
         .describe('The request permissions.'),
