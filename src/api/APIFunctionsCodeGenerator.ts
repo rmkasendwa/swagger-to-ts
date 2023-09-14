@@ -490,7 +490,10 @@ export const getAPIFunctionsCodeConfiguration = ({
               if (jsDocCommentLines.length > 0) {
                 const linesString = jsDocCommentLines
                   .map((line) => {
-                    return ` * ${line}`;
+                    return line
+                      .split('\n')
+                      .map((lineSlice) => ` * ${lineSlice}`)
+                      .join('\n');
                   })
                   .join('\n');
                 return `
