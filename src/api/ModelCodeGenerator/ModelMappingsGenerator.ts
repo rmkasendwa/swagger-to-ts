@@ -307,7 +307,6 @@ export const generateModelMappings = ({
         accumulator[entityName].models = (() => {
           const models = accumulator[entityName].models;
           const modelKeys = Object.keys(models);
-
           const modelsReferencingModelsInSameFile = modelKeys.filter(
             (modelKey) => {
               const model = models[modelKey];

@@ -298,13 +298,21 @@ export const generatePropertySchemaCode = (
     const propertyTypes = propertySchemas.map(
       ({ propertyType }) => propertyType
     );
-    const propertyModels = propertyTypes.map((propertyType) => {
-      return (primitiveTypeToModelMapping as any)[propertyType] ?? propertyType;
+    const propertyModels = propertyTypes.flatMap((propertyType) => {
+      return getModelsReferencedByPropertyType(propertyType);
     });
     propertySchemaCodeConfiguration.decorators.push(
       `@OneOf(${propertyModels.join(', ')})`
     );
     propertySchemaCodeConfiguration.propertyType = propertyTypes.join(' | ');
+    referencedSchemas.push(
+      ...propertyModels.filter((modelName) => {
+        return (
+          !primitiveTypeModels.includes(modelName as any) &&
+          !referencedSchemas.includes(modelName as any)
+        );
+      })
+    );
 
     if (generateTsEDControllers) {
       addModuleImport({
