@@ -319,14 +319,20 @@ export const generateModelMappings = ({
           return modelKeys
             .sort((aKey, bKey) => {
               if (
-                modelsReferencingModelsInSameFile.includes(aKey) &&
-                !modelsReferencingModelsInSameFile.includes(bKey)
+                (modelsReferencingModelsInSameFile.includes(aKey) &&
+                  !modelsReferencingModelsInSameFile.includes(bKey)) ||
+                models[aKey].referencedSchemas?.some((referencedSchema) => {
+                  return referencedSchema === bKey;
+                })
               ) {
                 return 1;
               }
               if (
-                !modelsReferencingModelsInSameFile.includes(aKey) &&
-                modelsReferencingModelsInSameFile.includes(bKey)
+                (!modelsReferencingModelsInSameFile.includes(aKey) &&
+                  modelsReferencingModelsInSameFile.includes(bKey)) ||
+                models[bKey].referencedSchemas?.some((referencedSchema) => {
+                  return referencedSchema === aKey;
+                })
               ) {
                 return -1;
               }
