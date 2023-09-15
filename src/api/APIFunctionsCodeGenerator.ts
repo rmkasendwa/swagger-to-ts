@@ -348,22 +348,6 @@ export const getAPIFunctionsCodeConfiguration = ({
                   queryParameters &&
                   queryParameters.length > 0
                 ) {
-                  jsDocCommentLines.push(`@param queryParams`);
-
-                  const schemaSource = `
-                  ../models/${
-                    tagToEntityLabelMappings[
-                      schemaToEntityMappings[queryParametersModelReference]
-                    ].PascalCaseEntities
-                  }
-                `.trimIndent();
-
-                  addModuleImport({
-                    imports,
-                    importName: queryParametersModelReference,
-                    importFilePath: schemaSource,
-                  });
-
                   // Check if query params are required
                   if (
                     queryParameters.filter(({ required }) => required).length >
