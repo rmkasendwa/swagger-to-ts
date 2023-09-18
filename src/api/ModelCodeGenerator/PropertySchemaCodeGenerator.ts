@@ -367,6 +367,9 @@ export const getModelsReferencedByPropertyType = (propertyType: string) => {
     .replace(/\[\]$/g, '')
     .replace(/^\(|\)$/g, '')
     .split(' | ')
+    .filter((propertyType) => {
+      return propertyType != 'any';
+    })
     .map((propertyType) => {
       if (propertyType.match(/".+"/g)) {
         return 'String';
