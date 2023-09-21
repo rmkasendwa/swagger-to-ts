@@ -158,6 +158,11 @@ export type ObjectSchema = BaseSchema & {
    * The object required properties
    */
   required?: string[];
+
+  /**
+   * Whether the object allows additional properties.
+   */
+  additionalProperties?: boolean;
 };
 
 export type RecordSchema = BaseSchema & {

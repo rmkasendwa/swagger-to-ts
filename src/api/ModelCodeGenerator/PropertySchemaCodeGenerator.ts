@@ -121,7 +121,7 @@ export const generatePropertySchemaCode = (
         case 'object':
           if (
             'additionalProperties' in propertySchema &&
-            propertySchema.additionalProperties
+            typeof propertySchema.additionalProperties === 'object'
           ) {
             const {
               propertyType,
@@ -164,7 +164,10 @@ export const generatePropertySchemaCode = (
                 importFilePath: TSED_SCHEMA_LIBRARY_PATH,
               });
             }
-            if ('$ref' in propertySchema.additionalProperties) {
+            if (
+              typeof propertySchema.additionalProperties === 'object' &&
+              '$ref' in propertySchema.additionalProperties
+            ) {
               const referencedSchemaName =
                 propertySchema.additionalProperties.$ref.replace(
                   '#/components/schemas/',
@@ -172,6 +175,7 @@ export const generatePropertySchemaCode = (
                 );
               decorators.push(`@AdditionalProperties(${referencedSchemaName})`);
             } else if (
+              typeof propertySchema.additionalProperties === 'object' &&
               'type' in propertySchema.additionalProperties &&
               propertySchema.additionalProperties.type === 'array' &&
               propertySchema.additionalProperties.items &&

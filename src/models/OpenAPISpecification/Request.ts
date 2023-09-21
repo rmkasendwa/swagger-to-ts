@@ -28,6 +28,7 @@ export const BaseRequestParameterValidationSchema = z.object<any>({
     .optional()
     .describe('The base request parameter description.'),
   schema: SchemaValidationSchema.describe('The base request parameter schema.'),
+  example: z.any().optional().describe('The base request parameter example.'),
 });
 
 export type BaseRequestParameter = {
@@ -35,6 +36,7 @@ export type BaseRequestParameter = {
   name: string;
   description?: string;
   schema: Schema;
+  example?: any;
 };
 //#endregion
 

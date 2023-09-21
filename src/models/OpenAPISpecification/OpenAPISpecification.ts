@@ -8,6 +8,13 @@ export const InfoValidationSchema = z.object({
   version: z.string().describe('The open api version.'),
   title: z.string().describe('The open api title.'),
   description: z.string().optional().describe('The open api description.'),
+  license: z
+    .object({
+      name: z.string().describe('The open api license name.'),
+      url: z.string().optional().describe('The open api license url.'),
+    })
+    .optional()
+    .describe('The open api license.'),
 });
 
 export type Info = z.infer<typeof InfoValidationSchema>;
@@ -38,6 +45,15 @@ export const TagValidationSchema = z.object({
 export type Tag = z.infer<typeof TagValidationSchema>;
 //#endregion
 
+//#region Server
+export const ServerValidationSchema = z.object({
+  url: z.string().describe('The server url.'),
+  description: z.string().optional().describe('The server description.'),
+});
+
+export type Server = z.infer<typeof ServerValidationSchema>;
+//#endregion
+
 export const OpenAPISpecificationValidationSchema = z.object({
   openapi: z
     .string()
@@ -62,7 +78,13 @@ export const OpenAPISpecificationValidationSchema = z.object({
   tags: z
     .array(TagValidationSchema)
     .describe(
-      "A list of tags used by the document with additional metadata. The order of the tags can be used to reflect on their order by the parsing tools. Not all tags that are used by the Operation Object must be declared. The tags that are not declared MAY be organized randomly or based on the tools' logic. Each tag name in the list MUST be unique."
+      "A list of tags used by the document with additional metadata. The order of the tags can be used to reflect on their order by the parsing tools. Not all tags that are used by the [Operation Object](https://swagger.io/specification/#operation-object) must be declared. The tags that are not declared MAY be organized randomly or based on the tools' logic. Each tag name in the list MUST be unique."
+    ),
+  servers: z
+    .array(ServerValidationSchema)
+    .optional()
+    .describe(
+      'An array of Server Objects, which provide connectivity information to a target server. If the `servers` property is not provided, or is an empty array, the default value would be a [Server Object](https://swagger.io/specification/#server-object) with a [url](https://swagger.io/specification/#server-url) value of /.'
     ),
 });
 
@@ -101,11 +123,18 @@ export type OpenAPISpecification = {
   /**
    * A list of tags used by the document with additional metadata.
    * The order of the tags can be used to reflect on their order by the parsing tools.
-   * Not all tags that are used by the Operation Object must be declared.
+   * Not all tags that are used by the [Operation Object](https://swagger.io/specification/#operation-object) must be declared.
    * The tags that are not declared MAY be organized randomly or based on the tools' logic.
    * Each tag name in the list MUST be unique.
    */
   tags: Tag[];
+
+  /**
+   * An array of Server Objects, which provide connectivity information to a target server.
+   * If the `servers` property is not provided, or is an empty array, the default value would
+   * be a [Server Object](https://swagger.io/specification/#server-object) with a [url](https://swagger.io/specification/#server-url) value of `/`.
+   */
+  servers?: Server[];
 };
 
 export const defineOpenAPI = (spec: OpenAPISpecification) => spec;

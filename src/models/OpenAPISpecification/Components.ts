@@ -5,12 +5,17 @@ import { Schema, SchemaValidationSchema } from './Schema';
 //#region SecurityScheme
 export const ApikeyAuthValidationSchema = z.object({
   type: z.string().describe('The security scheme type.'),
+  scheme: z
+    .literal('apikey')
+    .optional()
+    .describe('The security scheme scheme.'),
   in: z.string().optional().describe('The security scheme location.'),
   name: z.string().optional().describe('The security scheme name.'),
 });
 
 export type ApikeyAuth = {
   type: string;
+  scheme?: 'apikey';
   in?: string;
   name?: string;
 };

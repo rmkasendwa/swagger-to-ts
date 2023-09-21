@@ -15,7 +15,8 @@ const { stdout, stderr } = exec(
     .join(' ')}`,
   (err) => {
     if (err) {
-      throw err;
+      console.error(err.message);
+      process.exit(1);
     }
   }
 );
