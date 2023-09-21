@@ -54,7 +54,13 @@ if (args.includes('-v') || args.includes('--version')) {
         existsSync(openAPISpecificationFilePath + '/index' + fileExtension)
     )
   ) {
-    const openAPISpecification = require(openAPISpecificationFilePath);
+    const openAPISpecification = (() => {
+      const obj = require(openAPISpecificationFilePath);
+      if (obj.default) {
+        return obj.default;
+      }
+      return obj;
+    })();
 
     const outputRootPath = (() => {
       if (args.includes('-o') || args.includes('--output')) {
