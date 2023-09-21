@@ -107,3 +107,5 @@ export type OpenAPISpecification = {
    */
   tags: Tag[];
 };
+
+export const defineOpenAPI = (spec: OpenAPISpecification) => spec;
