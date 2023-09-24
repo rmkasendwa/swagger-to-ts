@@ -214,17 +214,23 @@ export const generateTypescriptAPI = async ({
       }
       //#endregion
 
-      request.tags.forEach((tag) => {
-        if (!accumulator[tag]) {
-          accumulator[tag] = {
+      request.tags.forEach((tagName) => {
+        if (!accumulator[tagName]) {
+          const tag = openAPISpecification.tags.find(
+            ({ name }) => name === tagName
+          );
+          accumulator[tagName] = {
+            name: tag?.name || tagName,
+            description: tag?.description,
+            permissons: tag?.['x-permissions'],
             imports: {},
             requests: [],
           };
         }
 
-        const { requests } = accumulator[tag];
+        const { requests } = accumulator[tagName];
         const typePrefix = (() => {
-          const match = /^\[(.+)\]\s/g.exec(tag);
+          const match = /^\[(.+)\]\s/g.exec(tagName);
           if (match) {
             return match[1].toPascalCase();
           }

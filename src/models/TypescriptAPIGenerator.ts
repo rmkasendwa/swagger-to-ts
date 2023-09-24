@@ -1,3 +1,4 @@
+import { TagPermission } from './OpenAPISpecification';
 import {
   Request,
   RequestMethod,
@@ -232,6 +233,21 @@ export type RequestGroupings = {
      * The requests that are grouped under this tag/module.
      */
     requests: TypescriptAPIGeneratorRequest[];
+
+    /**
+     * The name of the tag.
+     */
+    name: string;
+
+    /**
+     * The description of the tag.
+     */
+    description?: string;
+
+    /**
+     * The permissions of the tag.
+     */
+    permissons?: TagPermission[];
   };
 };
 
