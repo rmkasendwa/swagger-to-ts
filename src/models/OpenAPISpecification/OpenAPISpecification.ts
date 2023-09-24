@@ -36,13 +36,76 @@ export const SecurityValidationSchema = z.union([
 export type Security = z.infer<typeof SecurityValidationSchema>;
 //#endregion
 
+//#region Tag Permission
+export const TagPermissionValidationSchema = z.object({
+  code: z
+    .string()
+    .describe('The code that uniquely identifies the permission.'),
+  scope: z.string().describe('The scope of the permission.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The description of the permission.'),
+  parentPermissionCode: z
+    .string()
+    .optional()
+    .describe(
+      'The code of the permission that is the parent of this permission.'
+    ),
+  name: z.string().describe('The name of the permission.'),
+});
+
+export type TagPermission = {
+  /**
+   * The code that uniquely identifies the permission.
+   */
+  code: string;
+
+  /**
+   * The scope of the permission.
+   */
+  scope: string;
+
+  /**
+   * The description of the permission.
+   */
+  description?: string;
+
+  /**
+   * The code of the permission that is the parent of this permission.
+   */
+  parentPermissionCode?: string;
+
+  /**
+   * The name of the permission.
+   */
+  name: string;
+};
+//#endregion
+
 //#region Tag
 export const TagValidationSchema = z.object({
   name: z.string().describe('The tag name.'),
   description: z.string().optional().describe('The tag description.'),
+  'x-permissions': z.array(TagPermissionValidationSchema).optional(),
 });
 
-export type Tag = z.infer<typeof TagValidationSchema>;
+export type Tag = {
+  /**
+   * The tag name.
+   * */
+  name: string;
+
+  /**
+   * The tag description.
+   * */
+  description?: string;
+
+  /**
+   * The permissions of the tag.
+   * */
+  'x-permissions'?: TagPermission[];
+};
 //#endregion
 
 //#region Server
