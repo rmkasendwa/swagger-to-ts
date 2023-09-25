@@ -8,19 +8,20 @@ export interface GeneratePermissionsCodeConfigurationOptions {
   requestGroupings: RequestGroupings;
 
   /**
-   * The name of the local scope.
+   * The prefix to use for the scoped model.
    */
-  localScopeName: string;
+  scopedModelPrefix?: string;
 }
 export const getPermissionsCodeConfiguration = ({
   requestGroupings,
-  localScopeName,
+  scopedModelPrefix,
 }: GeneratePermissionsCodeConfigurationOptions) => {
   return Object.entries(requestGroupings).reduce<PermissionsCodeConfiguration>(
     (accumulator, [tagName, requestGrouping]) => {
-      const upperCaseTagName = tagName.replace(/\W+/g, '_').toUpperCase();
-      const snakeCaseTagName = tagName.replace(/\W+/g, '_').toLowerCase();
-      const pascalCaseTagName = tagName.toPascalCase();
+      const scopedTagName =
+        (scopedModelPrefix ? scopedModelPrefix + ' ' : '') + tagName;
+      const upperCaseTagName = scopedTagName.replace(/\W+/g, '_').toUpperCase();
+      const snakeCaseTagName = scopedTagName.replace(/\W+/g, '_').toLowerCase();
       const manageModulePermissionCode = `MANAGE_${upperCaseTagName}`;
       const manageModulePermissionsVariableName = `${manageModulePermissionCode}_PERMISSION`;
       const permissionCodeExports = [
@@ -29,33 +30,16 @@ export const getPermissionsCodeConfiguration = ({
       const permissionsListExportItemsCode = [
         `
           {
-            category: '${pascalCaseTagName}',
+            category: '${scopedTagName}',
             code: ${manageModulePermissionsVariableName},
             scope: '${snakeCaseTagName}',
             description:
-              'A user with this permission can perform all operations on ${tagName}',
-            name: 'Manage ${tagName}',
+              'A user with this permission can perform all operations on ${scopedTagName}',
+            name: 'Manage ${scopedTagName}',
             parentPermissionCode: 'ALL_FUNCTIONS',
           },
         `.trimIndent(),
       ];
-      requestGrouping.requests.forEach((request) => {
-        request['x-requestConfig']?.tsedControllerConfig?.permissions?.forEach(
-          (permission) => {
-            const permissionString = `${
-              localScopeName !== 'Root' ? localScopeName + '_' : ''
-            }${permission}`
-              .replace(/\W+/g, '_')
-              .toUpperCase();
-            const permissionExportVariableName = `${permissionString}_PERMISSION`;
-            permissionCodeExports.push(
-              `export const ${permissionExportVariableName} = ${JSON.stringify(
-                permissionString
-              )};`
-            );
-          }
-        );
-      });
 
       if (requestGrouping.permissons) {
         requestGrouping.permissons.forEach((permision) => {
@@ -69,6 +53,7 @@ export const getPermissionsCodeConfiguration = ({
           permissionsListExportItemsCode.push(
             '{\n' +
               Object.entries({
+                category: scopedTagName,
                 ...permision,
                 ...(() => {
                   if (!permision.parentPermissionCode) {
@@ -96,7 +81,7 @@ export const getPermissionsCodeConfiguration = ({
       }
 
       const permissionsListExport = `
-        export const all${pascalCaseTagName}Permissions = [
+        export const all${tagName.toPascalCase()}Permissions = [
           ${permissionsListExportItemsCode.join('\n')}
         ];
       `.trimIndent();
