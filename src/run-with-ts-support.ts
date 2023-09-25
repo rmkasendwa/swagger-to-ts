@@ -157,6 +157,31 @@ if (args.includes('-v') || args.includes('--version')) {
       })(),
       ...(() => {
         if (
+          args.includes('-tAADIP') ||
+          args.includes('--tsed-authorize-decorator-import-path')
+        ) {
+          const tsEDAuthorizeDecoratorImportPath = (() => {
+            if (args.includes('-tAADIP')) {
+              return args[args.indexOf('-tAADIP') + 1];
+            }
+            if (args.includes('--tsed-authorize-decorator-import-path')) {
+              return args[
+                args.indexOf('--tsed-authorize-decorator-import-path') + 1
+              ];
+            }
+          })();
+          if (
+            tsEDAuthorizeDecoratorImportPath &&
+            !tsEDAuthorizeDecoratorImportPath.match(/^-/g)
+          ) {
+            return {
+              tsEDAuthorizeDecoratorImportPath,
+            };
+          }
+        }
+      })(),
+      ...(() => {
+        if (
           args.includes('-tCNP') ||
           args.includes('--tsed-controller-name-prefix')
         ) {

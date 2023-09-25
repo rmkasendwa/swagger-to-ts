@@ -37,6 +37,11 @@ export interface GenerateTSEDControllersCodeConfigurationOptions {
   authenticateDecoratorImportPath?: string;
 
   /**
+   * The path to the tsed authorize decorator import.
+   */
+  authorizeDecoratorImportPath?: string;
+
+  /**
    * The prefix to add to the controller names.
    */
   tsedControllerNamePrefix?: string;
@@ -56,6 +61,7 @@ export const getTSEDControllersCodeConfiguration = ({
   tagToEntityLabelMappings,
   schemaToEntityMappings,
   authenticateDecoratorImportPath,
+  authorizeDecoratorImportPath,
   tsedControllerNamePrefix,
   tsedControllerNameSuffix,
   openAPISpecification,
@@ -88,6 +94,8 @@ export const getTSEDControllersCodeConfiguration = ({
           request['x-requestConfig']?.tsedControllerConfig?.streamAPIResponse;
         const responseHeaders =
           request['x-requestConfig']?.tsedControllerConfig?.responseHeaders;
+        const permissions =
+          request['x-requestConfig']?.tsedControllerConfig?.permissions;
 
         const {
           controllerMethodDecorators,
@@ -118,6 +126,35 @@ export const getTSEDControllersCodeConfiguration = ({
             importName: controllerMethodRequestMethodName,
             importFilePath: TSED_SCHEMA_LIBRARY_PATH,
           });
+
+          if (
+            authorizeDecoratorImportPath &&
+            permissions &&
+            permissions.length > 0
+          ) {
+            const permissionsVariableNames = permissions.map(
+              (permissionCode) => {
+                return `${permissionCode
+                  .replace(/\W+/g, '_')
+                  .toUpperCase()}_PERMISSION`;
+              }
+            );
+            permissionsVariableNames.forEach((permissionsVariableName) => {
+              addModuleImport({
+                imports,
+                importName: permissionsVariableName,
+                importFilePath: '../permissions',
+              });
+            });
+            controllerMethodDecorators.push(
+              `@Authorize(${permissionsVariableNames.join(', ')})`
+            );
+            addModuleImport({
+              imports,
+              importName: 'Authorize',
+              importFilePath: authorizeDecoratorImportPath,
+            });
+          }
 
           if (summary) {
             addModuleImport({

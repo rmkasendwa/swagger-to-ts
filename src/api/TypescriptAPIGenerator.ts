@@ -100,6 +100,11 @@ export interface GenerateTypescriptAPIOptions
   tsEDAuthenticateDecoratorImportPath?: string;
 
   /**
+   * The import path to use for the Ts.ED `Authorize` decorator.
+   */
+  tsEDAuthorizeDecoratorImportPath?: string;
+
+  /**
    * The scope name to use for the generated Typescript API.
    */
   scopeName?: string;
@@ -113,6 +118,7 @@ export const generateTypescriptAPI = async ({
   requestOperationNameSource = 'requestSummary',
   inferTypeFromValidationSchema,
   tsEDAuthenticateDecoratorImportPath,
+  tsEDAuthorizeDecoratorImportPath,
   tsedControllerNamePrefix,
   tsedControllerNameSuffix,
   scopeName,
@@ -587,6 +593,7 @@ export const generateTypescriptAPI = async ({
           schemaToEntityMappings,
           tagToEntityLabelMappings,
           authenticateDecoratorImportPath: tsEDAuthenticateDecoratorImportPath,
+          authorizeDecoratorImportPath: tsEDAuthorizeDecoratorImportPath,
           tsedControllerNamePrefix: (() => {
             if (scopeName) {
               return `[${scopeName}] `;
