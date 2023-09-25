@@ -21,9 +21,23 @@ export const getPermissionsCodeConfiguration = ({
       const upperCaseTagName = tagName.replace(/\W+/g, '_').toUpperCase();
       const snakeCaseTagName = tagName.replace(/\W+/g, '_').toLowerCase();
       const pascalCaseTagName = tagName.toPascalCase();
-      const manageModulePermissionsVariableName = `MANAGE_${upperCaseTagName}_PERMISSON`;
+      const manageModulePermissionCode = `MANAGE_${upperCaseTagName}`;
+      const manageModulePermissionsVariableName = `${manageModulePermissionCode}_PERMISSION`;
       const permissionCodeExports = [
         `export const ${manageModulePermissionsVariableName} = 'MANAGE_${upperCaseTagName}';`,
+      ];
+      const permissionsListExportItemsCode = [
+        `
+          {
+            category: '${pascalCaseTagName}',
+            code: ${manageModulePermissionsVariableName},
+            scope: '${snakeCaseTagName}',
+            description:
+              'A user with this permission can perform all operations on ${tagName}',
+            name: 'Manage ${tagName}',
+            parentPermissionCode: 'ALL_FUNCTIONS',
+          },
+        `.trimIndent(),
       ];
       requestGrouping.requests.forEach((request) => {
         request['x-requestConfig']?.tsedControllerConfig?.permissions?.forEach(
@@ -43,17 +57,47 @@ export const getPermissionsCodeConfiguration = ({
         );
       });
 
+      if (requestGrouping.permissons) {
+        requestGrouping.permissons.forEach((permision) => {
+          const { code } = permision;
+          const normalizedCode = code.replace(/\W+/g, '_').toUpperCase();
+          permissionCodeExports.push(
+            `export const ${normalizedCode}_PERMISSION = ${JSON.stringify(
+              normalizedCode
+            )};`
+          );
+          permissionsListExportItemsCode.push(
+            '{\n' +
+              Object.entries({
+                ...permision,
+                ...(() => {
+                  if (!permision.parentPermissionCode) {
+                    return {
+                      parentPermissionCode: manageModulePermissionCode,
+                    };
+                  }
+                })(),
+              })
+                .map(([key, value]) => {
+                  if (key === 'code') {
+                    return `${key}: ${normalizedCode}_PERMISSION,`;
+                  }
+                  if (key === 'parentPermissionCode' && value) {
+                    return `${key}: ${value
+                      .replace(/\W+/g, '_')
+                      .toUpperCase()}_PERMISSION,`;
+                  }
+                  return `${key}: ${JSON.stringify(value)},`;
+                })
+                .join('\n') +
+              '\n},'
+          );
+        });
+      }
+
       const permissionsListExport = `
         export const all${pascalCaseTagName}Permissions = [
-          {
-            category: '${pascalCaseTagName}',
-            code: ${manageModulePermissionsVariableName},
-            scope: '${snakeCaseTagName}',
-            description:
-              'A user with this permission can perform all operations on ${tagName}',
-            name: 'Manage ${tagName}',
-            parentPermissionCode: 'ALL_FUNCTIONS',
-          }
+          ${permissionsListExportItemsCode.join('\n')}
         ];
       `.trimIndent();
 
