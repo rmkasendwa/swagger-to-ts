@@ -302,41 +302,56 @@ export const generatePropertySchemaCode = (
     const propertyTypes = propertySchemas.map(
       ({ propertyType }) => propertyType
     );
-    const propertyModels = propertyTypes.flatMap((propertyType) => {
-      return getModelsReferencedByPropertyType(propertyType);
-    });
-    propertySchemaCodeConfiguration.decorators.push(
-      `@OneOf(${propertyModels.join(', ')})`
-    );
-    propertySchemaCodeConfiguration.propertyType = propertyTypes.join(' | ');
-    referencedSchemas.push(
-      ...propertyModels.filter((modelName) => {
-        return (
-          !primitiveTypeModels.includes(modelName as any) &&
-          !referencedSchemas.includes(modelName as any)
-        );
-      })
-    );
 
-    if (generateTsEDControllers) {
-      addModuleImport({
-        imports,
-        importName: 'OneOf',
-        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-      });
-    }
-
-    propertySchemaCodeConfiguration.zodCodeString =
-      propertySchemas.length > 1
-        ? `z.union([${propertySchemas
-            .map(({ zodCodeString }) => zodCodeString)
-            .join(',')}])`
-        : propertySchemas[0].zodCodeString;
-    propertySchemas.forEach(
-      ({ generatedVariables: propertyGeneratedVariables }) => {
-        Object.assign(generatedVariables, propertyGeneratedVariables);
+    if (propertyTypes.includes('any')) {
+      propertySchemaCodeConfiguration.decorators.push(`@Any()`);
+      propertySchemaCodeConfiguration.propertyType = 'any';
+      if (generateTsEDControllers) {
+        addModuleImport({
+          imports,
+          importName: 'Any',
+          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+        });
       }
-    );
+      propertySchemaCodeConfiguration.zodCodeString = `z.any()`;
+      propertySchemaCodeConfiguration.isNullable = false;
+    } else {
+      const propertyModels = propertyTypes.flatMap((propertyType) => {
+        return getModelsReferencedByPropertyType(propertyType);
+      });
+      propertySchemaCodeConfiguration.decorators.push(
+        `@OneOf(${propertyModels.join(', ')})`
+      );
+      propertySchemaCodeConfiguration.propertyType = propertyTypes.join(' | ');
+      referencedSchemas.push(
+        ...propertyModels.filter((modelName) => {
+          return (
+            !primitiveTypeModels.includes(modelName as any) &&
+            !referencedSchemas.includes(modelName as any)
+          );
+        })
+      );
+
+      if (generateTsEDControllers) {
+        addModuleImport({
+          imports,
+          importName: 'OneOf',
+          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+        });
+      }
+
+      propertySchemaCodeConfiguration.zodCodeString =
+        propertySchemas.length > 1
+          ? `z.union([${propertySchemas
+              .map(({ zodCodeString }) => zodCodeString)
+              .join(',')}])`
+          : propertySchemas[0].zodCodeString;
+      propertySchemas.forEach(
+        ({ generatedVariables: propertyGeneratedVariables }) => {
+          Object.assign(generatedVariables, propertyGeneratedVariables);
+        }
+      );
+    }
   } else if ('anyOf' in propertySchema) {
     const propertySchemas = propertySchema.anyOf.map((anyOfPropertySchema) => {
       return generatePropertySchemaCode({
@@ -348,37 +363,54 @@ export const generatePropertySchemaCode = (
     const propertyTypes = propertySchemas.map(
       ({ propertyType }) => propertyType
     );
-    const propertyModels = propertyTypes.flatMap((propertyType) => {
-      return getModelsReferencedByPropertyType(propertyType);
-    });
-    propertySchemaCodeConfiguration.decorators.push(
-      `@AnyOf(${propertyModels.join(', ')})`
-    );
-    propertySchemaCodeConfiguration.propertyType = propertyTypes.join(' | ');
-    referencedSchemas.push(
-      ...propertyModels.filter((modelName) => {
-        return (
-          !primitiveTypeModels.includes(modelName as any) &&
-          !referencedSchemas.includes(modelName as any)
-        );
-      })
-    );
 
-    if (generateTsEDControllers) {
-      addModuleImport({
-        imports,
-        importName: 'AnyOf',
-        importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-      });
-    }
-
-    propertySchemaCodeConfiguration.zodCodeString =
-      propertySchemas.length > 1 ? `z.any()` : propertySchemas[0].zodCodeString;
-    propertySchemas.forEach(
-      ({ generatedVariables: propertyGeneratedVariables }) => {
-        Object.assign(generatedVariables, propertyGeneratedVariables);
+    if (propertyTypes.includes('any')) {
+      propertySchemaCodeConfiguration.decorators.push(`@Any()`);
+      propertySchemaCodeConfiguration.propertyType = 'any';
+      if (generateTsEDControllers) {
+        addModuleImport({
+          imports,
+          importName: 'Any',
+          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+        });
       }
-    );
+      propertySchemaCodeConfiguration.zodCodeString = `z.any()`;
+      propertySchemaCodeConfiguration.isNullable = false;
+    } else {
+      const propertyModels = propertyTypes.flatMap((propertyType) => {
+        return getModelsReferencedByPropertyType(propertyType);
+      });
+      propertySchemaCodeConfiguration.decorators.push(
+        `@AnyOf(${propertyModels.join(', ')})`
+      );
+      propertySchemaCodeConfiguration.propertyType = propertyTypes.join(' | ');
+      referencedSchemas.push(
+        ...propertyModels.filter((modelName) => {
+          return (
+            !primitiveTypeModels.includes(modelName as any) &&
+            !referencedSchemas.includes(modelName as any)
+          );
+        })
+      );
+
+      if (generateTsEDControllers) {
+        addModuleImport({
+          imports,
+          importName: 'AnyOf',
+          importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+        });
+      }
+
+      propertySchemaCodeConfiguration.zodCodeString =
+        propertySchemas.length > 1
+          ? `z.any()`
+          : propertySchemas[0].zodCodeString;
+      propertySchemas.forEach(
+        ({ generatedVariables: propertyGeneratedVariables }) => {
+          Object.assign(generatedVariables, propertyGeneratedVariables);
+        }
+      );
+    }
   }
 
   if (propertySchemaCodeConfiguration.required) {

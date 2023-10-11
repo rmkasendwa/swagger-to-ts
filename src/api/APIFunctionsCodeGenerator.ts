@@ -689,7 +689,7 @@ export const getAPIFunctionsCodeConfiguration = ({
                 return baseGetStaleWhileRevalidate(${returnValueString.replace(
                   'response.data',
                   'data'
-                )});
+                )} as any);
               };
             }
 
