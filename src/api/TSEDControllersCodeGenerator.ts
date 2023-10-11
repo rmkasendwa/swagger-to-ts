@@ -179,7 +179,7 @@ export const getTSEDControllersCodeConfiguration = ({
 
           addModuleImport({
             imports,
-            importName: 'HeaderParams',
+            importName: 'Context',
             importFilePath: TSED_COMMON_LIBRARY_PATH,
           });
 
@@ -273,6 +273,11 @@ export const getTSEDControllersCodeConfiguration = ({
                 headerParameters &&
                 headerParameters.length > 0
               ) {
+                addModuleImport({
+                  imports,
+                  importName: 'HeaderParams',
+                  importFilePath: TSED_COMMON_LIBRARY_PATH,
+                });
                 const schemaSource = `../models/${
                   tagToEntityLabelMappings[
                     schemaToEntityMappings[headerParametersModelReference]
@@ -286,12 +291,11 @@ export const getTSEDControllersCodeConfiguration = ({
                 });
 
                 return [
-                  `@HeaderParams() baseHeaders: ${headerParametersModelReference}`,
+                  `@HeaderParams() headers: ${headerParametersModelReference}`,
                 ];
               }
               return [];
             })(),
-            `@HeaderParams() headers: any`,
             //#endregion
 
             //#region Query parameters
@@ -327,17 +331,7 @@ export const getTSEDControllersCodeConfiguration = ({
             //#endregion
 
             //#region Context
-            ...(() => {
-              if (responseHeaders) {
-                addModuleImport({
-                  imports,
-                  importName: 'Context',
-                  importFilePath: TSED_COMMON_LIBRARY_PATH,
-                });
-                return [`@Context() ctx: Context`];
-              }
-              return [];
-            })(),
+            `@Context() ctx: Context`,
             //#endregion
           ].join(', ');
           //#endregion
@@ -447,7 +441,7 @@ export const getTSEDControllersCodeConfiguration = ({
                 headerParameters &&
                 headerParameters.length > 0
               ) {
-                return ['baseHeaders'];
+                return ['headers'];
               }
               return [];
             })(),
@@ -473,11 +467,11 @@ export const getTSEDControllersCodeConfiguration = ({
                   `{
                     unWrapResponse: false,
                     responseType: 'stream',
-                    headers
+                    headers: ctx.request.headers
                   }`,
                 ];
               }
-              return [`{ headers }`];
+              return [`{ headers: ctx.request.headers }`];
             })(),
             //#endregion
           ].join(', ');
