@@ -36,6 +36,6 @@
     "traceResolution": false /* Report module resolution log messages. */,
     "types": ["node", "jest"]
   },
-  "exclude": ["node_modules", "src/__sandbox/**/*"],
+  "exclude": ["node_modules", "src/__sandbox/**/*", "src/__sandbox__/**/*"],
   "include": ["./src/**/*"]
 }

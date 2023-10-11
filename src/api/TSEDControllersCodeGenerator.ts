@@ -220,13 +220,11 @@ export const getTSEDControllersCodeConfiguration = ({
                 });
 
                 if (requestBodySchemaName) {
-                  const schemaSource = `
-                    ../models/${
-                      tagToEntityLabelMappings[
-                        schemaToEntityMappings[requestBodySchemaName]
-                      ].PascalCaseEntities
-                    }
-                  `.trimIndent();
+                  const schemaSource = `../models/${
+                    tagToEntityLabelMappings[
+                      schemaToEntityMappings[requestBodySchemaName]
+                    ].PascalCaseEntities
+                  }`.trim();
 
                   addModuleImport({
                     imports,
@@ -241,15 +239,13 @@ export const getTSEDControllersCodeConfiguration = ({
 
                 if (requestBodyType) {
                   if (requestBodyTypeDependentSchemaName) {
-                    const schemaSource = `
-                            ../models/${
-                              tagToEntityLabelMappings[
-                                schemaToEntityMappings[
-                                  requestBodyTypeDependentSchemaName
-                                ]
-                              ].PascalCaseEntities
-                            }
-                          `.trimIndent();
+                    const schemaSource = `../models/${
+                      tagToEntityLabelMappings[
+                        schemaToEntityMappings[
+                          requestBodyTypeDependentSchemaName
+                        ]
+                      ].PascalCaseEntities
+                    }`.trim();
 
                     addModuleImport({
                       imports,
@@ -276,13 +272,11 @@ export const getTSEDControllersCodeConfiguration = ({
                   importName: 'HeaderParams',
                   importFilePath: TSED_COMMON_LIBRARY_PATH,
                 });
-                const schemaSource = `
-                  ../models/${
-                    tagToEntityLabelMappings[
-                      schemaToEntityMappings[headerParametersModelReference]
-                    ].PascalCaseEntities
-                  }
-                `.trimIndent();
+                const schemaSource = `../models/${
+                  tagToEntityLabelMappings[
+                    schemaToEntityMappings[headerParametersModelReference]
+                  ].PascalCaseEntities
+                }`.trim();
 
                 addModuleImport({
                   imports,
@@ -310,13 +304,11 @@ export const getTSEDControllersCodeConfiguration = ({
                   importName: 'QueryParams',
                   importFilePath: TSED_COMMON_LIBRARY_PATH,
                 });
-                const schemaSource = `
-                  ../models/${
-                    tagToEntityLabelMappings[
-                      schemaToEntityMappings[queryParametersModelReference]
-                    ].PascalCaseEntities
-                  }
-                `.trimIndent();
+                const schemaSource = `../models/${
+                  tagToEntityLabelMappings[
+                    schemaToEntityMappings[queryParametersModelReference]
+                  ].PascalCaseEntities
+                }`.trim();
 
                 addModuleImport({
                   imports,
@@ -367,7 +359,7 @@ export const getTSEDControllersCodeConfiguration = ({
                     importFilePath: `../models/${
                       tagToEntityLabelMappings[schemaToEntityMappings[name]]
                         .PascalCaseEntities
-                    }`,
+                    }`.trim(),
                   });
                 }
 
