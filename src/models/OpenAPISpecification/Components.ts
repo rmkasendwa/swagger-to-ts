@@ -11,6 +11,10 @@ export const ApikeyAuthValidationSchema = z.object({
     .describe('The security scheme scheme.'),
   in: z.string().optional().describe('The security scheme location.'),
   name: z.string().optional().describe('The security scheme name.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The security scheme description.'),
 });
 
 export type ApikeyAuth = {
@@ -18,6 +22,7 @@ export type ApikeyAuth = {
   scheme?: 'apikey';
   in?: string;
   name?: string;
+  description?: string;
 };
 
 export const BearerAuthValidationSchema = z.object({
@@ -30,12 +35,17 @@ export const BearerAuthValidationSchema = z.object({
     .string()
     .optional()
     .describe('The security scheme bearer format.'),
+  description: z
+    .string()
+    .optional()
+    .describe('The security scheme description.'),
 });
 
 export type BearerAuth = {
   type: string;
   scheme?: 'bearer';
   bearerFormat?: string;
+  description?: string;
 };
 
 export const SecuritySchemeValidationSchema = z

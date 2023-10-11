@@ -24,6 +24,11 @@ export type StringSchema = BaseSchema & {
   format?: 'date' | 'date-time' | 'email' | 'uri';
 
   /**
+   * The schema property pattern.
+   */
+  pattern?: string;
+
+  /**
    * The schema property enum.
    */
   enum?: string[];
@@ -71,9 +76,19 @@ export type NumberSchema = BaseSchema & {
   min?: number;
 
   /**
+   * The schema property minimum value.
+   */
+  minimum?: number;
+
+  /**
    * The schema property maximum value.
    */
   max?: number;
+
+  /**
+   * The schema property maximum value.
+   */
+  maximum?: number;
 };
 
 export type BooleanSchema = BaseSchema & {
@@ -139,6 +154,7 @@ export type ObjectSchema = BaseSchema & {
     | NullSchema
     | RefSchema
     | OneOfSchema
+    | AnyOfSchema
     | RecordSchema
     | ObjectSchema
     | ArraySchema
@@ -181,6 +197,7 @@ export type RecordSchema = BaseSchema & {
     | NullSchema
     | RefSchema
     | OneOfSchema
+    | AnyOfSchema
     | RecordSchema
     | ObjectSchema
     | ArraySchema;
@@ -204,6 +221,22 @@ export type OneOfSchema = BaseSchema & {
     | NullSchema
     | RefSchema
     | OneOfSchema
+    | AnyOfSchema
+    | RecordSchema
+    | ObjectSchema
+    | ArraySchema
+  )[];
+};
+
+export type AnyOfSchema = BaseSchema & {
+  anyOf: (
+    | StringSchema
+    | NumberSchema
+    | BooleanSchema
+    | NullSchema
+    | RefSchema
+    | OneOfSchema
+    | AnyOfSchema
     | RecordSchema
     | ObjectSchema
     | ArraySchema
@@ -226,6 +259,7 @@ export type ArraySchema = BaseSchema & {
     | NullSchema
     | RefSchema
     | OneOfSchema
+    | AnyOfSchema
     | RecordSchema
     | ObjectSchema
     | ArraySchema;
@@ -252,4 +286,5 @@ export type Schema =
   | ObjectSchema
   | ArraySchema
   | OneOfSchema
+  | AnyOfSchema
   | RefSchema;

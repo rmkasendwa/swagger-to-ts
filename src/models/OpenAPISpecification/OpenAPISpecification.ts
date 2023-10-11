@@ -17,7 +17,7 @@ export const InfoValidationSchema = z.object({
     .describe('The open api license.'),
 });
 
-export type Info = z.infer<typeof InfoValidationSchema>;
+export type Info = z.infer<typeof InfoValidationSchema> & Record<string, any>;
 //#endregion
 
 //#region SecurityScheme

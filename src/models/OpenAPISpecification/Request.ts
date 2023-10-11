@@ -168,5 +168,5 @@ export type Request = {
    * The custom request configuration.
    */
   'x-requestConfig'?: RequestConfig;
-};
+} & Record<string, any>;
 //#endregion
