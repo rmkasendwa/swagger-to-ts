@@ -177,6 +177,12 @@ export const getTSEDControllersCodeConfiguration = ({
             );
           }
 
+          addModuleImport({
+            imports,
+            importName: 'HeaderParams',
+            importFilePath: TSED_COMMON_LIBRARY_PATH,
+          });
+
           //#region Controller Method parameters code
           const controllerMethodParametersCode = [
             //#region Path parameters
@@ -267,11 +273,6 @@ export const getTSEDControllersCodeConfiguration = ({
                 headerParameters &&
                 headerParameters.length > 0
               ) {
-                addModuleImport({
-                  imports,
-                  importName: 'HeaderParams',
-                  importFilePath: TSED_COMMON_LIBRARY_PATH,
-                });
                 const schemaSource = `../models/${
                   tagToEntityLabelMappings[
                     schemaToEntityMappings[headerParametersModelReference]
@@ -285,11 +286,12 @@ export const getTSEDControllersCodeConfiguration = ({
                 });
 
                 return [
-                  `@HeaderParams() headers: ${headerParametersModelReference}`,
+                  `@HeaderParams() baseHeaders: ${headerParametersModelReference}`,
                 ];
               }
               return [];
             })(),
+            `@HeaderParams() headers: any`,
             //#endregion
 
             //#region Query parameters
@@ -445,7 +447,7 @@ export const getTSEDControllersCodeConfiguration = ({
                 headerParameters &&
                 headerParameters.length > 0
               ) {
-                return ['headers'];
+                return ['baseHeaders'];
               }
               return [];
             })(),
@@ -470,11 +472,12 @@ export const getTSEDControllersCodeConfiguration = ({
                 return [
                   `{
                     unWrapResponse: false,
-                    responseType: 'stream'
+                    responseType: 'stream',
+                    headers
                   }`,
                 ];
               }
-              return [];
+              return [`{ headers }`];
             })(),
             //#endregion
           ].join(', ');
