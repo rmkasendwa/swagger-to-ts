@@ -8,18 +8,17 @@ export interface GeneratePermissionsCodeConfigurationOptions {
   requestGroupings: RequestGroupings;
 
   /**
-   * The prefix to use for the scoped model.
+   * The scope name of the permissions.
    */
-  scopedModelPrefix?: string;
+  scopeName?: string;
 }
 export const getPermissionsCodeConfiguration = ({
   requestGroupings,
-  scopedModelPrefix,
+  scopeName,
 }: GeneratePermissionsCodeConfigurationOptions) => {
   return Object.entries(requestGroupings).reduce<PermissionsCodeConfiguration>(
     (accumulator, [tagName, requestGrouping]) => {
-      const scopedTagName =
-        (scopedModelPrefix ? scopedModelPrefix + ' ' : '') + tagName;
+      const scopedTagName = (scopeName ? scopeName + ' ' : '') + tagName;
       const upperCaseTagName = scopedTagName.replace(/\W+/g, '_').toUpperCase();
       const snakeCaseTagName = scopedTagName.replace(/\W+/g, '_').toLowerCase();
       const manageModulePermissionCode = `MANAGE_${upperCaseTagName}`;

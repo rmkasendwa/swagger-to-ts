@@ -610,7 +610,7 @@ export const generateTypescriptAPI = async ({
     //#region Generate permissions code configuration
     const permissionsCodeConfiguration = getPermissionsCodeConfiguration({
       requestGroupings,
-      scopedModelPrefix,
+      scopeName,
     });
     //#endregion
 
