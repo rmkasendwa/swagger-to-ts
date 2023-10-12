@@ -237,6 +237,16 @@ if (args.includes('-v') || args.includes('--version')) {
         }
       })(),
       ...(() => {
+        if (
+          args.includes('-pRH') ||
+          args.includes('--propagate-request-headers')
+        ) {
+          return {
+            propagateRequestHeaders: true,
+          };
+        }
+      })(),
+      ...(() => {
         if (args.includes('-sN') || args.includes('--scope-name')) {
           const scopeName = (() => {
             if (args.includes('-sN')) {

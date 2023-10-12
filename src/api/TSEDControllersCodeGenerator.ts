@@ -52,6 +52,11 @@ export interface GenerateTSEDControllersCodeConfigurationOptions {
   tsedControllerNameSuffix?: string;
 
   /**
+   * Whether to propagate request headers to the API function calls.
+   */
+  propagateRequestHeaders?: boolean;
+
+  /**
    * The OpenAPI specification.
    */
   openAPISpecification: OpenAPISpecification;
@@ -64,6 +69,7 @@ export const getTSEDControllersCodeConfiguration = ({
   authorizeDecoratorImportPath,
   tsedControllerNamePrefix,
   tsedControllerNameSuffix,
+  propagateRequestHeaders = false,
   openAPISpecification,
 }: GenerateTSEDControllersCodeConfigurationOptions) => {
   return Object.keys(requestGroupings).reduce((accumulator, tag) => {
@@ -177,11 +183,13 @@ export const getTSEDControllersCodeConfiguration = ({
             );
           }
 
-          addModuleImport({
-            imports,
-            importName: 'Context',
-            importFilePath: TSED_COMMON_LIBRARY_PATH,
-          });
+          if (propagateRequestHeaders || responseHeaders) {
+            addModuleImport({
+              imports,
+              importName: 'Context',
+              importFilePath: TSED_COMMON_LIBRARY_PATH,
+            });
+          }
 
           //#region Controller Method parameters code
           const controllerMethodParametersCode = [
@@ -331,7 +339,12 @@ export const getTSEDControllersCodeConfiguration = ({
             //#endregion
 
             //#region Context
-            `@Context() ctx: Context`,
+            ...(() => {
+              if (propagateRequestHeaders) {
+                return [`@Context() ctx: Context`];
+              }
+              return [];
+            })(),
             //#endregion
           ].join(', ');
           //#endregion
@@ -462,16 +475,27 @@ export const getTSEDControllersCodeConfiguration = ({
 
             //#region Request options
             ...(() => {
+              if (propagateRequestHeaders) {
+                if (streamAPIResponse) {
+                  return [
+                    `{
+                      unWrapResponse: false,
+                      responseType: 'stream',
+                      headers: ctx.request.headers
+                    }`,
+                  ];
+                }
+                return [`{ headers: ctx.request.headers }`];
+              }
               if (streamAPIResponse) {
                 return [
                   `{
                     unWrapResponse: false,
-                    responseType: 'stream',
-                    headers: ctx.request.headers
+                    responseType: 'stream'
                   }`,
                 ];
               }
-              return [`{ headers: ctx.request.headers }`];
+              return [];
             })(),
             //#endregion
           ].join(', ');

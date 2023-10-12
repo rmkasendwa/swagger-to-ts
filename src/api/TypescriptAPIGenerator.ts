@@ -105,6 +105,11 @@ export interface GenerateTypescriptAPIOptions
   tsEDAuthorizeDecoratorImportPath?: string;
 
   /**
+   * Whether to propagate request headers from TsEd controller methods to the API function calls.
+   */
+  propagateRequestHeaders?: boolean;
+
+  /**
    * The scope name to use for the generated Typescript API.
    */
   scopeName?: string;
@@ -121,6 +126,7 @@ export const generateTypescriptAPI = async ({
   tsEDAuthorizeDecoratorImportPath,
   tsedControllerNamePrefix,
   tsedControllerNameSuffix,
+  propagateRequestHeaders,
   scopeName,
 }: GenerateTypescriptAPIOptions) => {
   //#region Validate OpenAPI specification
@@ -601,6 +607,7 @@ export const generateTypescriptAPI = async ({
             return tsedControllerNamePrefix;
           })(),
           tsedControllerNameSuffix,
+          propagateRequestHeaders,
           openAPISpecification,
         });
       }
