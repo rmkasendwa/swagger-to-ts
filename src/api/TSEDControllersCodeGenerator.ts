@@ -340,7 +340,7 @@ export const getTSEDControllersCodeConfiguration = ({
 
             //#region Context
             ...(() => {
-              if (propagateRequestHeaders) {
+              if (propagateRequestHeaders || responseHeaders) {
                 return [`@Context() ctx: Context`];
               }
               return [];
