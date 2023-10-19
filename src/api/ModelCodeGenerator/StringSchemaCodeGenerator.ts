@@ -58,13 +58,20 @@ export const generateStringSchemaCode: SchemaCodeGeneratorFunction<
 
   const baseTsedPropertyDecorators: string[] = [];
 
-  if (schema.enum && schema.enum.length > 1) {
+  if (schema.enum && schema.enum.length > 0) {
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
         importName: 'Enum',
         importFilePath: TSED_SCHEMA_LIBRARY_PATH,
       });
+    }
+    if (schema.enum.length === 1) {
+      return {
+        decorators: [...baseTsedPropertyDecorators, `@Enum(${propertyType})`],
+        propertyType,
+        zodCodeString,
+      };
     }
     return {
       decorators: [
