@@ -570,6 +570,25 @@ export const getAPIFunctionsCodeConfiguration = ({
                 return 'type' in successResponseSchema;
               })
           );
+
+          const isBlobType = Boolean(
+            successResponseSchemas &&
+              successResponseSchemas.every((successResponseSchema) => {
+                if ('name' in successResponseSchema) {
+                  return (
+                    successResponseSchema.name &&
+                    ENVIRONMENT_DEFINED_MODELS.includes(
+                      successResponseSchema.name as any
+                    )
+                  );
+                }
+                return (
+                  'type' in successResponseSchema &&
+                  successResponseSchema.type === 'any'
+                );
+              })
+          );
+
           const environmentDefinedResponseType = (() => {
             if (isEnvironmentDefinedModel && successResponseSchemas) {
               return `${successResponseSchemas
@@ -610,7 +629,7 @@ export const getAPIFunctionsCodeConfiguration = ({
               if (responseType) {
                 return [`responseType: '${responseType}'`];
               }
-              if (isEnvironmentDefinedModel) {
+              if (isEnvironmentDefinedModel && isBlobType) {
                 return [`responseType: 'blob'`];
               }
               return [];
