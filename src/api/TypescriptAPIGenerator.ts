@@ -337,6 +337,17 @@ export const generateTypescriptAPI = async ({
                   const httpStatusCode = +successResponse;
                   const content = response.content!;
                   const description = response.description;
+                  const getSchemaPrimitiveSchemaType = (type: string) => {
+                    switch (type) {
+                      case 'boolean':
+                        return 'boolean';
+                      case 'integer':
+                      case 'number':
+                        return 'number';
+                      case 'string':
+                        return 'string';
+                    }
+                  };
                   if (
                     'application/json' in content &&
                     content['application/json'].schema
@@ -351,17 +362,6 @@ export const generateTypescriptAPI = async ({
                         description,
                       } as SuccessResponseSchema;
                     } else if ('type' in content['application/json'].schema) {
-                      const getSchemaPrimitiveSchemaType = (type: string) => {
-                        switch (type) {
-                          case 'boolean':
-                            return 'boolean';
-                          case 'integer':
-                          case 'number':
-                            return 'number';
-                          case 'string':
-                            return 'string';
-                        }
-                      };
                       switch (content['application/json'].schema.type) {
                         case 'boolean':
                         case 'integer':
@@ -423,6 +423,48 @@ export const generateTypescriptAPI = async ({
                     } as SuccessResponseSchema;
                   }
                   if ('*/*' in content) {
+                    if ('type' in content['*/*'].schema) {
+                      switch (content['*/*'].schema.type) {
+                        case 'boolean':
+                        case 'integer':
+                        case 'number':
+                        case 'string':
+                          return {
+                            type: getSchemaPrimitiveSchemaType(
+                              content['*/*'].schema.type
+                            ),
+                            httpStatusCode,
+                            description,
+                          } as SuccessResponseSchema;
+                        case 'array':
+                          if (content['*/*'].schema.items) {
+                            if ('$ref' in content['*/*'].schema.items) {
+                              const schemaReference =
+                                content['*/*'].schema.items.$ref;
+                              const successResponseSchemaName =
+                                schemaReference.replace(
+                                  '#/components/schemas/',
+                                  ''
+                                );
+                              return {
+                                name: successResponseSchemaName,
+                                httpStatusCode,
+                                description,
+                                isArray: true,
+                              } as SuccessResponseSchema;
+                            } else if ('type' in content['*/*'].schema.items) {
+                              return {
+                                type: getSchemaPrimitiveSchemaType(
+                                  content['*/*'].schema.items.type
+                                ),
+                                httpStatusCode,
+                                description,
+                                isArray: true,
+                              } as SuccessResponseSchema;
+                            }
+                          }
+                      }
+                    }
                     return {
                       type: 'any',
                       description,
