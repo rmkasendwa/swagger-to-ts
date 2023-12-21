@@ -250,7 +250,10 @@ export const generateModelMappings = ({
             referencedSchemas.forEach((referencedSchemaName) => {
               const referencedSchemaEntityName =
                 schemaToEntityMappings[referencedSchemaName];
-              if (referencedSchemaEntityName != entityName) {
+              if (
+                referencedSchemaEntityName &&
+                referencedSchemaEntityName != entityName
+              ) {
                 addModuleImport({
                   imports,
                   importName: `${referencedSchemaName}ValidationSchema`,

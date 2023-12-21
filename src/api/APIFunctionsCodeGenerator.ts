@@ -24,7 +24,7 @@ export const getAPIAdapterCode = () => {
       ResponseProcessor,
     } from '@infinite-debugger/axios-api-adapter';
 
-    const {
+    export const {
       APIAdapterConfiguration,
       RequestController,
       _delete,
@@ -38,19 +38,6 @@ export const getAPIAdapterCode = () => {
     } = getAPIAdapter({
       id: 'api-client',
     });
-
-    export {
-      APIAdapterConfiguration,
-      RequestController,
-      _delete,
-      defaultRequestHeaders,
-      get,
-      logout,
-      patch,
-      patchDefaultRequestHeaders,
-      post,
-      put,
-    };
   `.trimIndent();
 };
 //#endregion

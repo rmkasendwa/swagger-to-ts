@@ -32,10 +32,13 @@ export interface GetImportsCodeOptions {
 }
 export const getImportsCode = ({ imports }: GetImportsCodeOptions) => {
   if (imports) {
-    return Object.keys(imports!).map((importFilePath) => {
-      const importNames = imports![importFilePath];
-      return `import { ${importNames.join(', ')} } from '${importFilePath}';`;
-    });
+    return Object.entries(imports!)
+      .filter(([, importFilePath]) => {
+        return importFilePath.length > 0;
+      })
+      .map(([importFilePath, importNames]) => {
+        return `import { ${importNames.join(', ')} } from '${importFilePath}';`;
+      });
   }
   return [];
 };
