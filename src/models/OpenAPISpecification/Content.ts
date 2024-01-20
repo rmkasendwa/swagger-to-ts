@@ -44,6 +44,36 @@ export type PNGContent = {
 };
 //#endregion
 
+//#region XMLContent
+export const XMLContentValidationSchema = z.object({
+  'application/xml': z.object({
+    schema: z.string().optional(),
+  }),
+});
+
+export type XMLContent = z.infer<typeof XMLContentValidationSchema>;
+//#endregion
+
+//#region HTMLContent
+export const HTMLContentValidationSchema = z.object({
+  'text/html': z.object({
+    schema: z.string().optional(),
+  }),
+});
+
+export type HTMLContent = z.infer<typeof HTMLContentValidationSchema>;
+//#endregion
+
+//#region CSVContent
+export const CSVContentValidationSchema = z.object({
+  'text/csv': z.object({
+    schema: z.string().optional(),
+  }),
+});
+
+export type CSVContent = z.infer<typeof CSVContentValidationSchema>;
+//#endregion
+
 //#region GenericContent
 export const GenericContentValidationSchema = z.object({
   '*/*': z.object({
@@ -63,9 +93,18 @@ export const ContentValidationSchema: any = z.union([
   JSONContentValidationSchema,
   PNGContentValidationSchema,
   PDFContentValidationSchema,
+  XMLContentValidationSchema,
+  HTMLContentValidationSchema,
+  CSVContentValidationSchema,
   GenericContentValidationSchema,
   z.record(z.any()),
 ]);
 
-export type Content = JSONContent | PNGContent | GenericContent;
+export type Content =
+  | JSONContent
+  | PNGContent
+  | XMLContent
+  | HTMLContent
+  | CSVContent
+  | GenericContent;
 //#endregion
