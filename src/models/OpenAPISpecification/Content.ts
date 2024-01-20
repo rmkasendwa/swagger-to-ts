@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { Schema, SchemaValidationSchema } from './Schema';
+import { Schema, SchemaValidationSchema, StringSchema } from './Schema';
 
 //#region JSONContent
 export const JSONContentValidationSchema = z.object({
@@ -47,31 +47,43 @@ export type PNGContent = {
 //#region XMLContent
 export const XMLContentValidationSchema = z.object({
   'application/xml': z.object({
-    schema: z.string().optional(),
+    schema: z.any(),
   }),
 });
 
-export type XMLContent = z.infer<typeof XMLContentValidationSchema>;
+export type XMLContent = {
+  'application/xml': {
+    schema: StringSchema;
+  };
+};
 //#endregion
 
 //#region HTMLContent
 export const HTMLContentValidationSchema = z.object({
   'text/html': z.object({
-    schema: z.string().optional(),
+    schema: z.any(),
   }),
 });
 
-export type HTMLContent = z.infer<typeof HTMLContentValidationSchema>;
+export type HTMLContent = {
+  'text/html': {
+    schema: StringSchema;
+  };
+};
 //#endregion
 
 //#region CSVContent
 export const CSVContentValidationSchema = z.object({
   'text/csv': z.object({
-    schema: z.string().optional(),
+    schema: z.any(),
   }),
 });
 
-export type CSVContent = z.infer<typeof CSVContentValidationSchema>;
+export type CSVContent = {
+  'text/csv': {
+    schema: StringSchema;
+  };
+};
 //#endregion
 
 //#region GenericContent
