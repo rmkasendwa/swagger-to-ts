@@ -262,14 +262,14 @@ export const generatePropertySchemaCode = (
                   );
                 })
               );
-              if (generateTsEDControllers) {
-                addModuleImport({
-                  imports,
-                  importName: 'ArrayOf',
-                  importFilePath: TSED_SCHEMA_LIBRARY_PATH,
-                });
-              }
               if (propertyModels.length === 1) {
+                if (generateTsEDControllers) {
+                  addModuleImport({
+                    imports,
+                    importName: 'ArrayOf',
+                    importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                  });
+                }
                 decorators.push(`@ArrayOf(${propertyModels[0]})`);
               }
             }
