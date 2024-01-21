@@ -9,6 +9,7 @@ import {
   RequestGroupings,
   TagNameToEntityLabelsMap,
 } from '../models';
+import { getPrimitiveSchemaType } from './SchemaGenerator';
 import { addModuleImport } from './Utils';
 
 //#region API adapter code generator
@@ -102,10 +103,10 @@ export const getAPIFunctionsCodeConfiguration = ({
       //#region Generate entity api endpoint paths
       const requestPathsOutputCode = requestGroupings[tag].requests
         .map(({ requestPath, requestPathName, pathParameters }) => {
-          if (pathParameters && pathParameters.length > 0) {
+          if (pathParameters?.length) {
             const parametersCode = pathParameters
-              .reduce((accumulator, { name }) => {
-                accumulator.push(`${name}: string`);
+              .reduce((accumulator, { name, schema }) => {
+                accumulator.push(`${name}: ${getPrimitiveSchemaType(schema)}`);
                 return accumulator;
               }, [] as string[])
               .join(';\n');
@@ -161,7 +162,7 @@ export const getAPIFunctionsCodeConfiguration = ({
             if (description) {
               jsDocCommentLines.push(description, '');
             }
-            if (pathParameters && pathParameters.length > 0) {
+            if (pathParameters?.length) {
               jsDocCommentLines.push(
                 ...pathParameters.map(({ name, description = '' }) => {
                   return `@param ${name} ${description}`.trim();
@@ -211,24 +212,9 @@ export const getAPIFunctionsCodeConfiguration = ({
             const baseAPIFunctionParameters = [
               //#region Path parameters
               ...(() => {
-                if (pathParameters) {
+                if (pathParameters?.length) {
                   return pathParameters.map(({ name, schema }) => {
-                    const type = (() => {
-                      if (
-                        'type' in schema &&
-                        (
-                          [
-                            'boolean',
-                            'number',
-                            'string',
-                          ] as (typeof schema.type)[]
-                        ).includes(schema.type)
-                      ) {
-                        return schema.type;
-                      }
-                      return 'string';
-                    })();
-                    return `${name}: ${type}`;
+                    return `${name}: ${getPrimitiveSchemaType(schema)}`;
                   });
                 }
                 return [];
@@ -495,7 +481,7 @@ export const getAPIFunctionsCodeConfiguration = ({
           //#region API request URL code
           const interpolatedEndpointPathString = (() => {
             const interpolatedEndpointPathString = (() => {
-              if (pathParameters && pathParameters.length > 0) {
+              if (pathParameters?.length) {
                 const interpolationFunctionName = 'getInterpolatedPath';
                 addModuleImport({
                   imports,

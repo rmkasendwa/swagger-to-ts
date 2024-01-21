@@ -118,3 +118,26 @@ export const generateSchemaFromRequestParameters = ({
   } as Schema;
 };
 //#endregion
+
+//#region Get schema primitive schema type
+export const getPrimitiveSchemaType = (schema: Schema) => {
+  if ('type' in schema) {
+    switch (schema.type) {
+      case 'boolean':
+        return 'boolean';
+      case 'integer':
+      case 'number':
+        return 'number';
+      case 'string':
+        if (schema.enum) {
+          return schema.enum
+            .filter((value) => value.length > 0)
+            .map((value) => `'${value}'`)
+            .join(' | ');
+        }
+        return 'string';
+    }
+  }
+  return 'any';
+};
+//#endregion

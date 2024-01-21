@@ -42,7 +42,10 @@ import {
 } from './ModelCodeGenerator';
 import { prefixModelsAndModelReferences } from './ModelPrefixer';
 import { getPermissionsCodeConfiguration } from './PermissionsCodeGenerator';
-import { generateSchemaFromRequestParameters } from './SchemaGenerator';
+import {
+  generateSchemaFromRequestParameters,
+  getPrimitiveSchemaType,
+} from './SchemaGenerator';
 import {
   GenerateTSEDControllersCodeConfigurationOptions,
   getTSEDControllersCodeConfiguration,
@@ -337,17 +340,6 @@ export const generateTypescriptAPI = async ({
                   const httpStatusCode = +successResponse;
                   const content = response.content!;
                   const description = response.description;
-                  const getSchemaPrimitiveSchemaType = (type: string) => {
-                    switch (type) {
-                      case 'boolean':
-                        return 'boolean';
-                      case 'integer':
-                      case 'number':
-                        return 'number';
-                      case 'string':
-                        return 'string';
-                    }
-                  };
                   if (
                     'application/json' in content &&
                     content['application/json'].schema
@@ -368,8 +360,8 @@ export const generateTypescriptAPI = async ({
                         case 'number':
                         case 'string':
                           return {
-                            type: getSchemaPrimitiveSchemaType(
-                              content['application/json'].schema.type
+                            type: getPrimitiveSchemaType(
+                              content['application/json'].schema
                             ),
                             httpStatusCode,
                             description,
@@ -396,8 +388,8 @@ export const generateTypescriptAPI = async ({
                               'type' in content['application/json'].schema.items
                             ) {
                               return {
-                                type: getSchemaPrimitiveSchemaType(
-                                  content['application/json'].schema.items.type
+                                type: getPrimitiveSchemaType(
+                                  content['application/json'].schema.items
                                 ),
                                 httpStatusCode,
                                 description,
@@ -429,9 +421,7 @@ export const generateTypescriptAPI = async ({
                       case 'number':
                       case 'string':
                         return {
-                          type: getSchemaPrimitiveSchemaType(
-                            content['*/*'].schema.type
-                          ),
+                          type: getPrimitiveSchemaType(content['*/*'].schema),
                           httpStatusCode,
                           description,
                         } as SuccessResponseSchema;
@@ -453,8 +443,8 @@ export const generateTypescriptAPI = async ({
                             } as SuccessResponseSchema;
                           } else if ('type' in content['*/*'].schema.items) {
                             return {
-                              type: getSchemaPrimitiveSchemaType(
-                                content['*/*'].schema.items.type
+                              type: getPrimitiveSchemaType(
+                                content['*/*'].schema.items
                               ),
                               httpStatusCode,
                               description,

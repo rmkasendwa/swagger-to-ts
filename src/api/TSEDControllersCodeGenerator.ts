@@ -12,6 +12,7 @@ import {
   TagNameToEntityLabelsMap,
   primitiveTypeToModelMapping,
 } from '../models';
+import { getPrimitiveSchemaType } from './SchemaGenerator';
 import { addModuleImport } from './Utils';
 
 //#region API functions code generator
@@ -195,29 +196,30 @@ export const getTSEDControllersCodeConfiguration = ({
           const controllerMethodParametersCode = [
             //#region Path parameters
             ...(() => {
-              if (pathParameters) {
+              if (pathParameters?.length) {
                 addModuleImport({
                   imports,
                   importName: 'PathParams',
                   importFilePath: TSED_COMMON_LIBRARY_PATH,
                 });
                 return pathParameters.map(({ name, schema }) => {
-                  const type = (() => {
-                    if (
-                      'type' in schema &&
-                      (
-                        [
-                          'boolean',
-                          'number',
-                          'string',
-                        ] as (typeof schema.type)[]
-                      ).includes(schema.type)
-                    ) {
-                      return schema.type;
-                    }
-                    return 'string';
-                  })();
-                  return `@PathParams('${name}') ${name}: ${type}`;
+                  const decorators = [`@PathParams('${name}')`];
+                  if ('enum' in schema && schema.enum?.length) {
+                    decorators.push(
+                      `@Enum(${schema.enum
+                        .filter((value) => value.length > 0)
+                        .map((value) => `'${value}`)
+                        .join(', ')})`
+                    );
+                    addModuleImport({
+                      imports,
+                      importName: 'Enum',
+                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                    });
+                  }
+                  return `${decorators.join(
+                    ' '
+                  )} ${name}: ${getPrimitiveSchemaType(schema)}`;
                 });
               }
               return [];
@@ -429,10 +431,8 @@ export const getTSEDControllersCodeConfiguration = ({
           const apiFunctionCallArgumentsCode = [
             //#region Path parameters
             ...(() => {
-              if (pathParameters) {
-                return pathParameters.map(({ name }) => {
-                  return name;
-                });
+              if (pathParameters?.length) {
+                return pathParameters.map(({ name }) => name);
               }
               return [];
             })(),
