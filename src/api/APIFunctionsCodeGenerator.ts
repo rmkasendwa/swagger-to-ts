@@ -170,42 +170,78 @@ export const getAPIFunctionsCodeConfiguration = ({
               );
             }
 
-            const definedSchemaResponseName = (() => {
+            const definedSchemaResponseNames = (() => {
               if (successResponseSchemas && successResponseSchemas.length > 0) {
-                const [successResponseSchema] = successResponseSchemas;
-                if (
-                  'name' in successResponseSchema &&
-                  modelsToValidationSchemaMappings[successResponseSchema.name]
-                ) {
-                  const { name: successResponseSchemaName } =
-                    successResponseSchema;
-                  return modelsToValidationSchemaMappings[
-                    successResponseSchemaName
-                  ].name;
-                }
+                return successResponseSchemas
+                  .map((successResponseSchema) => {
+                    const definedSchemaResponseName = (() => {
+                      if (
+                        'name' in successResponseSchema &&
+                        modelsToValidationSchemaMappings[
+                          successResponseSchema.name
+                        ]
+                      ) {
+                        const { name: successResponseSchemaName } =
+                          successResponseSchema;
+                        return modelsToValidationSchemaMappings[
+                          successResponseSchemaName
+                        ].name;
+                      }
+                    })();
+                    if (definedSchemaResponseName) {
+                      return {
+                        modelName: definedSchemaResponseName,
+                        type: successResponseSchema.isArray
+                          ? `${definedSchemaResponseName}[]`
+                          : definedSchemaResponseName,
+                      };
+                    }
+                    if (
+                      'type' in successResponseSchema &&
+                      successResponseSchema.type
+                    ) {
+                      return {
+                        type: successResponseSchema.isArray
+                          ? `${successResponseSchema.type}[]`
+                          : successResponseSchema.type,
+                      };
+                    }
+                  })
+                  .filter((modelNameAndType) => modelNameAndType) as {
+                  modelName?: string;
+                  type: string;
+                }[];
               }
             })();
 
             const definedSchemaResponseType = (() => {
-              if (successResponseSchemas && successResponseSchemas.length > 0) {
-                const [successResponseSchema] = successResponseSchemas;
-                if (successResponseSchema.isArray) {
-                  return `${definedSchemaResponseName}[]`;
-                }
+              if (definedSchemaResponseNames?.length) {
+                return [
+                  ...new Set(
+                    definedSchemaResponseNames.map(({ type }) => {
+                      return type;
+                    })
+                  ),
+                ].join(' | ');
               }
-              return definedSchemaResponseName;
             })();
 
-            if (definedSchemaResponseName && definedSchemaResponseType) {
-              addModuleImport({
-                imports,
-                importName: definedSchemaResponseName,
-                importFilePath: `../models/${
-                  tagToEntityLabelMappings[
-                    schemaToEntityMappings[definedSchemaResponseName]
-                  ].PascalCaseEntities
-                }`.trim(),
-              });
+            if (definedSchemaResponseNames?.length) {
+              definedSchemaResponseNames.forEach(
+                ({ modelName: definedSchemaResponseName }) => {
+                  if (definedSchemaResponseName) {
+                    addModuleImport({
+                      imports,
+                      importName: definedSchemaResponseName,
+                      importFilePath: `../models/${
+                        tagToEntityLabelMappings[
+                          schemaToEntityMappings[definedSchemaResponseName]
+                        ].PascalCaseEntities
+                      }`.trim(),
+                    });
+                  }
+                }
+              );
             }
 
             //#region Base API function parameters code
@@ -374,7 +410,10 @@ export const getAPIFunctionsCodeConfiguration = ({
             });
 
             const returnValueString = (() => {
-              if (successResponseSchemas && successResponseSchemas.length > 0) {
+              if (
+                successResponseSchemas &&
+                successResponseSchemas.length === 1
+              ) {
                 const [successResponseSchema] = successResponseSchemas;
                 if (
                   'name' in successResponseSchema &&
