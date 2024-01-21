@@ -65,10 +65,7 @@ export const generateModelMappings = ({
           })(),
         ].forEach(({ content }) => {
           if (content) {
-            if (
-              'application/json' in content &&
-              content['application/json'].schema
-            ) {
+            if (content['application/json']?.schema) {
               if ('$ref' in content['application/json'].schema) {
                 const schemaReference = content['application/json'].schema.$ref;
                 const schemaName = schemaReference.replace(

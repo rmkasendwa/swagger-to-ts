@@ -216,8 +216,7 @@ export const generateTypescriptAPI = async ({
         const { content } = requestBody;
         if (
           content &&
-          'application/json' in content &&
-          content['application/json'].schema &&
+          content['application/json']?.schema &&
           'type' in content['application/json'].schema &&
           content['application/json'].schema.type === 'object'
         ) {
@@ -273,8 +272,7 @@ export const generateTypescriptAPI = async ({
           requestBodySchemaName: (() => {
             if (
               request.requestBody?.content &&
-              'application/json' in request.requestBody.content &&
-              request.requestBody.content['application/json'].schema &&
+              request.requestBody.content['application/json']?.schema &&
               '$ref' in request.requestBody.content['application/json'].schema
             ) {
               const requestBodySchemaName = request.requestBody.content[
@@ -287,8 +285,7 @@ export const generateTypescriptAPI = async ({
             if (request.requestBody?.content) {
               const { content } = request.requestBody;
               if (
-                'application/json' in content &&
-                content['application/json'].schema &&
+                content['application/json']?.schema &&
                 'type' in content['application/json'].schema &&
                 content['application/json'].schema.type === 'array'
               ) {
@@ -328,9 +325,29 @@ export const generateTypescriptAPI = async ({
           })(),
           // TODO: Deal with oneof schema types
           successResponseSchemas: (() => {
-            const successResponses = Object.entries(request.responses).filter(
-              ([responseCode]) => responseCode.startsWith('2')
-            );
+            const successResponses = Object.entries(request.responses)
+              .filter(([responseCode]) => responseCode.startsWith('2'))
+              .reduce<[string, (typeof request.responses)[number]][]>(
+                (accumulator, [httpStatusCode, response]) => {
+                  if (response.content) {
+                    Object.entries(response.content).forEach(
+                      ([contentType, content]) => {
+                        accumulator.push([
+                          httpStatusCode,
+                          {
+                            ...response,
+                            content: {
+                              [contentType]: content,
+                            } as any,
+                          },
+                        ]);
+                      }
+                    );
+                  }
+                  return accumulator;
+                },
+                []
+              );
             if (successResponses.length > 0) {
               return successResponses
                 .filter(([, response]) => {
@@ -340,10 +357,7 @@ export const generateTypescriptAPI = async ({
                   const httpStatusCode = +successResponse;
                   const content = response.content!;
                   const description = response.description;
-                  if (
-                    'application/json' in content &&
-                    content['application/json'].schema
-                  ) {
+                  if (content['application/json']?.schema) {
                     if ('$ref' in content['application/json'].schema) {
                       const successResponseSchemaName = content[
                         'application/json'
@@ -414,7 +428,7 @@ export const generateTypescriptAPI = async ({
                       httpStatusCode,
                     } as SuccessResponseSchema;
                   }
-                  if ('*/*' in content && 'type' in content['*/*'].schema) {
+                  if (content['*/*'] && 'type' in content['*/*'].schema) {
                     switch (content['*/*'].schema.type) {
                       case 'boolean':
                       case 'integer':

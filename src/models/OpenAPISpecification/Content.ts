@@ -101,22 +101,14 @@ export type GenericContent = {
 //#endregion
 
 //#region Content
-export const ContentValidationSchema: any = z.union([
-  JSONContentValidationSchema,
-  PNGContentValidationSchema,
-  PDFContentValidationSchema,
-  XMLContentValidationSchema,
-  HTMLContentValidationSchema,
-  CSVContentValidationSchema,
-  GenericContentValidationSchema,
-  z.record(z.any()),
-]);
+export const ContentValidationSchema: any = z.any();
 
-export type Content =
-  | JSONContent
-  | PNGContent
-  | XMLContent
-  | HTMLContent
-  | CSVContent
-  | GenericContent;
+export type Content = Partial<
+  JSONContent &
+    PNGContent &
+    XMLContent &
+    HTMLContent &
+    CSVContent &
+    GenericContent
+>;
 //#endregion

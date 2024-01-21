@@ -229,6 +229,9 @@ export type OneOfSchema = BaseSchema & {
 };
 
 export type AnyOfSchema = BaseSchema & {
+  /**
+   * The schema property accepted types.
+   */
   anyOf: (
     | StringSchema
     | NumberSchema
@@ -241,6 +244,16 @@ export type AnyOfSchema = BaseSchema & {
     | ObjectSchema
     | ArraySchema
   )[];
+
+  /**
+   * The schema property example.
+   */
+  example?: any;
+
+  /**
+   * The schema property default.
+   */
+  defualt?: any;
 };
 
 export type ArraySchema = BaseSchema & {
