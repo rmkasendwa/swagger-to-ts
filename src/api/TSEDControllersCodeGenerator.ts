@@ -202,13 +202,23 @@ export const getTSEDControllersCodeConfiguration = ({
                   importName: 'PathParams',
                   importFilePath: TSED_COMMON_LIBRARY_PATH,
                 });
-                return pathParameters.map(({ name, schema }) => {
+                return pathParameters.map(({ name, schema, description }) => {
                   const decorators = [`@PathParams('${name}')`];
+                  if (description) {
+                    decorators.push(
+                      `@Description(${JSON.stringify(description)})`
+                    );
+                    addModuleImport({
+                      imports,
+                      importName: 'Description',
+                      importFilePath: TSED_SCHEMA_LIBRARY_PATH,
+                    });
+                  }
                   if ('enum' in schema && schema.enum?.length) {
                     decorators.push(
                       `@Enum(${schema.enum
                         .filter((value) => value.length > 0)
-                        .map((value) => `'${value}`)
+                        .map((value) => `'${value}'`)
                         .join(', ')})`
                     );
                     addModuleImport({
