@@ -24,7 +24,7 @@ export const PDFContentValidationSchema = z.object({
 });
 
 export type PDFContent = {
-  'image/png': {
+  'application/pdf': {
     schema?: any;
   };
 };
@@ -106,6 +106,7 @@ export const ContentValidationSchema: any = z.any();
 export type Content = Partial<
   JSONContent &
     PNGContent &
+    PDFContent &
     XMLContent &
     HTMLContent &
     CSVContent &

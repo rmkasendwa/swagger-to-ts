@@ -26,6 +26,11 @@ export interface SuccessResponseBaseSchema {
    * Whether the response is an array or not.
    */
   isArray?: boolean;
+
+  /**
+   * The content type of the response.
+   */
+  contentType?: string;
 }
 
 export interface SuccessResponseModelSchema extends SuccessResponseBaseSchema {

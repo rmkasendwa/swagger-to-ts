@@ -364,7 +364,8 @@ export const getTSEDControllersCodeConfiguration = ({
           //#region Success response schemas
           if (successResponseSchemas && successResponseSchemas.length > 0) {
             successResponseSchemas.forEach((successResponseSchema) => {
-              const { httpStatusCode, description } = successResponseSchema;
+              const { httpStatusCode, description, contentType } =
+                successResponseSchema;
               addModuleImport({
                 imports,
                 importName: 'Returns',
@@ -402,6 +403,11 @@ export const getTSEDControllersCodeConfiguration = ({
                           return `.Description(${JSON.stringify(description)})`;
                         }
                         return '';
+                      })() +
+                      (() => {
+                        if (contentType) {
+                          return `.ContentType(${JSON.stringify(contentType)})`;
+                        }
                       })()
                   );
                 }
@@ -416,6 +422,11 @@ export const getTSEDControllersCodeConfiguration = ({
                 if (description) {
                   returnTypeDecorator += `.Description(${JSON.stringify(
                     description
+                  )})`;
+                }
+                if (contentType) {
+                  returnTypeDecorator += `.ContentType(${JSON.stringify(
+                    contentType
                   )})`;
                 }
                 controllerMethodDecorators.push(returnTypeDecorator);

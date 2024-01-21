@@ -353,126 +353,75 @@ export const generateTypescriptAPI = async ({
                 .filter(([, response]) => {
                   return response.content;
                 })
-                .map(([successResponse, response]) => {
+                .flatMap(([successResponse, response]) => {
                   const httpStatusCode = +successResponse;
                   const content = response.content!;
                   const description = response.description;
-                  if (content['application/json']?.schema) {
-                    if ('$ref' in content['application/json'].schema) {
-                      const successResponseSchemaName = content[
-                        'application/json'
-                      ].schema.$ref.replace('#/components/schemas/', '');
+                  return Object.entries(content).map(
+                    ([contentType, content]) => {
                       return {
-                        name: successResponseSchemaName,
-                        httpStatusCode,
+                        contentType,
                         description,
-                      } as SuccessResponseSchema;
-                    } else if ('type' in content['application/json'].schema) {
-                      switch (content['application/json'].schema.type) {
-                        case 'boolean':
-                        case 'integer':
-                        case 'number':
-                        case 'string':
-                          return {
-                            type: getPrimitiveSchemaType(
-                              content['application/json'].schema
-                            ),
-                            httpStatusCode,
-                            description,
-                          } as SuccessResponseSchema;
-                        case 'array':
-                          if (content['application/json'].schema.items) {
-                            if (
-                              '$ref' in content['application/json'].schema.items
-                            ) {
-                              const schemaReference =
-                                content['application/json'].schema.items.$ref;
-                              const successResponseSchemaName =
-                                schemaReference.replace(
-                                  '#/components/schemas/',
-                                  ''
-                                );
+                        httpStatusCode,
+                        ...(() => {
+                          switch (
+                            contentType as keyof NonNullable<
+                              typeof response.content
+                            >
+                          ) {
+                            case 'image/png':
+                            case 'application/pdf':
                               return {
-                                name: successResponseSchemaName,
-                                httpStatusCode,
-                                description,
-                                isArray: true,
+                                name: BINARY_RESPONSE_TYPE_MODEL_NAME,
                               } as SuccessResponseSchema;
-                            } else if (
-                              'type' in content['application/json'].schema.items
-                            ) {
-                              return {
-                                type: getPrimitiveSchemaType(
-                                  content['application/json'].schema.items
-                                ),
-                                httpStatusCode,
-                                description,
-                                isArray: true,
-                              } as SuccessResponseSchema;
-                            }
                           }
-                      }
-                    }
-                  }
-                  if ('image/png' in content) {
-                    return {
-                      name: BINARY_RESPONSE_TYPE_MODEL_NAME,
-                      description,
-                      httpStatusCode,
-                    } as SuccessResponseSchema;
-                  }
-                  if ('application/pdf' in content) {
-                    return {
-                      name: BINARY_RESPONSE_TYPE_MODEL_NAME,
-                      description,
-                      httpStatusCode,
-                    } as SuccessResponseSchema;
-                  }
-                  if (content['*/*'] && 'type' in content['*/*'].schema) {
-                    switch (content['*/*'].schema.type) {
-                      case 'boolean':
-                      case 'integer':
-                      case 'number':
-                      case 'string':
-                        return {
-                          type: getPrimitiveSchemaType(content['*/*'].schema),
-                          httpStatusCode,
-                          description,
-                        } as SuccessResponseSchema;
-                      case 'array':
-                        if (content['*/*'].schema.items) {
-                          if ('$ref' in content['*/*'].schema.items) {
-                            const schemaReference =
-                              content['*/*'].schema.items.$ref;
+                          if ('$ref' in content.schema) {
                             const successResponseSchemaName =
-                              schemaReference.replace(
+                              content.schema.$ref.replace(
                                 '#/components/schemas/',
                                 ''
                               );
                             return {
                               name: successResponseSchemaName,
-                              httpStatusCode,
-                              description,
-                              isArray: true,
                             } as SuccessResponseSchema;
-                          } else if ('type' in content['*/*'].schema.items) {
-                            return {
-                              type: getPrimitiveSchemaType(
-                                content['*/*'].schema.items
-                              ),
-                              httpStatusCode,
-                              description,
-                              isArray: true,
-                            } as SuccessResponseSchema;
+                          } else if ('type' in content.schema) {
+                            switch (content.schema.type) {
+                              case 'boolean':
+                              case 'integer':
+                              case 'number':
+                              case 'string':
+                                return {
+                                  type: getPrimitiveSchemaType(content.schema),
+                                } as SuccessResponseSchema;
+                              case 'array':
+                                if (content.schema.items) {
+                                  if ('$ref' in content.schema.items) {
+                                    const schemaReference =
+                                      content.schema.items.$ref;
+                                    const successResponseSchemaName =
+                                      schemaReference.replace(
+                                        '#/components/schemas/',
+                                        ''
+                                      );
+                                    return {
+                                      name: successResponseSchemaName,
+                                      isArray: true,
+                                    } as SuccessResponseSchema;
+                                  } else if ('type' in content.schema.items) {
+                                    return {
+                                      type: getPrimitiveSchemaType(
+                                        content.schema.items
+                                      ),
+                                      isArray: true,
+                                    } as SuccessResponseSchema;
+                                  }
+                                }
+                            }
                           }
-                        }
+                        })(),
+                      };
                     }
-                  }
-                  return {
-                    type: 'any',
-                    description,
-                    httpStatusCode,
-                  } as SuccessResponseSchema;
+                  );
                 })
                 .filter((schema) => schema) as SuccessResponseSchema[];
             }
