@@ -83,7 +83,7 @@ export const getTSEDControllersCodeConfiguration = ({
           method,
           operationName,
           description,
-          requestPath,
+          requestPath: baseRequestPath,
           pathParameters,
           headerParameters,
           headerParametersModelReference,
@@ -103,6 +103,9 @@ export const getTSEDControllersCodeConfiguration = ({
           request['x-requestConfig']?.tsedControllerConfig?.responseHeaders;
         const permissions =
           request['x-requestConfig']?.tsedControllerConfig?.permissions;
+        const userDefinedRequestPath =
+          request['x-requestConfig']?.tsedControllerConfig?.path;
+        const requestPath = userDefinedRequestPath ?? baseRequestPath;
 
         const {
           controllerMethodDecorators,
