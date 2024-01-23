@@ -26,7 +26,7 @@ export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
   }
 
   if (schema.max != null) {
-    decorators.push(`@Max(${schema.min})`);
+    decorators.push(`@Max(${schema.max})`);
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
