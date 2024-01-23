@@ -213,8 +213,8 @@ export type RecordSchema = BaseSchema & {
   default?: any;
 };
 
-export type OneOfSchema = BaseSchema & {
-  oneOf: (
+export type OneOfSchema<
+  Item extends
     | StringSchema
     | NumberSchema
     | BooleanSchema
@@ -224,36 +224,51 @@ export type OneOfSchema = BaseSchema & {
     | AnyOfSchema
     | RecordSchema
     | ObjectSchema
-    | ArraySchema
-  )[];
-};
-
-export type AnyOfSchema = BaseSchema & {
+    | ArraySchema = any
+> = BaseSchema & {
   /**
    * The schema property accepted types.
    */
-  anyOf: (
-    | StringSchema
-    | NumberSchema
-    | BooleanSchema
-    | NullSchema
-    | RefSchema
-    | OneOfSchema
-    | AnyOfSchema
-    | RecordSchema
-    | ObjectSchema
-    | ArraySchema
-  )[];
+  oneOf: Item[];
 
   /**
    * The schema property example.
    */
-  example?: any;
+  example?: Item extends { example: unknown } ? Item['example'] : any;
 
   /**
    * The schema property default.
    */
-  defualt?: any;
+  default?: Item extends { default: unknown } ? Item['default'] : any;
+};
+
+export type AnyOfSchema<
+  Item extends
+    | StringSchema
+    | NumberSchema
+    | BooleanSchema
+    | NullSchema
+    | RefSchema
+    | OneOfSchema
+    | AnyOfSchema
+    | RecordSchema
+    | ObjectSchema
+    | ArraySchema = any
+> = BaseSchema & {
+  /**
+   * The schema property accepted types.
+   */
+  anyOf: Item[];
+
+  /**
+   * The schema property example.
+   */
+  example?: Item extends { example: unknown } ? Item['example'] : unknown;
+
+  /**
+   * The schema property default.
+   */
+  default?: Item extends { default: unknown } ? Item['default'] : unknown;
 };
 
 export type ArraySchema = BaseSchema & {
