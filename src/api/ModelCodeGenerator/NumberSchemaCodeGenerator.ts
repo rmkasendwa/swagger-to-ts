@@ -13,9 +13,11 @@ export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
   NumberSchema
 > = ({ schema, generateTsEDControllers, imports }) => {
   const decorators: string[] = [];
+  const min = schema.min ?? schema.minimum;
+  const max = schema.max ?? schema.maximum;
 
-  if (schema.min != null) {
-    decorators.push(`@Min(${schema.min})`);
+  if (min != null) {
+    decorators.push(`@Min(${min})`);
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
@@ -25,8 +27,8 @@ export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
     }
   }
 
-  if (schema.max != null) {
-    decorators.push(`@Max(${schema.max})`);
+  if (max != null) {
+    decorators.push(`@Max(${max})`);
     if (generateTsEDControllers) {
       addModuleImport({
         imports,
@@ -41,11 +43,11 @@ export const generateNumberSchemaCode: SchemaCodeGeneratorFunction<
     propertyType: `number`,
     zodCodeString: (() => {
       let validationCode = `z.number()`;
-      if (schema.min != null) {
-        validationCode += `.min(${schema.min})`;
+      if (min != null) {
+        validationCode += `.min(${min})`;
       }
-      if (schema.max != null) {
-        validationCode += `.max(${schema.max})`;
+      if (max != null) {
+        validationCode += `.max(${max})`;
       }
       return validationCode;
     })(),
