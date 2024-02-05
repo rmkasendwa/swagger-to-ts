@@ -5,7 +5,7 @@ import { exec } from 'node:child_process';
 const currentProcessArgs = process.argv.slice(2);
 
 const { stdout, stderr } = exec(
-  `ts-node ${__dirname}/run-with-ts-support ${currentProcessArgs
+  `ts-node "${__dirname}"/run-with-ts-support ${currentProcessArgs
     .map((arg) => {
       if (arg.includes(' ')) {
         return `"${arg}"`;
