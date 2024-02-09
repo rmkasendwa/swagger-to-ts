@@ -505,11 +505,29 @@ export const getTSEDControllersCodeConfiguration = ({
                     `{
                       unWrapResponse: false,
                       responseType: 'stream',
-                      headers: ctx.request.headers
+                      headers: (() => {
+                        const headers = { ...ctx.request.headers };
+                        ['origin', 'host', 'content-length'].forEach((headerKey) => {
+                          delete headers[headerKey];
+                        });
+                        return headers;
+                      })(),
                     }`,
                   ];
                 }
-                return [`{ headers: ctx.request.headers }`];
+                return [
+                  `
+                    {
+                      headers: (() => {
+                        const headers = { ...ctx.request.headers };
+                        ['origin', 'host', 'content-length'].forEach((headerKey) => {
+                          delete headers[headerKey];
+                        });
+                        return headers;
+                      })(),
+                    }
+                  `.trimIndent(),
+                ];
               }
               if (streamAPIResponse) {
                 return [
