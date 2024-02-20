@@ -319,6 +319,10 @@ export const generateModelCode = ({
                   );
                 }
 
+                if (openAPISpecification.deprecated) {
+                  jsDocCommentLines.push(`@deprecated`);
+                }
+
                 if (jsDocCommentLines.length > 0) {
                   const linesString = jsDocCommentLines
                     .reduce((acumulator, line) => {

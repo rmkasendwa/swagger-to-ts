@@ -10,6 +10,11 @@ export type BaseSchema = {
    * Whether the schema is nullable or not.
    */
   nullable?: boolean;
+
+  /**
+   * Whether the schema is deprecated or not.
+   */
+  deprecated?: boolean;
 };
 
 export type StringSchema = BaseSchema & {

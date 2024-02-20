@@ -134,6 +134,7 @@ export const getAPIFunctionsCodeConfiguration = ({
             summary,
             description,
             pathParameters,
+            deprecated,
             headerParameters,
             headerParametersModelReference,
             queryParameters,
@@ -168,6 +169,9 @@ export const getAPIFunctionsCodeConfiguration = ({
                   return `@param ${name} ${description}`.trim();
                 })
               );
+            }
+            if (deprecated) {
+              jsDocCommentLines.push('@deprecated');
             }
 
             const definedSchemaResponseNames = (() => {

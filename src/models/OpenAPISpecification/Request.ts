@@ -122,6 +122,10 @@ export const RequestValidationSchema = z.object<any>({
     RequestBodyValidationSchema.optional().describe('The request body.'),
   responses: ResponsesValidationSchema.describe('The request responses.'),
   summary: z.string().optional().describe('The request summary.'),
+  deprecated: z
+    .boolean()
+    .optional()
+    .describe('Whether the request is deprecated.'),
   tags: z.array(z.string()).describe('The request tags.'),
   'x-requestConfig': RequestConfigValidationSchema.optional().describe(
     'The custom request configuration.'
@@ -158,6 +162,11 @@ export type Request = {
    * The request summary.
    */
   summary?: string;
+
+  /**
+   * Whether the request is deprecated.
+   */
+  deprecated?: boolean;
 
   /**
    * The request tags.
